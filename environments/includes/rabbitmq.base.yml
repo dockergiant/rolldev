@@ -1,0 +1,16 @@
+version: "3.5"
+services:
+  rabbitmq:
+    hostname: "${ROLL_ENV_NAME}-rabbitmq"
+    image: ${ROLL_IMAGE_REPOSITORY}/rabbitmq:${RABBITMQ_VERSION:-3.8}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-rabbitmq.tls=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-rabbitmq.rule=Host(`rabbitmq.${TRAEFIK_DOMAIN}`)
+      - traefik.http.services.${ROLL_ENV_NAME}-rabbitmq.loadbalancer.server.port=15672
+      - traefik.docker.network=${ROLL_ENV_NAME}_default
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq
+
+volumes:
+  rabbitmq:

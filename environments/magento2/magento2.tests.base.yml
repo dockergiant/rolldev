@@ -1,0 +1,22 @@
+version: "3.5"
+services:
+  tmp-mysql:
+    hostname: "${ROLL_ENV_NAME}-mysql"
+    image: ${ROLL_IMAGE_REPOSITORY}/mysql:5.7
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-magento}
+      - MYSQL_DATABASE=magento_integration_tests
+      - MYSQL_USER=${MYSQL_USER:-magento}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-magento}
+    command:
+      - mysqld
+      - --max_allowed_packet=1024M
+      - --explicit_defaults_for_timestamp=on
+    volumes:
+      - tmp-dbdata:/var/lib/mysql
+
+volumes:
+  tmp-dbdata:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs

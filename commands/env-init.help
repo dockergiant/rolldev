@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+
+ROLL_USAGE=$(cat <<EOF
+\033[33mUsage:\033[0m
+  env-init <project_name> <environment_type>
+
+\033[33mOptions:\033[0m
+  -h, --help        Display this help menu
+
+\033[33mEnvironment Types:\033[0m
+  local               Declares the docker-compose version and labels the project
+                      network allowing RollDev to recognize it. Must be coupled with
+                      per-project configuration. See documentation for details:
+                      https://docs.roll.dev/environments/types.html#local
+
+  magento2            Nginx, varnish, php-fpm, db (mariadb), elasticsearch, redis,
+                      and rabbitmq services pre configured for Magento 2; on macOS
+                      systems code files are synced into container using mutagen
+                      session with pub/media, pub/static and var dirs excluded.
+                      On Linux code is mounted natively.
+
+  magento1            Nginx, php-fpm, db (mariadb), and redis services
+                      pre-configured for running Magento 1
+
+  laravel             Nginx, php-fpm, db (mariadb), and redis services
+                      pre-configured for running Laravel
+
+  symfony             Nginx, php-fpm, db (mariadb), and redis services
+                      pre-configured for running Symfony 4+
+                      Due to the fact that Symfony uses '.env' file too,
+                      WEBROOT value of '/web/' is used by default
+
+  wordpress           Nginx, php-fpm, db
+                      pre-configured for running Wordpress
+EOF
+)

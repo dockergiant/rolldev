@@ -1,0 +1,106 @@
+version: "3.5"
+services:
+  traefik:
+    container_name: traefik
+    image: traefik:${TRAEFIK_VERSION:-2.2}
+    ports:
+      - "${TRAEFIK_LISTEN:-127.0.0.1}:80:80"     # The HTTP port
+      - "${TRAEFIK_LISTEN:-127.0.0.1}:443:443"   # The HTTPS port
+    volumes:
+      - ${ROLL_HOME_DIR}/etc/traefik/traefik.yml:/etc/traefik/traefik.yml
+      - ${ROLL_HOME_DIR}/etc/traefik/dynamic.yml:/etc/traefik/dynamic.yml
+      - ${ROLL_HOME_DIR}/ssl/certs:/etc/ssl/certs
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.traefik.tls=true
+      - traefik.http.routers.traefik.rule=Host(`traefik.${ROLL_SERVICE_DOMAIN:-roll.test}`)
+      - traefik.http.routers.traefik.service=api@internal
+    restart: ${ROLL_RESTART_POLICY:-always}
+
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer:/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.portainer.tls=true
+      - traefik.http.routers.portainer.rule=Host(`portainer.${ROLL_SERVICE_DOMAIN:-roll.test}`)
+      - traefik.http.services.portainer.loadbalancer.server.port=9000
+    restart: ${ROLL_RESTART_POLICY:-always}
+
+  dnsmasq:
+    container_name: dnsmasq
+    image: jpillora/dnsmasq
+    ports:
+      - "127.0.0.1:53:53/udp"
+    environment:
+      ROLL_DNSMASQ_CONF: |-
+        #dnsmasq config, for a complete example, see:
+        #  http://oss.segetech.com/intra/srv/dnsmasq.conf
+
+        #log all dns queries (enable as-needed for debugging purposes)
+        # log-queries
+
+        #dont use hosts nameservers
+        no-resolv
+
+        #use cloudflare as default nameservers, prefer 1^4
+        server=${ROLL_DNSMASQ_NS1:-1.0.0.1}
+        server=${ROLL_DNSMASQ_NS2:-1.1.1.1}
+        strict-order
+
+        #explicitly define host-ip mappings
+        address=/.test/127.0.0.1
+        ${ROLL_DNSMASQ_CONF_ADDITIONAL:-}
+
+    entrypoint: ["/bin/sh", "-c", "
+        echo \"$$ROLL_DNSMASQ_CONF\" > /etc/dnsmasq.conf;
+        webproc --config /etc/dnsmasq.conf -- dnsmasq --no-daemon;
+      "]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.dnsmasq.tls=true
+      - traefik.http.routers.dnsmasq.rule=Host(`dnsmasq.${ROLL_SERVICE_DOMAIN:-roll.test}`)
+      - traefik.http.services.dnsmasq.loadbalancer.server.port=8080
+    restart: ${ROLL_RESTART_POLICY:-always}
+
+  mailhog:
+    container_name: mailhog
+    image: docker.io/rollupdev/mailhog:1.0
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.mailhog.tls=true
+      - traefik.http.routers.mailhog.rule=Host(`mailhog.${ROLL_SERVICE_DOMAIN:-roll.test}`)
+      - traefik.http.services.mailhog.loadbalancer.server.port=8025
+    restart: ${ROLL_RESTART_POLICY:-always}
+
+  tunnel:
+    container_name: tunnel
+    image: panubo/sshd:1.1.0
+    ports:
+      - "127.0.0.1:2222:22"
+    volumes:
+      - ${ROLL_HOME_DIR}/tunnel/ssh_key.pub:/etc/authorized_keys/user
+      - sshd_keys:/etc/ssh/keys
+    environment:
+      - |
+        MOTD=Welcome to the RollDev SSH tunnel container!
+
+        This tunnel container is used only for forwarding TCP
+        connections, generally to port 3306 of db containers
+        and is not typically used with an interactive shell.
+
+      - SSH_USERS=user:2000:2000
+      - TCP_FORWARDING=true
+    restart: ${ROLL_RESTART_POLICY:-always}
+
+volumes:
+  portainer:
+  sshd_keys:
+
+networks:
+  default:
+    name: roll

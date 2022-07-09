@@ -1,0 +1,53 @@
+version: "3.5"
+
+x-volumes: &volumes
+  - ${ROLL_SSL_DIR}/rootca/certs:/etc/ssl/roll-rootca-cert:ro
+  - ${ROLL_COMPOSER_DIR}:/home/www-data/.composer:cached
+  - .${ROLL_WEB_ROOT:-}/:/var/www/html:cached
+  - bashhistory:/bash_history
+  - sshdirectory:/home/www-data/.ssh
+
+x-extra_hosts: &extra_hosts
+    - ${TRAEFIK_DOMAIN}:${TRAEFIK_ADDRESS:-0.0.0.0}
+    - ${TRAEFIK_SUBDOMAIN:-app}.${TRAEFIK_DOMAIN}:${TRAEFIK_ADDRESS:-0.0.0.0}
+
+services:
+  nginx:
+    depends_on:
+      - php-fpm
+
+  php-fpm:
+    hostname: "${ROLL_ENV_NAME}-php-fpm"
+    image: ${ROLL_IMAGE_REPOSITORY}/php-fpm:${PHP_VERSION:-7.4}${ROLL_SVC_PHP_VARIANT:-}
+    environment:
+      - TRAEFIK_DOMAIN
+      - TRAEFIK_SUBDOMAIN
+      - SSH_AUTH_SOCK=${SSH_AUTH_SOCK_PATH_ENV:-/tmp/ssh-auth.sock}
+      - NODE_VERSION=${NODE_VERSION:-12}
+      - COMPOSER_VERSION=${COMPOSER_VERSION:-1}
+      - COMPOSER_MEMORY_LIMIT=-1
+      - HISTFILE=/bash_history/.bash_history
+      - CHOWN_DIR_LIST=${CHOWN_DIR_LIST:-}
+    volumes: *volumes
+    extra_hosts: *extra_hosts
+
+  php-debug:
+    hostname: "${ROLL_ENV_NAME}-php-debug"
+    image: ${ROLL_IMAGE_REPOSITORY}/php-fpm:${PHP_VERSION:-7.4}${ROLL_SVC_PHP_VARIANT:-}-${XDEBUG_VERSION:-debug}
+    environment:
+      - TRAEFIK_DOMAIN
+      - TRAEFIK_SUBDOMAIN
+      - SSH_AUTH_SOCK=${SSH_AUTH_SOCK_PATH_ENV:-/tmp/ssh-auth.sock}
+      - NODE_VERSION=${NODE_VERSION:-12}
+      - COMPOSER_VERSION=${COMPOSER_VERSION:-1}
+      - COMPOSER_MEMORY_LIMIT=-1
+      - PHP_IDE_CONFIG=serverName=${ROLL_ENV_NAME}-docker
+      - HISTFILE=/bash_history/.bash_history
+      - CHOWN_DIR_LIST=${CHOWN_DIR_LIST:-}
+    volumes: *volumes
+    extra_hosts: *extra_hosts
+    depends_on:
+      - php-fpm
+volumes:
+  bashhistory:
+  sshdirectory:

@@ -1,0 +1,6 @@
+version: "3.5"
+networks:
+  default:
+    labels:
+      - dev.roll.environment.name=${ROLL_ENV_NAME}
+      - dev.roll.environment.type=${ROLL_ENV_TYPE}

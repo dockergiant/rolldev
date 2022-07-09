@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+set -e
+trap 'error "$(printf "Command \`%s\` at $BASH_SOURCE:$LINENO failed with exit code $?" "$BASH_COMMAND")"' ERR
+
+## find directory where this script is located following symlinks if neccessary
+readonly ROLL_DIR="$(
+  cd "$(
+    dirname "$(
+      (readlink "${BASH_SOURCE[0]}" || echo "${BASH_SOURCE[0]}") \
+        | sed -e "s#^../#$(dirname "$(dirname "${BASH_SOURCE[0]}")")/#"
+    )"
+  )/.." >/dev/null \
+  && pwd
+)"
+source "${ROLL_DIR}/utils/core.sh"
+source "${ROLL_DIR}/utils/env.sh"
+
+## verify docker-compose is installed
+if ! which docker-compose >/dev/null; then
+  fatal "docker-compose could not be found; please install and try again."
+fi
+
+## verify docker-compose meets version constraint
+DOCKER_COMPOSE_REQUIRE="1.25.0"
+DOCKER_COMPOSE_REQUIRE_V2="2.2.3"
+DOCKER_COMPOSE_VERSION="$(docker-compose --version | grep -oE '[0-9\.]+' | head -n1)"
+if ! test $(version ${DOCKER_COMPOSE_VERSION}) -ge $(version ${DOCKER_COMPOSE_REQUIRE}); then
+  fatal "docker-compose version should be ${DOCKER_COMPOSE_REQUIRE} or higher (${DOCKER_COMPOSE_VERSION} installed)"
+fi
+
+if test $(version ${DOCKER_COMPOSE_VERSION}) -ge $(version "2.0.0") \
+  && ! test $(version ${DOCKER_COMPOSE_VERSION}) -ge $(version ${DOCKER_COMPOSE_REQUIRE_V2})
+then
+  fatal "docker-compose version should be ${DOCKER_COMPOSE_REQUIRE_V2} or higher (${DOCKER_COMPOSE_VERSION} installed)"
+fi
+
+## define and export global shared directory paths
+export readonly ROLL_HOME_DIR="${ROLL_HOME_DIR:-"$HOME/.roll"}"
+export readonly ROLL_SSL_DIR="${ROLL_HOME_DIR}/ssl"
+export readonly ROLL_COMPOSER_DIR="${ROLL_COMPOSER_DIR:-"$HOME/.composer"}"
+
+## declare variables for flags and arguments
+declare ROLL_HELP=
+declare ROLL_PARAMS=()
+declare ROLL_CMD_VERB=
+declare ROLL_CMD_EXEC=
+declare ROLL_CMD_HELP=
+declare ROLL_CMD_ANYARGS=(svc env db redis sync shell debug)
+
+## parse first argument as command and determine validity
+if (( "$#" )); then
+  ## local project directory if running within one; don't fail if it can't be found
+  ROLL_ENV_PATH="$(locateEnvPath 2>/dev/null)" || true
+
+  if [[ -f "${ROLL_DIR}/commands/${1}.cmd" ]]; then
+    ROLL_CMD_VERB="$1"
+    ROLL_CMD_EXEC="${ROLL_DIR}/commands/${1}.cmd"
+    ROLL_CMD_HELP="${ROLL_DIR}/commands/${1}.help"
+    shift
+  elif [[ -f "${ROLL_ENV_PATH}/.roll/commands/${1}.cmd" ]]; then
+    ROLL_CMD_VERB="$1"
+    ROLL_CMD_ANYARGS+=("$1")
+    ROLL_CMD_EXEC="${ROLL_ENV_PATH}/.roll/commands/${1}.cmd"
+    ROLL_CMD_HELP="${ROLL_ENV_PATH}/.roll/commands/${1}.help"
+    shift
+  elif [[ -f "${ROLL_HOME_DIR}/declu/${1}.cmd" ]]; then
+  	ROLL_CMD_VERB="$1"
+  	ROLL_CMD_EXEC="${ROLL_HOME_DIR}/declu/${1}.cmd"
+  	ROLL_CMD_HELP="${ROLL_HOME_DIR}/declu/${1}.help"
+  	shift
+  elif [[ -f "${ROLL_HOME_DIR}/commands/${1}.cmd" ]]; then
+    ROLL_CMD_VERB="$1"
+    ROLL_CMD_ANYARGS+=("$1")
+    ROLL_CMD_EXEC="${ROLL_HOME_DIR}/commands/${1}.cmd"
+    ROLL_CMD_HELP="${ROLL_HOME_DIR}/commands/${1}.help"
+    shift
+  else
+    ROLL_HELP=1
+  fi
+else
+  ROLL_HELP=1
+fi
+
+## parse arguments
+while (( "$#" )); do
+  case "$1" in
+    -h|--help)
+      ROLL_HELP=1
+      break
+      ;;
+    --) # end argument parsing (unless command is on 'anyargs' list and consumes anything as params)
+      shift
+      containsElement "${ROLL_CMD_VERB}" "${ROLL_CMD_ANYARGS[@]}" || break
+      ;;
+    -*|--*=) # unsupported flags (unless command is on 'anyargs' list and consumes anything as params)
+      containsElement "${ROLL_CMD_VERB}" "${ROLL_CMD_ANYARGS[@]}" && break
+      fatal "Unsupported flag $1"
+      ;;
+    *) # preserve positional arguments
+      ROLL_PARAMS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+## display command specific usage info if help flag is set
+if [[ ${ROLL_HELP} ]]; then
+  source "${ROLL_DIR}/commands/usage.cmd"
+fi
+
+## execute sub-command in context of this script
+source "${ROLL_CMD_EXEC}"

@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+
+ROLL_HEADER='
+
+████████▄     ▄████████  ▄████████    ▄█   ▄█▄
+███   ▀███   ███    ███ ███    ███   ███ ▄███▀
+███    ███   ███    █▀  ███    █▀    ███▐██▀
+███    ███  ▄███▄▄▄     ███         ▄█████▀
+███    ███ ▀▀███▀▀▀     ███        ▀▀█████▄
+███    ███   ███    █▄  ███    █▄    ███▐██▄
+███   ▄███   ███    ███ ███    ███   ███ ▀███▄
+████████▀    ██████████ ████████▀    ███   ▀█▀
+'
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  ROLL_DARWIN=$(cat <<EOF
+
+\033[33mMac OS only commands:\033[0m
+  tableplus         	Launches tableplus with the current project environment
+  sync         		Command to interact with mutagen sync (see \033[31m'roll sync -h'\033[0m for details)
+EOF
+)
+fi
+
+ROLL_USAGE=$(cat <<EOF
+${ROLL_HEADER:1}
+RollDev version $(cat ${ROLL_DIR}/version)
+
+\033[33mUsage:\033[0m
+  command [options] [arguments]
+
+\033[33mOptions:\033[0m
+  -h, --help        Display this help menu
+
+\033[33mCommands:\033[0m
+  svc               	Orchestrates global services such as traefik, portainer and dnsmasq via docker-compose
+  env-init          	Configure environment by adding \033[31m'.env'\033[0m file to the current working directory
+  env               	Controls an environment from any point within the root project directory
+  db                	Interacts with the db service on an environment (see \033[31m'roll db -h'\033[0m for details)
+  redis             	Interacts with the redis service on an environment (see \033[31m'roll redis -h'\033[0m for details)
+  install           	Initializes or updates roll configuration on host machine
+  shell             	Launches into a shell within the current project environment
+  debug             	Launches debug enabled shell within current project environment
+  sign-certificate  	Signs a wildcard certificate including all passed hostnames on the SAN list
+  version           	Show version information
+
+\033[33mEnvoirment commands:\033[0m
+  start         	Starting current envoirement (simulair to \033[31m'roll env up'\033[0m)
+  start         	Stopping current envoirement (simulair to \033[31m'roll env down'\033[0m)
+  restart         	Restarting current envoirement (simulair to \033[31m'roll env up && roll env down'\033[0m)
+  bash         		Allocate TTY with shell (simulair to \033[31m'roll shell'\033[0m)
+  cli \033[32m%command%\033[0m     	Run command inside container with TTY allocation
+  clinotty \033[32m%command%\033[0m    Run command inside container without TTY allocation
+  root \033[32m%command%\033[0m        Run command inside container with TTY allocation as root user
+  rootnotty \033[32m%command%\033[0m   Run command inside container without TTY allocation as root user
+  rootshell          	Allocate TTY with shell as root user
+  composer \033[32m%command%\033[0m    run composer inside php-fpm container with params
+  magento \033[32m%command%\033[0m     run magento inside php-fpm container with params
+  cache     		clean magento 2 cache (simulair to \033[31m'bin/magento cache:clean'\033[0m)
+  fixowns 		Fix ownerships inside container
+  fixperms 		Fix permissions inside container
+
+
+${ROLL_DARWIN:1}
+EOF
+)

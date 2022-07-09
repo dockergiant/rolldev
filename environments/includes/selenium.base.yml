@@ -1,0 +1,8 @@
+version: "3.5"
+services:
+  selenium:
+    hostname: ${ROLL_ENV_NAME}_selenium
+    image: selenium/standalone-chrome${ROLL_SELENIUM_DEBUG:-}:${ROLL_SELENIUM_VERSION:-3.141.59}
+    extra_hosts:
+      - ${TRAEFIK_DOMAIN}:${TRAEFIK_ADDRESS:-0.0.0.0}
+      - ${TRAEFIK_SUBDOMAIN:-app}.${TRAEFIK_DOMAIN}:${TRAEFIK_ADDRESS:-0.0.0.0}

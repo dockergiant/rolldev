@@ -1,0 +1,31 @@
+version: "3.5"
+services:
+  allure:
+    hostname: "${ROLL_ENV_NAME}-allure"
+    image: frankescobar/allure-docker-service:latest
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-allure.tls=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-allure.rule=Host(`allure.${TRAEFIK_DOMAIN}`)
+      - traefik.http.services.${ROLL_ENV_NAME}-allure.loadbalancer.server.port=4040
+      - traefik.docker.network=${ROLL_ENV_NAME}_default
+      # TODO; configure the Allure API; these rules result in allure sub-domain no longer routing
+      # - traefik.http.routers.${ROLL_ENV_NAME}-allure-api.tls=true
+      # - traefik.http.routers.${ROLL_ENV_NAME}-allure-api.rule=Host(`allure-api.${TRAEFIK_DOMAIN}`)
+      # - traefik.http.services.${ROLL_ENV_NAME}-allure-api.loadbalancer.server.port=5050
+    volumes:
+      - allure-results:/app/allure-results
+    environment:
+      CHECK_RESULTS_EVERY_SECONDS: 5
+      KEEP_HISTORY: "TRUE"
+
+  php-fpm:
+    volumes:
+      - allure-results:/var/allure-results
+
+  php-debug:
+    volumes:
+      - allure-results:/var/allure-results
+
+volumes:
+  allure-results:

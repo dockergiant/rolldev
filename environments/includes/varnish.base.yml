@@ -1,0 +1,21 @@
+version: "3.5"
+services:
+  nginx:
+    labels:
+      - traefik.enable=false
+      - traefik.http.routers.${ROLL_ENV_NAME}-nginx.priority=2
+      - traefik.docker.network=${ROLL_ENV_NAME}_default
+
+  varnish:
+    hostname: "${ROLL_ENV_NAME}-varnish"
+    image: ${ROLL_IMAGE_REPOSITORY}/varnish:${VARNISH_VERSION:-6.0}
+    depends_on:
+      - nginx
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-varnish.tls=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-varnish.priority=1
+      - traefik.http.routers.${ROLL_ENV_NAME}-varnish.rule=
+          HostRegexp(`{subdomain:.+}.${TRAEFIK_DOMAIN}`) || Host(`${TRAEFIK_DOMAIN}`)
+      - traefik.http.services.${ROLL_ENV_NAME}-varnish.loadbalancer.server.port=80
+      - traefik.docker.network=${ROLL_ENV_NAME}_default
