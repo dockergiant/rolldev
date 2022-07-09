@@ -107,6 +107,7 @@ for file in $(find ${SEARCH_PATH} -type f -name Dockerfile | sort -V); do
     fi
 
     printf "\e[01;31m==> building ${IMAGE_TAG} from ${BUILD_DIR}/Dockerfile with context ${BUILD_CONTEXT}\033[0m\n"
+    docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
     docker buildx create --use
     docker buildx build --platform linux/amd64,linux/arm64 -t "${IMAGE_TAG}" -f ${BUILD_DIR}/Dockerfile ${BUILD_ARGS[@]} ${BUILD_CONTEXT}
     [[ $PUSH_FLAG ]] && docker push "${IMAGE_TAG}" || true
