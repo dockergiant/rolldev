@@ -18,15 +18,7 @@ pushd ${BASE_DIR} >/dev/null
 readonly ROLL_DIR="${BASE_DIR}/.."
 source "${ROLL_DIR}/utils/core.sh"
 
-# if --push is passed as first argument to script, this will login to docker hub and push images
-PUSH_FLAG=
-if [[ "${1:-}" = "--push" ]]; then
-  PUSH_FLAG=1
-  SEARCH_PATH="${2:-}"
-else
-  SEARCH_PATH="${1:-}"
-fi
-PUSH_FLAG=0
+SEARCH_PATH="${1:-}"
 
 ## since fpm images no longer can be traversed, this script should require a search path vs defaulting to build all
 if [[ -z ${SEARCH_PATH} ]]; then
@@ -53,7 +45,7 @@ for file in $(find ${SEARCH_PATH} -type f -name Dockerfile | sort -V); do
     IMAGE_TAG="${ROLL_IMAGE_REPOSITORY}/$(echo "${BUILD_DIR}" | cut -d/ -f1)"
     IMAGE_SUFFIX="$(echo "${BUILD_DIR}" | cut -d/ -f2- -s | tr / - | sed 's/^-//')"
 
-    ## due to build matrix requirements, magento1 and magento2 specific varients are built in separate invocation
+    ## due to build matrix requirements, magento1 and magento2 specific variants are built in separate invocation
     if [[ ${SEARCH_PATH} == "php-fpm" ]] && [[ ${file} =~ php-fpm/magento[1-2] ]]; then
       continue;
     fi
@@ -109,6 +101,5 @@ for file in $(find ${SEARCH_PATH} -type f -name Dockerfile | sort -V); do
     printf "\e[01;31m==> building ${IMAGE_TAG} from ${BUILD_DIR}/Dockerfile with context ${BUILD_CONTEXT}\033[0m\n"
     docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
     docker buildx create --use
-    docker buildx build --platform linux/amd64,linux/arm64 -t "${IMAGE_TAG}" -f ${BUILD_DIR}/Dockerfile ${BUILD_ARGS[@]} ${BUILD_CONTEXT}
-    [[ $PUSH_FLAG ]] && docker push "${IMAGE_TAG}" || true
+    docker buildx build --push --platform linux/amd64,linux/arm64 -t "${IMAGE_TAG}" -f ${BUILD_DIR}/Dockerfile ${BUILD_ARGS[@]} ${BUILD_CONTEXT}
 done

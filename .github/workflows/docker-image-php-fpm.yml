@@ -23,7 +23,7 @@ jobs:
       if: ${{ env.ACT }}
 
     - uses: actions/checkout@v1
-    - run: ./images/scripts/build.sh --push "${BUILD_GROUP}"
+    - run: ./images/scripts/build.sh "${BUILD_GROUP}"
       env:
         BUILD_GROUP: php-fpm
         PHP_VERSION: ${{ matrix.php_version }}
@@ -44,7 +44,7 @@ jobs:
       if: ${{ env.ACT }}
 
     - uses: actions/checkout@v1
-    - run: ./images/scripts/build.sh --push "${BUILD_GROUP}"
+    - run: ./images/scripts/build.sh "${BUILD_GROUP}"
       env:
         BUILD_GROUP: php-fpm/magento1
         PHP_VERSION: ${{ matrix.php_version }}
@@ -64,7 +64,7 @@ jobs:
       if: ${{ env.ACT }}
 
     - uses: actions/checkout@v1
-    - run: ./images/scripts/build.sh --push "${BUILD_GROUP}"
+    - run: ./images/scripts/build.sh "${BUILD_GROUP}"
       env:
         BUILD_GROUP: php-fpm/magento2
         PHP_VERSION: ${{ matrix.php_version }}
