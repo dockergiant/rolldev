@@ -4,8 +4,8 @@
 ## load usage info for the given command falling back on default usage text
 if [[ -f "${ROLL_CMD_HELP}" ]]; then
   source "${ROLL_CMD_HELP}"
-elif [[ -f "${HOME}/.roll/declu/usage.help" ]]; then
-  source "${HOME}/.roll/declu/usage.help"
+elif [[ -f "${HOME}/.roll/reclu/usage.help" ]]; then
+  source "${HOME}/.roll/reclu/usage.help"
 else
   source "${ROLL_DIR}/commands/usage.help"
 fi

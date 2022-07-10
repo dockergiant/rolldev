@@ -63,10 +63,10 @@ if (( "$#" )); then
     ROLL_CMD_EXEC="${ROLL_ENV_PATH}/.roll/commands/${1}.cmd"
     ROLL_CMD_HELP="${ROLL_ENV_PATH}/.roll/commands/${1}.help"
     shift
-  elif [[ -f "${ROLL_HOME_DIR}/declu/${1}.cmd" ]]; then
+  elif [[ -f "${ROLL_HOME_DIR}/reclu/${1}.cmd" ]]; then
   	ROLL_CMD_VERB="$1"
-  	ROLL_CMD_EXEC="${ROLL_HOME_DIR}/declu/${1}.cmd"
-  	ROLL_CMD_HELP="${ROLL_HOME_DIR}/declu/${1}.help"
+  	ROLL_CMD_EXEC="${ROLL_HOME_DIR}/reclu/${1}.cmd"
+  	ROLL_CMD_HELP="${ROLL_HOME_DIR}/reclu/${1}.help"
   	shift
   elif [[ -f "${ROLL_HOME_DIR}/commands/${1}.cmd" ]]; then
     ROLL_CMD_VERB="$1"
