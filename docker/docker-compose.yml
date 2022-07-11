@@ -69,7 +69,7 @@ services:
 
   mailhog:
     container_name: mailhog
-    image: docker.io/rollupdev/mailhog:1.0
+    image: rollupdev/mailhog
     labels:
       - traefik.enable=true
       - traefik.http.routers.mailhog.tls=true
@@ -79,7 +79,7 @@ services:
 
   tunnel:
     container_name: tunnel
-    image: bensuperpc/sshd:latest
+    image: rollupdev/sshd:latest
     ports:
       - "127.0.0.1:2222:22"
     volumes:

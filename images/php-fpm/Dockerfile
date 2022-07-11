@@ -10,15 +10,18 @@ ENV COMPOSER_HOME=
 ENV MAILHOG_HOST    mailhog
 ENV MAILHOG_PORT    1025
 
-RUN dnf install -y which pv sudo bind-utils python3-pip bash-completion rsync socat oathtool \
+RUN set -eux; \
+	&& apt-get update; \
+    && apt-get install -y --no-install-recommends which pv sudo bind-utils python3-pip bash-completion rsync socat oathtool \
         wget ack make gcc gcc-c++ automake autoconf crontabs mariadb nano vim coreutils-common \
-    && dnf clean all \
-    && rm -rf /var/cache/dnf
+    && rm -rf /var/lib/apt/lists/*
 
-RUN dnf install -y python2 \
+
+RUN set -eux; \
+	&& apt-get update; \
+    && apt-get install -y --no-install-recommends python2 \
     && ln -sf /bin/python2 /bin/python \
-    && dnf clean all \
-    && rm -rf /var/cache/dnf
+    && rm -rf /var/lib/apt/lists/
 
 ENV NODE_VERSION    10
 RUN npm install -g n \
