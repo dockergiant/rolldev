@@ -12,8 +12,8 @@ ENV MAILHOG_PORT    1025
 
 RUN set -eux; \
 	apt-get update; \
-    apt-get install -y --no-install-recommends which pv sudo bind-utils python3-pip bash-completion rsync socat oathtool \
-        wget ack make gcc gcc-c++ automake autoconf crontabs mariadb nano vim coreutils-common; \
+    apt-get install -y --no-install-recommends pv sudo python3-pip bash-completion rsync socat oathtool \
+        wget ack automake autoconf nano vim build-essential; \
     rm -rf /var/lib/apt/lists/*;
 
 

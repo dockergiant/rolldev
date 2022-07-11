@@ -25,14 +25,17 @@ if [[ -z ${SEARCH_PATH} ]]; then
   fatal "Missing search path. Please try again passing an image type as an argument."
 fi
 
-## login to docker hub as needed
-if [[ ${DOCKER_USERNAME:-} ]]; then
-	echo "Attempting non-interactive docker login (via provided credentials)"
-	echo "${DOCKER_PASSWORD:-}" | docker login -u "${DOCKER_USERNAME:-}" --password-stdin ${DOCKER_REGISTRY:-docker.io}
-elif [[ -t 1 ]]; then
-	echo "Attempting interactive docker login (tty)"
-	docker login ${DOCKER_REGISTRY:-docker.io}
+if [[ -z ${ACT} ]]; then
+  ## login to docker hub as needed
+  if [[ ${DOCKER_USERNAME:-} ]]; then
+  	echo "Attempting non-interactive docker login (via provided credentials)"
+  	echo "${DOCKER_PASSWORD:-}" | docker login -u "${DOCKER_USERNAME:-}" --password-stdin ${DOCKER_REGISTRY:-docker.io}
+  elif [[ -t 1 ]]; then
+  	echo "Attempting interactive docker login (tty)"
+  	docker login ${DOCKER_REGISTRY:-docker.io}
+  fi
 fi
+
 
 ## define image repository to push
 ROLL_IMAGE_REPOSITORY="${ROLL_IMAGE_REPOSITORY:-"docker.io/rollupdev"}"

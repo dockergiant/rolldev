@@ -14,7 +14,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php_version: ["7.2", "7.3", "7.4", "8.0", "8.1"]
+        php_version:
+          - "7.2"
+          - "7.3"
+          - "7.4"
+          - "8.0"
+          - "8.1"
+          - "8.2"
     steps:
     - run: sudo chown runner:docker /var/run/docker.sock
       if: ${{ env.ACT }}
@@ -25,6 +31,7 @@ jobs:
         BUILD_GROUP: php-fpm
         PHP_VERSION: ${{ matrix.php_version }}
         PHP_VARIANT: ${{ matrix.php_variant }}
+        ACT: ${{ env.ACT }}
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
@@ -35,7 +42,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php_version: ["7.2", "7.3", "7.4", "8.0", "8.1"]
+        php_version:
+          - "7.2"
+          - "7.3"
+          - "7.4"
+          - "8.0"
+          - "8.1"
+          - "8.2"
     steps:
     - run: sudo chown runner:docker /var/run/docker.sock
       if: ${{ env.ACT }}
@@ -45,6 +58,7 @@ jobs:
       env:
         BUILD_GROUP: php-fpm/magento1
         PHP_VERSION: ${{ matrix.php_version }}
+        ACT: ${{ env.ACT }}
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
@@ -55,7 +69,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php_version: ["7.2", "7.3", "7.4", "8.0", "8.1"]
+        php_version:
+          - "7.2"
+          - "7.3"
+          - "7.4"
+          - "8.0"
+          - "8.1"
+          - "8.2"
     steps:
     - run: sudo chown runner:docker /var/run/docker.sock
       if: ${{ env.ACT }}
@@ -65,5 +85,6 @@ jobs:
       env:
         BUILD_GROUP: php-fpm/magento2
         PHP_VERSION: ${{ matrix.php_version }}
+        ACT: ${{ env.ACT }}
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
