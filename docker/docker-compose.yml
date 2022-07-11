@@ -79,7 +79,7 @@ services:
 
   tunnel:
     container_name: tunnel
-    image: rollupdev/sshd:latest
+    image: bensuperpc/sshd:latest
     ports:
       - "127.0.0.1:2222:22"
     volumes:
