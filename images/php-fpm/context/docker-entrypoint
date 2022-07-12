@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
 # configure php additions.ini
@@ -24,7 +24,7 @@ then
 fi
 
 # start crond as a background process
-sudo crond
+sudo service cron start
 
 # install requested node version if not already installed
 NODE_INSTALLED="$(node -v | perl -pe 's/^v([0-9]+)\..*$/$1/')";
