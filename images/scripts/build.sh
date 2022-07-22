@@ -89,7 +89,7 @@ for file in $(find ${SEARCH_PATH} -type f -name Dockerfile | sort -V); do
 
     # Skip build of xdebug3 fpm images on older versions of PHP (it requires PHP 7.2 or greater)
     if [[ ${IMAGE_SUFFIX} =~ 'xdebug3' ]] && (test $(version ${PHP_VERSION}) -lt $(version "7.2") \
-    	|| test $(version ${PHP_VERSION}) -gt $(version "8.1")); then
+    	|| test $(version ${PHP_VERSION}) -gt $(version "8.2")); then
 
       warning "Skipping build for ${IMAGE_TAG} (xdebug3 is unavailable for PHP ${PHP_VERSION})"
       continue
@@ -101,8 +101,8 @@ for file in $(find ${SEARCH_PATH} -type f -name Dockerfile | sort -V); do
 	  continue
 	fi
 
-	# Skip build of xdebug2 fpm images on newer versions of PHP (it requires PHP 7.4 or lower)
-	if [[ ${IMAGE_SUFFIX} =~ 'blackfire' ]] && test $(version ${PHP_VERSION}) -gt $(version "8.1"); then
+	# Skip build of blackfire images on newer versions of PHP (it requires PHP 7.4 or lower)
+	if [[ ${IMAGE_SUFFIX} =~ 'blackfire' ]] && test $(version ${PHP_VERSION}) -gt $(version "8.0"); then
 	  warning "Skipping build for ${IMAGE_TAG} (blackfire is unavailable for PHP ${PHP_VERSION})"
 	  continue
 	fi
