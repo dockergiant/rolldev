@@ -20,19 +20,23 @@ jobs:
           - "3.9"
 
     steps:
-      - run: sudo chown runner:docker /var/run/docker.sock
-        if: ${{ env.ACT }}
-      - uses: actions/checkout@v2
-      - uses: docker/setup-qemu-action@v1
-      - uses: docker/setup-buildx-action@v1
+      - name: Set up Actions
+        uses: actions/checkout@v2
 
-      - uses: docker/login-action@v1
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
         if: ${{ !env.ACT }}
 
-      - uses: docker/build-push-action@v2
+      - name: Build and push
+        uses: docker/build-push-action@v3
         with:
           context: images/rabbitmq
           platforms: linux/amd64,linux/arm64
