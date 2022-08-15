@@ -19,6 +19,7 @@ readonly ROLL_DIR="${BASE_DIR}/.."
 source "${ROLL_DIR}/utils/core.sh"
 
 SEARCH_PATH="${1:-}"
+PUSH=""
 
 ## since fpm images no longer can be traversed, this script should require a search path vs defaulting to build all
 if [[ -z ${SEARCH_PATH} ]]; then
@@ -26,6 +27,7 @@ if [[ -z ${SEARCH_PATH} ]]; then
 fi
 
 if [[ -z ${ACT} ]]; then
+	PUSH="--push"
   ## login to docker hub as needed
   if [[ ${DOCKER_USERNAME:-} ]]; then
   	echo "Attempting non-interactive docker login (via provided credentials)"
@@ -116,5 +118,7 @@ for file in $(find ${SEARCH_PATH} -type f -name Dockerfile | sort -V); do
     printf "\e[01;31m==> building ${IMAGE_TAG} from ${BUILD_DIR}/Dockerfile with context ${BUILD_CONTEXT}\033[0m\n"
     docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
     docker buildx create --use
-    docker buildx build --push --platform linux/amd64,linux/arm64 -t "${IMAGE_TAG}" -f ${BUILD_DIR}/Dockerfile ${BUILD_ARGS[@]} ${BUILD_CONTEXT}
+
+    docker buildx build ${PUSH} --platform linux/amd64,linux/arm64 -t "${IMAGE_TAG}" -f ${BUILD_DIR}/Dockerfile ${BUILD_ARGS[@]} ${BUILD_CONTEXT}
+
 done

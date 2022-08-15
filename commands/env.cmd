@@ -108,9 +108,6 @@ fi
 [[ ${ROLL_SELENIUM} -eq 1 ]] \
     && appendEnvPartialIfExists "selenium"
 
-[[ ${ROLL_MAGEPACK} -eq 1 ]] \
-    && appendEnvPartialIfExists "${ROLL_ENV_TYPE}.magepack"
-
 if [[ -f "${ROLL_ENV_PATH}/.roll/roll-env.yml" ]]; then
     DOCKER_COMPOSE_ARGS+=("-f")
     DOCKER_COMPOSE_ARGS+=("${ROLL_ENV_PATH}/.roll/roll-env.yml")

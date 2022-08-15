@@ -1,12 +1,11 @@
-FROM golang:alpine as builder
+FROM golang:1.18-alpine as builder
 
 # Install MailHog:
-ARG MAILHOG_VERSION=1.0
 RUN apk --no-cache add --virtual build-dependencies \
     git \
   && mkdir -p /root/gocode \
   && export GOPATH=/root/gocode \
-  && go install github.com/mailhog/MailHog@v${MAILHOG_VERSION}
+  && go install github.com/mailhog/MailHog@latest
 
 FROM alpine:3
 # Add mailhog user/group with uid/gid 1000.

@@ -1,7 +1,0 @@
-version: "3.5"
-
-x-volumes: &volumes
-  - .${ROLL_WEB_ROOT:-}/:/var/www/html
-
-services:
-  magepack: { volumes: *volumes }
