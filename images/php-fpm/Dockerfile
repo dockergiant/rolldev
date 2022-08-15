@@ -34,12 +34,13 @@ COPY etc/*.ini /etc/
 COPY etc/php.d/*.ini /etc/php.d/
 COPY etc/php.d/05-additions.ini.template /etc/php.d/
 
+ARG TARGETARCH
 # Install mhsendmail to support routing email through mailhog
 RUN mkdir -p /tmp/mhsendmail; \
     cd /tmp/mhsendmail; \
-    curl -vLOs https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_amd64; \
-    chmod +x mhsendmail_linux_amd64; \
-    mv mhsendmail_linux_amd64 /usr/local/bin/mhsendmail;
+    curl -vLOs https://github.com/dockergiant/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_$TARGETARCH; \
+    chmod +x mhsendmail_linux_$TARGETARCH; \
+    mv mhsendmail_linux_$TARGETARCH /usr/local/bin/mhsendmail;
 
 # Install awscli to support data backfill workflows using S3 storage; segno for QR code generation
 RUN pip3 install awscli segno --no-cache-dir
