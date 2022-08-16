@@ -13,6 +13,6 @@ RUN mkdir -p /tmp/blackfire \
     && mv /tmp/blackfire/blackfire /usr/bin/blackfire \
     && rm -rf /tmp/blackfire
 
-COPY blackfire/etc/php.d/*.ini /etc/php.d/
+COPY blackfire/etc/php.d/*.ini /usr/local/etc/php/conf.d/
 
 USER www-data

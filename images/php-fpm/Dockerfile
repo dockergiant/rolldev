@@ -48,7 +48,7 @@ RUN pip3 install awscli segno --no-cache-dir
 # Configure www-data user as primary php-fpm user for better local dev experience
 RUN chmod 0755 ~www-data; \
     mkdir -p /var/www/html; \
-    chown -R www-data:www-data /var/www; \
+    chown -R www-data:www-data /var/www/html; \
     echo "www-data ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd; \
     PHP_FPM_USER=$(grep -i '^user = ' /usr/local/etc/php-fpm.d/www.conf | awk '{print $3}'); \
     PHP_FPM_GROUP=$(grep -i '^group = ' /usr/local/etc/php-fpm.d/www.conf | awk '{print $3}'); \
