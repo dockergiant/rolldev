@@ -9,9 +9,6 @@ RUN PHP_V=$(echo ${PHP_VERSION} | head -n1 | cut -d' ' -f2 | awk -F '.' '{print 
 RUN install-php-extensions xsl sockets
 
 COPY xdebug3/etc/*.ini /etc/
-COPY xdebug3/etc/xdebug-config.template /usr/local/etc/php/conf.d/xdebug-config.template
-
-RUN cat /usr/local/etc/php/conf.d/xdebug-config.template >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
-    && rm /usr/local/etc/php/conf.d/xdebug-config.template
+COPY xdebug3/etc/conf.d/* /usr/local/etc/php/conf.d/
 
 USER www-data
