@@ -1,6 +1,6 @@
 ARG PHP_SOURCE_IMAGE="docker.io/rollupdev/php"
 ARG PHP_VERSION
-ARG PHP_VARIANT="fpm-loaders"
+ARG PHP_VARIANT="fpm"
 FROM ${PHP_SOURCE_IMAGE}:${PHP_VERSION}-${PHP_VARIANT}
 
 # Clear undesired settings from base fpm images
@@ -29,13 +29,9 @@ RUN npm install -g n; \
 
 COPY docker-entrypoint /usr/local/bin/
 COPY etc/profile.d/*.sh /etc/profile.d/
-COPY etc/*.ini /etc/
-COPY etc/opcache-config /usr/local/etc/php/conf.d/opcache-config
+COPY etc/opcache-config /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini
 COPY etc/php.d/*.ini /usr/local/etc/php/conf.d
 COPY etc/php.d/05-additions.ini.template /usr/local/etc/php/conf.d
-
-RUN cat /usr/local/etc/php/conf.d/opcache-config >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
-    && rm /usr/local/etc/php/conf.d/opcache-config
 
 ARG TARGETARCH
 # Install mhsendmail to support routing email through mailhog
@@ -44,9 +40,6 @@ RUN mkdir -p /tmp/mhsendmail; \
     curl -vLOs https://github.com/dockergiant/mhsendmail/releases/download/v0.3.0/mhsendmail_linux_$TARGETARCH; \
     chmod +x mhsendmail_linux_$TARGETARCH; \
     mv mhsendmail_linux_$TARGETARCH /usr/local/bin/mhsendmail;
-
-# Install awscli to support data backfill workflows using S3 storage; segno for QR code generation
-RUN pip3 install awscli segno --no-cache-dir
 
 # Configure www-data user as primary php-fpm user for better local dev experience
 RUN mkdir -p /home/www-data \

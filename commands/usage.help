@@ -54,11 +54,12 @@ RollDev version $(cat ${ROLL_DIR}/version)
   rootnotty \033[32m%command%\033[0m   Run command inside container without TTY allocation as root user
   rootshell          	Allocate TTY with shell as root user
   composer \033[32m%command%\033[0m    run composer inside php-fpm container with params
-  magento \033[32m%command%\033[0m     run magento inside php-fpm container with params
+
+\033[33mMagento 2 commands:\033[0m
+  magento \033[32m%command%\033[0m     run bin/magento inside php-fpm container with params
   cache     		clean magento 2 cache (simulair to \033[31m'bin/magento cache:clean'\033[0m)
   fixowns 		Fix ownerships inside container
   fixperms 		Fix permissions inside container
-
 
 ${ROLL_DARWIN:1}
 EOF

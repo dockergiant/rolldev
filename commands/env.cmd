@@ -97,11 +97,6 @@ appendEnvPartialIfExists "${ROLL_ENV_TYPE}"
 [[ ${ROLL_SPLIT_CHECKOUT} -eq 1 ]] \
     && appendEnvPartialIfExists "${ROLL_ENV_TYPE}.splitdb.checkout"
 
-if [[ ${ROLL_BLACKFIRE} -eq 1 ]]; then
-    appendEnvPartialIfExists "blackfire"
-    appendEnvPartialIfExists "${ROLL_ENV_TYPE}.blackfire"
-fi
-
 [[ ${ROLL_ALLURE} -eq 1 ]] \
     && appendEnvPartialIfExists "allure"
 
