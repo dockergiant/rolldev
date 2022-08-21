@@ -11,17 +11,11 @@ ENV MAILHOG_HOST    mailhog
 ENV MAILHOG_PORT    1025
 
 RUN set -eux; \
-	apt-get update; \
-    apt-get install -y --no-install-recommends pv sudo cron python3-pip bash-completion rsync socat oathtool \
-        wget ack automake autoconf nano vim build-essential; \
-    rm -rf /var/lib/apt/lists/*;
-
-
-RUN set -eux; \
-	apt-get update; \
-    apt-get install -y --no-install-recommends python2; \
-    ln -sf /bin/python2 /bin/python; \
-    rm -rf /var/lib/apt/lists/;
+    apt-get update -y; \
+    apt-get install -y --no-install-recommends pv sudo bind9-utils python3-pip bash-completion rsync socat oathtool \
+        wget ack automake autoconf nano vim cron mariadb-client python2; \
+    ln -s /usr/bin/python2 /usr/bin/python; \
+    rm -rf /var/lib/apt/lists/*
 
 ENV NODE_VERSION    10
 RUN npm install -g n; \
@@ -31,14 +25,18 @@ RUN npm install -g n; \
 COPY docker-entrypoint /usr/local/bin/
 COPY etc/profile.d/*.sh /etc/profile.d/
 COPY etc/*.ini /etc/
-COPY etc/php.d/*.ini /etc/php.d/
-COPY etc/php.d/05-additions.ini.template /etc/php.d/
+COPY etc/opcache-config /usr/local/etc/php/conf.d/opcache-config
+COPY etc/php.d/*.ini /usr/local/etc/php/conf.d
+COPY etc/php.d/05-additions.ini.template /usr/local/etc/php/conf.d
+
+RUN cat /usr/local/etc/php/conf.d/opcache-config >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
+    && rm /usr/local/etc/php/conf.d/opcache-config
 
 ARG TARGETARCH
 # Install mhsendmail to support routing email through mailhog
 RUN mkdir -p /tmp/mhsendmail; \
     cd /tmp/mhsendmail; \
-    curl -vLOs https://github.com/dockergiant/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_$TARGETARCH; \
+    curl -vLOs https://github.com/dockergiant/mhsendmail/releases/download/v0.3.0/mhsendmail_linux_$TARGETARCH; \
     chmod +x mhsendmail_linux_$TARGETARCH; \
     mv mhsendmail_linux_$TARGETARCH /usr/local/bin/mhsendmail;
 
@@ -46,14 +44,16 @@ RUN mkdir -p /tmp/mhsendmail; \
 RUN pip3 install awscli segno --no-cache-dir
 
 # Configure www-data user as primary php-fpm user for better local dev experience
-RUN chmod 0755 ~www-data; \
-    mkdir -p /var/www/html; \
-    chown -R www-data:www-data /var/www/html; \
-    echo "www-data ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd; \
-    PHP_FPM_USER=$(grep -i '^user = ' /usr/local/etc/php-fpm.d/www.conf | awk '{print $3}'); \
-    PHP_FPM_GROUP=$(grep -i '^group = ' /usr/local/etc/php-fpm.d/www.conf | awk '{print $3}'); \
-    find /var/log /usr/local/lib/php | xargs chown -R www-data:www-data; \
-    perl -pi -e 's/^(user|group) = php-fpm$/$1 = www-data/g' /usr/local/etc/php-fpm.d/www.conf;
+RUN mkdir -p /home/www-data \
+    && chown www-data:www-data /home/www-data \
+    && usermod -d /home/www-data www-data \
+    && chmod 0755 ~www-data \
+    && mkdir -p /var/www/html \
+    && chown www-data:www-data /var/www/html \
+    && echo "www-data ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd \
+    && PHP_FPM_USER=$(grep -i '^user = ' /usr/local/etc/php-fpm.d/www.conf | awk '{print $3}') \
+    && PHP_FPM_GROUP=$(grep -i '^group = ' /usr/local/etc/php-fpm.d/www.conf | awk '{print $3}') \
+    && perl -pi -e 's/^(user|group) = php-fpm$/$1 = www-data/g' /usr/local/etc/php-fpm.d/www.conf
 
 WORKDIR /var/www/html
 USER www-data
