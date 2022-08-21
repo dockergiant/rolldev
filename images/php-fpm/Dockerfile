@@ -19,7 +19,7 @@ RUN set -eux; \
     fi; \
     apt-get install -y --no-install-recommends pv sudo python3-pip bash-completion rsync socat oathtool \
         wget ack automake autoconf nano vim cron mariadb-client python2; \
-    ln -s /usr/bin/python2 /usr/bin/python; \
+    ln -nsf /usr/bin/python2 /usr/bin/python; \
     rm -rf /var/lib/apt/lists/*
 
 ENV NODE_VERSION    10
