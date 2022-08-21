@@ -12,7 +12,12 @@ ENV MAILHOG_PORT    1025
 
 RUN set -eux; \
     apt-get update -y; \
-    apt-get install -y --no-install-recommends pv sudo bind9-utils python3-pip bash-completion rsync socat oathtool \
+    PHP_VERSION=$(php -v | head -n1 | cut -d' ' -f2 | awk -F '.' '{print $1$2}'); \
+    if [ ${PHP_VERSION} -gt 72 ]; \
+            then apt-get install -y --no-install-recommends bind9-utils; \
+            else apt-get install -y --no-install-recommends bind9utils; \
+    fi; \
+    apt-get install -y --no-install-recommends pv sudo python3-pip bash-completion rsync socat oathtool \
         wget ack automake autoconf nano vim cron mariadb-client python2; \
     ln -s /usr/bin/python2 /usr/bin/python; \
     rm -rf /var/lib/apt/lists/*

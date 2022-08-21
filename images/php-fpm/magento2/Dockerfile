@@ -6,13 +6,11 @@ USER root
 RUN npm install -g grunt-cli gulp yarn
 
 RUN set -eux \
-    && PHP_VERSION=$(php -v | head -n1 | cut -d' ' -f2 | awk -F '.' '{print $1$2}') \
     && mkdir -p /usr/local/bin \
     && curl -s https://files.magerun.net/n98-magerun2.phar > /usr/local/bin/n98-magerun \
     && chmod +x /usr/local/bin/n98-magerun
 
 RUN set -eux \
-    && PHP_VERSION=$(php -v | head -n1 | cut -d' ' -f2 | awk -F '.' '{print $1$2}') \
     && curl -o /etc/bash_completion.d/n98-magerun2.phar.bash \
         https://raw.githubusercontent.com/netz98/n98-magerun2/master/res/autocompletion/bash/n98-magerun2.phar.bash \
     && perl -pi -e 's/^(complete -o default .*)$/$1 n98-magerun/' /etc/bash_completion.d/n98-magerun2.phar.bash
