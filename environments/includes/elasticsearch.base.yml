@@ -10,23 +10,27 @@ services:
       - traefik.http.services.${ROLL_ENV_NAME}-elasticsearch.loadbalancer.server.port=9200
       - traefik.docker.network=${ROLL_ENV_NAME}_default
     environment:
+      - indices.query.bool.max_clause_count=4096
       - discovery.type=single-node
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms64m -Xmx512m"
+      - http.cors.enabled=true
+      - http.cors.allow-origin=/.*/
     volumes:
       - esdata:/usr/share/elasticsearch/data
 
-  elasticsearch-hq:
-    hostname: "${ROLL_ENV_NAME}-elasticsearch-hq"
-    image: elastichq/elasticsearch-hq:latest
+  elasticvue:
+    hostname: "${ROLL_ENV_NAME}-elasticvue"
+    image: rollupdev/elasticvue:latest
     labels:
       - traefik.enable=true
-      - traefik.http.routers.${ROLL_ENV_NAME}-elasticsearch-hq.tls=true
-      - traefik.http.routers.${ROLL_ENV_NAME}-elasticsearch-hq.rule=Host(`elastichq.${TRAEFIK_DOMAIN}`)
-      - traefik.http.services.${ROLL_ENV_NAME}-elasticsearch-hq.loadbalancer.server.port=5000
+      - traefik.http.routers.${ROLL_ENV_NAME}-elasticvue.tls=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-elasticvue.rule=Host(`elasticvue.${TRAEFIK_DOMAIN}`)
+      - traefik.http.services.${ROLL_ENV_NAME}-elasticvue.loadbalancer.server.port=8080
       - traefik.docker.network=${ROLL_ENV_NAME}_default
     environment:
-      - HQ_DEFAULT_URL=http://elasticsearch:9200
+      - DEFAULT_NAME=elasticsearch.${TRAEFIK_DOMAIN}
+      - DEFAULT_HOST=https://elasticsearch.${TRAEFIK_DOMAIN}
 
 volumes:
   esdata:
