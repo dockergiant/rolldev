@@ -31,6 +31,9 @@ services:
     environment:
       - DEFAULT_NAME=elasticsearch.${TRAEFIK_DOMAIN}
       - DEFAULT_HOST=https://elasticsearch.${TRAEFIK_DOMAIN}
+    volumes:
+      - esvue:/usr/share/nginx/html
 
 volumes:
   esdata:
+  esvue:
