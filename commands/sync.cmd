@@ -57,13 +57,17 @@ case "${ROLL_PARAMS[0]}" in
         while ! mutagen sync list --label-selector "roll-sync=${ROLL_ENV_NAME}" \
             | grep -i 'watching for changes'>/dev/null;
                 do
-                    if mutagen sync list --label-selector "roll-sync=${ROLL_ENV_NAME}" \
+                		info=$(mutagen sync list --label-selector "roll-sync=${ROLL_ENV_NAME}")
+                    if echo "$info" \
                         | grep -i 'Last error' > /dev/null; then
-                        MUTAGEN_ERROR=$(mutagen sync list --label-selector "roll-sync=${ROLL_ENV_NAME}" \
+                        MUTAGEN_ERROR=$(echo "$info" \
                             | sed -n 's/Last error: \(.*\)/\1/p')
                         fatal "Mutagen encountered an error during sync: ${MUTAGEN_ERROR}"
                     fi
-                    printf .; sleep 1; done; echo
+                    genstatus=$(echo "$info" | grep "Status") || echo ""
+                    progress=$(echo "$info" | grep "Staging progress" |  sed 's/%/%%/') || progress="Done syncing"
+                    printf "\r[\033[0;31m${genstatus}\033[0m] ${progress}"; sleep 1; done;
+        printf "\r[\033[0;31mDone syncing\033[0m]"
         ;;
     stop)
         mutagen sync terminate --label-selector "roll-sync=${ROLL_ENV_NAME}"
