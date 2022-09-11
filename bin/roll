@@ -2,7 +2,7 @@
 set -e
 trap 'error "$(printf "Command \`%s\` at $BASH_SOURCE:$LINENO failed with exit code $?" "$BASH_COMMAND")"' ERR
 
-## find directory where this script is located following symlinks if neccessary
+## find directory where this script is located following symlinks if necessary
 readonly ROLL_DIR="$(
   cd "$(
     dirname "$(
@@ -45,7 +45,7 @@ declare ROLL_PARAMS=()
 declare ROLL_CMD_VERB=
 declare ROLL_CMD_EXEC=
 declare ROLL_CMD_HELP=
-declare ROLL_CMD_ANYARGS=(svc env db redis sync shell debug)
+declare ROLL_CMD_ANYARGS=(svc env db redis sync shell debug rootnotty rootshell root)
 
 ## parse first argument as command and determine validity
 if (( "$#" )); then

@@ -1,14 +1,10 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
 
-COMPOSER_HELP=$("${ROLL_DIR}/bin/roll" cli "composer")
-
 ROLL_USAGE=$(cat <<EOF
-
-\033[33mExtra Roll Options:\033[0m
-  --notty        Run command without tty
+\033[33mUsage:\033[0m
+  grunt - execute grunt in container
+\033[33mOptions:\033[0m
   -h, --help        Display this help menu
-
-${COMPOSER_HELP}
 EOF
 )

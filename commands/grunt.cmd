@@ -4,8 +4,4 @@
 ## allow return codes from sub-process to bubble up normally
 trap '' ERR
 
-if [ "$1" == "--notty" ]; then
-	"${ROLL_DIR}/bin/roll" clinotty composer "${ROLL_PARAMS[@]}" "$@"
-else
-	"${ROLL_DIR}/bin/roll" cli composer "${ROLL_PARAMS[@]}" "$@"
-fi
+"${ROLL_DIR}/bin/roll" cli npx grunt "${ROLL_PARAMS[@]}" "$@"
