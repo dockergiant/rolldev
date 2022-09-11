@@ -1,4 +1,4 @@
-name: Docker Image Elasticsearch
+name: Docker Image Startpage
 on:
   push:
     paths:
