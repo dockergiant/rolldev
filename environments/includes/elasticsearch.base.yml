@@ -29,11 +29,8 @@ services:
       - traefik.http.services.${ROLL_ENV_NAME}-elasticvue.loadbalancer.server.port=8080
       - traefik.docker.network=${ROLL_ENV_NAME}_default
     environment:
-      - DEFAULT_NAME=elasticsearch.${TRAEFIK_DOMAIN}
+      - DEFAULT_NAME=${ROLL_ENV_NAME}
       - DEFAULT_HOST=https://elasticsearch.${TRAEFIK_DOMAIN}
-    volumes:
-      - esvue:/usr/share/nginx/html
 
 volumes:
   esdata:
-  esvue:
