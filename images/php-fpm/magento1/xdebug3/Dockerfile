@@ -10,8 +10,8 @@ RUN set -eux; \
         else install-php-extensions xdebug-3.1.5;  \
     fi;
 
-COPY xdebug3/etc/*.ini /etc/
-COPY xdebug3/etc/conf.d/* /usr/local/etc/php/conf.d/
+COPY xdebug3/etc/*.ini ${PHP_INI_DIR}/
+COPY xdebug3/etc/conf.d/* ${PHP_INI_DIR}/conf.d/
 
 RUN docker-php-ext-enable xdebug
 
