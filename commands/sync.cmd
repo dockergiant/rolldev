@@ -66,8 +66,8 @@ case "${ROLL_PARAMS[0]}" in
                     fi
                     genstatus=$(echo "$info" | grep "Status") || echo ""
                     progress=$(echo "$info" | grep "Staging progress" |  sed 's/%/%%/') || progress="Done syncing"
-                    printf "\r[\033[0;31m${genstatus}\033[0m] ${progress}"; sleep 1; done;
-        printf "\r[\033[0;31mDone syncing\033[0m]"
+                    printf "\r\033[K[\033[0;31m${genstatus}\033[0m] ${progress}"; sleep 1; done;
+        printf "\r\033[K[\033[0;31mDone syncing\033[0m]\n\n"
         ;;
     stop)
         mutagen sync terminate --label-selector "roll-sync=${ROLL_ENV_NAME}"
