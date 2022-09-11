@@ -1,5 +1,20 @@
 version: "3.5"
 services:
+
+  startpage:
+    container_name: startpage
+    image: docker.io/rollupdev/startpage:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.startpage.tls=true
+      - traefik.http.routers.startpage.rule=Host(`${ROLL_SERVICE_DOMAIN:-roll.test}`)
+      - traefik.http.services.startpage.loadbalancer.server.port=3000
+    environment:
+      - ROLL_SERVICE_DOMAIN=${ROLL_SERVICE_DOMAIN:-roll.test}
+    restart: ${ROLL_RESTART_POLICY:-always}
+
   traefik:
     container_name: traefik
     image: traefik:${TRAEFIK_VERSION:-2.2}

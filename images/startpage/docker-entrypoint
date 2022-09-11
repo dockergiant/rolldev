@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+
+# configure php additions.ini
+cat /home/node/app/index.html.template \
+  | envsubst '${ROLL_SERVICE_DOMAIN}' \
+  | tee /home/node/app/index.html
+
+cd /home/node/app && npm start
