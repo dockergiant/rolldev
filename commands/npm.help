@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+
+NPM_HELP=$("${ROLL_DIR}/bin/roll" cli "npm --help")
+
+ROLL_USAGE=$(cat <<EOF
+${NPM_HELP}
+EOF
+)

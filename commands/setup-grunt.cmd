@@ -13,8 +13,6 @@ THEME_PATH="select theme_path from theme where theme_id in ($DEFAULT_THEME_ID);"
 VENDOR_THEME=$("${ROLL_DIR}/bin/roll" magerun db:query "$THEME_PATH" | sed -n 2p | cut -d$'\r' -f1)
 THEME=$(echo "$VENDOR_THEME" | cut -d'/' -f2)
 LOCALE_CODE=$("${ROLL_DIR}/bin/roll" magento config:show general/locale/code | cut -d$'\r' -f1 | sed 's/ *$//g')
-
-echo "$LOCALE_CODE"
 # Generate local-theme.js for custom theme
 ! read -r -d '' GEN_THEME_JS << EOM
 var fs = require('fs');
