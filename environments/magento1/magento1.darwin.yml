@@ -1,4 +1,4 @@
-version: "3.5"
+version: "3.9"
 
 x-volumes: &volumes
   - .${ROLL_WEB_ROOT:-}/media:/var/www/html/media:cached
