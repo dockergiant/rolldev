@@ -1,4 +1,8 @@
 version: "3.9"
+
+x-volumes: &volumes
+  - ${ROLL_HOME_DIR}/ssl/certs:/home/certs
+
 services:
   nginx:
     environment:
@@ -18,7 +22,9 @@ services:
       - traefik.docker.network=${ROLL_ENV_NAME}_default
     environment:
       - MAGE_DEBUG_SHOW_ARGS=1
+    volumes: *volumes
 
   php-debug:
     environment:
       - MAGE_DEBUG_SHOW_ARGS=1
+    volumes: *volumes
