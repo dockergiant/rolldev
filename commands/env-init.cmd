@@ -130,7 +130,7 @@ if [[ "${ROLL_ENV_TYPE}" == "laravel" ]]; then
 	EOT
 fi
 
-if [[ "${ROLL_ENV_TYPE}" =~ ^symfony|shopware$ ]]; then
+if [[ "${ROLL_ENV_TYPE}" =~ ^symfony|shopware|typo3$ ]]; then
   cat >> "${ROLL_ENV_PATH}/.env" <<-EOT
 
 		ROLL_DB=1

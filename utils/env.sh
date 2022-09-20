@@ -64,7 +64,7 @@ function fetchValidEnvTypes () {
     echo $(
         ls -1 "${ROLL_DIR}/environments/"*/*".base.yml" \
             | sed -E "s#^${ROLL_DIR}/environments/##" \
-            | cut -d/ -f1 | uniq | sort | grep -v includes
+            | cut -d/ -f1 | sort | grep -v includes | uniq
     )
 }
 

@@ -31,6 +31,9 @@ ROLL_USAGE=$(cat <<EOF
                       Due to the fact that Symfony uses '.env' file too,
                       WEBROOT value of '/web/' is used by default
 
+  typo3               Typo3, php-fpm, db (mariadb), and redis services
+                      pre-configured for running Typo3
+
   wordpress           Nginx, php-fpm, db
                       pre-configured for running Wordpress
 EOF
