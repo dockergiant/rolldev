@@ -6,7 +6,7 @@ services:
       - NGINX_TEMPLATE=typo3.conf
   php-fpm:
     environment:
-      - TYPO3_CONTEXT=local
+      - TYPO3_CONTEXT=Development
   php-debug:
     environment:
-      - TYPO3_CONTEXT=local
+      - TYPO3_CONTEXT=Development
