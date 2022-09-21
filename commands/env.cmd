@@ -47,6 +47,12 @@ if [[ ${ROLL_ENV_TYPE} == "magento2" ]]; then
     ROLL_VARNISH=${ROLL_VARNISH:-1}
     ROLL_ELASTICSEARCH=${ROLL_ELASTICSEARCH:-1}
     ROLL_RABBITMQ=${ROLL_RABBITMQ:-1}
+
+    if [[ ${ROLL_NO_STATIC_CACHING} -eq 1 ]]; then
+        export NGINX_TEMPLATE="magento2-dev.conf"
+    else
+        export NGINX_TEMPLATE="magento2.conf"
+    fi
 fi
 
 ## WSL1/WSL2 are GNU/Linux env type but still run Docker Desktop
@@ -67,6 +73,8 @@ appendEnvPartialIfExists "networks"
 if [[ ${ROLL_ENV_TYPE} != local ]]; then
     appendEnvPartialIfExists "php-fpm"
 fi
+
+
 
 [[ ${ROLL_NGINX} -eq 1 ]] \
     && appendEnvPartialIfExists "nginx"
