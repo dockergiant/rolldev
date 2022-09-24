@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  nginx:
+    hostname: "${ROLL_ENV_NAME}-nginx"
+    image: ${ROLL_IMAGE_REPOSITORY}/nginx:${NGINX_VERSION:-1.16}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-nginx.tls=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-nginx.priority=2
+      - traefik.http.routers.${ROLL_ENV_NAME}-nginx.rule=
+          Host(`${TRAEFIK_SUBDOMAIN}.${TRAEFIK_DOMAIN}`) || Host(`${TRAEFIK_DOMAIN}`)
+      - traefik.http.services.${ROLL_ENV_NAME}-nginx.loadbalancer.server.port=80
+      - traefik.docker.network=${ROLL_ENV_NAME}_default
+    volumes:
+      - .${ROLL_WEB_ROOT:-}/:/var/www/html:cached
+    environment:
+      - XDEBUG_CONNECT_BACK_HOST=${XDEBUG_CONNECT_BACK_HOST:-''}

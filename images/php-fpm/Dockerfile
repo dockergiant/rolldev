@@ -23,7 +23,7 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 ENV NODE_VERSION    10
-RUN npm install -g n; \
+RUN npm install -g n yarn; \
     n install ${NODE_VERSION}; \
     rm -rf /usr/local/n/versions/node;
 

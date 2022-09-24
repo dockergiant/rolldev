@@ -3,3 +3,4 @@ services:
   nginx:
     environment:
       - NGINX_PUBLIC=/public
+      - NGINX_TEMPLATE=laravel.conf
