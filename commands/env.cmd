@@ -136,6 +136,9 @@ fi
 if [[ "${ROLL_PARAMS[0]}" == "up" ]]; then
     ## create environment network for attachments if it does not already exist
     if [[ -z "$(docker network ls -f 'name=$(renderEnvNetworkName)' -q)" ]]; then
+    		# update images if needed
+      	roll env pull
+
         docker-compose \
             --project-directory "${ROLL_ENV_PATH}" -p "${ROLL_ENV_NAME}" \
             "${DOCKER_COMPOSE_ARGS[@]}" up --no-start

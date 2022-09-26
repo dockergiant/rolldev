@@ -1,6 +1,28 @@
 version: "3.9"
+
+x-volumes: &volumes
+  - ${ROLL_HOME_DIR}/ssl/certs:/home/certs
+
 services:
   nginx:
     environment:
       - NGINX_PUBLIC=/public
       - NGINX_TEMPLATE=laravel.conf
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-nginx.tls=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-nginx.priority=2
+      - traefik.http.routers.${ROLL_ENV_NAME}-nginx.rule=
+        Host(`${TRAEFIK_SUBDOMAIN}.${TRAEFIK_DOMAIN}`) || Host(`${TRAEFIK_DOMAIN}`)
+      - traefik.http.services.${ROLL_ENV_NAME}-nginx.loadbalancer.server.port=80
+      - traefik.docker.network=${ROLL_ENV_NAME}_default
+  php-fpm:
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-watch.tls=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-watch.priority=2
+      - traefik.http.routers.${ROLL_ENV_NAME}-watch.rule=
+        Host(`watch.${TRAEFIK_SUBDOMAIN}.${TRAEFIK_DOMAIN}`)
+      - traefik.http.services.${ROLL_ENV_NAME}-watch.loadbalancer.server.port=8000
+      - traefik.docker.network=${ROLL_ENV_NAME}_default
+    volumes: *volumes

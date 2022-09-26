@@ -20,6 +20,8 @@ DOCKER_COMPOSE_ARGS+=("${ROLL_DIR}/docker/docker-compose.yml")
 
 ## special handling when 'svc up' is run
 if [[ "${ROLL_PARAMS[0]}" == "up" ]]; then
+		# update images if needed
+		roll svc pull
 
     ## sign certificate used by global services (by default roll.test)
     if [[ -f "${ROLL_HOME_DIR}/.env" ]]; then
