@@ -5,7 +5,7 @@ USER root
 
 RUN set -eux \
     && mkdir -p /usr/local/bin \
-    && curl -s curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar > /usr/local/bin/wp-cli \
+    && curl -s https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar > /usr/local/bin/wp-cli \
     && chmod +x /usr/local/bin/wp-cli
 
 # Create wp alias for wp-cli
