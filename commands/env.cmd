@@ -19,7 +19,7 @@ fi
 export ROLL_IMAGE_REPOSITORY="${ROLL_IMAGE_REPOSITORY:-"docker.io/rollupdev"}"
 
 ## configure environment type defaults
-if [[ ${ROLL_ENV_TYPE} =~ ^magento ]]; then
+if [[ ${ROLL_ENV_TYPE} =~ ^magento || ${ROLL_ENV_TYPE} =~ ^wordpress ]]; then
     export ROLL_SVC_PHP_VARIANT=-${ROLL_ENV_TYPE}
 fi
 
