@@ -3,8 +3,6 @@ ARG PHP_VERSION
 FROM ${ENV_SOURCE_IMAGE}:${PHP_VERSION}
 USER root
 
-RUN npm install -g grunt-cli gulp yarn
-
 RUN mkdir -p /usr/local/bin \
     && curl -s https://files.magerun.net/n98-magerun.phar > /usr/local/bin/n98-magerun \
     && chmod +x /usr/local/bin/n98-magerun

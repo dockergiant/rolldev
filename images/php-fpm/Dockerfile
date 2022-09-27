@@ -22,8 +22,10 @@ RUN set -eux; \
     ln -nsf /usr/bin/python2 /usr/bin/python; \
     rm -rf /var/lib/apt/lists/*
 
+RUN npm install -g grunt-cli gulp yarn
+
 ENV NODE_VERSION    10
-RUN npm install -g n yarn; \
+RUN npm install -g n; \
     n install ${NODE_VERSION}; \
     rm -rf /usr/local/n/versions/node;
 

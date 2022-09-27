@@ -2,9 +2,6 @@ ARG ENV_SOURCE_IMAGE
 ARG PHP_VERSION
 FROM ${ENV_SOURCE_IMAGE}:${PHP_VERSION}
 USER root
-
-RUN npm install -g grunt-cli gulp yarn
-
 RUN set -eux \
     && mkdir -p /usr/local/bin \
     && curl -s https://files.magerun.net/n98-magerun2.phar > /usr/local/bin/n98-magerun \

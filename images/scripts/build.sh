@@ -53,6 +53,11 @@ for file in $(find ${SEARCH_PATH} -type f -name Dockerfile | sort -V); do
       continue;
     fi
 
+    ## due to build matrix requirements, wordpress specific variants are built in separate invocation
+		if [[ ${SEARCH_PATH} == "php-fpm" ]] && [[ ${file} =~ php-fpm/wordpress ]]; then
+			continue;
+		fi
+
     ## fpm images will not have each version in a directory tree; require version be passed
     ## in as env variable for use as a build argument
     BUILD_ARGS=()
