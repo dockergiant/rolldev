@@ -2,8 +2,8 @@ version: "3.9"
 services:
   nginx:
     environment:
-      - NGINX_PUBLIC=/public
-      - NGINX_TEMPLATE=typo3.conf
+      - NGINX_PUBLIC=${NGINX_PUBLIC:-/public}
+      - NGINX_TEMPLATE=${NGINX_TEMPLATE:-typo3.conf}
   php-fpm:
     environment:
       - TYPO3_CONTEXT=Development/local

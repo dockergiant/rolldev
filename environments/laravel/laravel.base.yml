@@ -6,8 +6,8 @@ x-volumes: &volumes
 services:
   nginx:
     environment:
-      - NGINX_PUBLIC=/public
-      - NGINX_TEMPLATE=laravel.conf
+      - NGINX_PUBLIC=${NGINX_PUBLIC:-/public}
+      - NGINX_TEMPLATE=${NGINX_TEMPLATE:-laravel.conf}
     labels:
       - traefik.enable=true
       - traefik.http.routers.${ROLL_ENV_NAME}-nginx.tls=true

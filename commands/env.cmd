@@ -42,6 +42,7 @@ export CHOWN_DIR_LIST=${ROLL_CHOWN_DIR_LIST:-}
 if [[ ${ROLL_ENV_TYPE} == "magento1" && -f "${ROLL_ENV_PATH}/.modman/.basedir" ]]; then
   export NGINX_PUBLIC='/'$(cat "${ROLL_ENV_PATH}/.modman/.basedir")
 fi
+export NGINX_PUBLIC=${NGINX_PUBLIC:-}
 
 if [[ ${ROLL_ENV_TYPE} == "magento2" ]]; then
     ROLL_VARNISH=${ROLL_VARNISH:-1}
@@ -50,10 +51,10 @@ if [[ ${ROLL_ENV_TYPE} == "magento2" ]]; then
 
     if [[ ${ROLL_NO_STATIC_CACHING} -eq 1 ]]; then
         export NGINX_TEMPLATE="magento2-dev.conf"
-    else
-        export NGINX_TEMPLATE="magento2.conf"
     fi
+    export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2.conf}
 fi
+export NGINX_TEMPLATE=${NGINX_TEMPLATE:-}
 
 ## WSL1/WSL2 are GNU/Linux env type but still run Docker Desktop
 if [[ ${XDEBUG_CONNECT_BACK_HOST} == '' ]] && grep -sqi microsoft /proc/sys/kernel/osrelease; then

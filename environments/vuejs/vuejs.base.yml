@@ -8,8 +8,8 @@ x-extra_hosts: &extra_hosts
 services:
   nginx:
     environment:
-      - NGINX_PUBLIC=/dist
-      - NGINX_TEMPLATE=vuejs.conf
+      - NGINX_PUBLIC=${NGINX_PUBLIC:-/dist}
+      - NGINX_TEMPLATE=${NGINX_TEMPLATE:-vuejs.conf}
     labels:
       - traefik.enable=true
       - traefik.http.routers.${ROLL_ENV_NAME}-nginx.tls=true

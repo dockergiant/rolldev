@@ -6,7 +6,7 @@ x-volumes: &volumes
 services:
   nginx:
     environment:
-      - NGINX_PUBLIC=/pub
+      - NGINX_PUBLIC=${NGINX_PUBLIC:-/pub}
       - NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2.conf}
 
   php-fpm:

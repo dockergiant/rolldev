@@ -3,8 +3,8 @@ services:
   nginx:
     environment:
       - NGINX_PUBLIC=${NGINX_PUBLIC:-}
-      - NGINX_TEMPLATE=magento1.conf
-      
+      - NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento1.conf}
+
   php-fpm:
     environment:
       - MAGE_IS_DEVELOPER_MODE=1

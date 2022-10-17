@@ -36,6 +36,7 @@ function loadEnvConfig () {
     eval "$(cat "${ROLL_ENV_PATH}/.env" | sed 's/\r$//g' | grep "^ROLL_")"
     eval "$(cat "${ROLL_ENV_PATH}/.env" | sed 's/\r$//g' | grep "^TRAEFIK_")"
     eval "$(cat "${ROLL_ENV_PATH}/.env" | sed 's/\r$//g' | grep "^PHP_")"
+    eval "$(cat "${ROLL_ENV_PATH}/.env" | sed 's/\r$//g' | grep "^NGINX_")"
 
     ROLL_ENV_NAME="${ROLL_ENV_NAME:-}"
     ROLL_ENV_TYPE="${ROLL_ENV_TYPE:-}"
