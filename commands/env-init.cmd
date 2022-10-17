@@ -60,6 +60,9 @@ if [[ "${ROLL_ENV_TYPE}" == "magento1" ]]; then
 
 		ROLL_SELENIUM=0
 		ROLL_SELENIUM_DEBUG=0
+
+		# Uncomment to disable static content caching
+    #ROLL_NO_STATIC_CACHING=1
 	EOT
 fi
 
@@ -85,6 +88,9 @@ if [[ "${ROLL_ENV_TYPE}" == "magento2" ]]; then
 		ROLL_SYNC_IGNORE=
 
 		ROLL_NO_STATIC_CACHING=0
+
+		# Uncomment to disable static content caching
+    #ROLL_NO_STATIC_CACHING=1
 
 		ROLL_ALLURE=0
 		ROLL_SELENIUM=0
