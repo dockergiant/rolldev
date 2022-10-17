@@ -39,8 +39,15 @@ if [[ ${ROLL_ENV_TYPE} != local ]]; then
 fi
 export CHOWN_DIR_LIST=${ROLL_CHOWN_DIR_LIST:-}
 
-if [[ ${ROLL_ENV_TYPE} == "magento1" && -f "${ROLL_ENV_PATH}/.modman/.basedir" ]]; then
-  export NGINX_PUBLIC='/'$(cat "${ROLL_ENV_PATH}/.modman/.basedir")
+if [[ ${ROLL_ENV_TYPE} == "magento1" ]]; then
+	if [[ -f "${ROLL_ENV_PATH}/.modman/.basedir" ]]; then
+  	export NGINX_PUBLIC='/'$(cat "${ROLL_ENV_PATH}/.modman/.basedir")
+  fi
+
+  if [[ ${ROLL_NO_STATIC_CACHING} -eq 1 ]]; then
+          export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento1-dev.conf}
+      fi
+      export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento1.conf}
 fi
 export NGINX_PUBLIC=${NGINX_PUBLIC:-}
 
@@ -50,7 +57,7 @@ if [[ ${ROLL_ENV_TYPE} == "magento2" ]]; then
     ROLL_RABBITMQ=${ROLL_RABBITMQ:-1}
 
     if [[ ${ROLL_NO_STATIC_CACHING} -eq 1 ]]; then
-        export NGINX_TEMPLATE="magento2-dev.conf"
+        export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2-dev.conf}
     fi
     export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2.conf}
 fi
