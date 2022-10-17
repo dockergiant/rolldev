@@ -1,1 +1,7 @@
 version: "3.9"
+
+services:
+  nginx:
+    environment:
+      - NGINX_PUBLIC=${NGINX_PUBLIC:-}
+      - NGINX_TEMPLATE=${NGINX_TEMPLATE:-}
