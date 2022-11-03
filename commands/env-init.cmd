@@ -3,12 +3,12 @@
 
 ROLL_ENV_PATH="$(pwd -P)"
 
-# Prompt user if there is an extant .env file to ensure they intend to overwrite
-if test -f "${ROLL_ENV_PATH}/.env"; then
+# Prompt user if there is an extant .env.roll file to ensure they intend to overwrite
+if test -f "${ROLL_ENV_PATH}/.env.roll"; then
   while true; do
-    read -p $'\033[32mA roll env file already exists at '"${ROLL_ENV_PATH}/.env"$'; would you like to overwrite? y/n\033[0m ' resp
+    read -p $'\033[32mA roll env file already exists at '"${ROLL_ENV_PATH}/.env.roll"$'; would you like to overwrite? y/n\033[0m ' resp
     case $resp in
-      [Yy]*) echo "Overwriting extant .env file"; break;;
+      [Yy]*) echo "Overwriting extant .env.roll file"; break;;
       [Nn]*) exit;;
       *) echo "Please answer (y)es or (n)o";;
     esac
@@ -35,8 +35,8 @@ fi
 # Verify the auto-select and/or type path resolves correctly before setting it
 assertValidEnvType || exit $?
 
-# Write the .env file to current working directory
-cat > "${ROLL_ENV_PATH}/.env" <<EOF
+# Write the .env.roll file to current working directory
+cat > "${ROLL_ENV_PATH}/.env.roll" <<EOF
 ROLL_ENV_NAME=${ROLL_ENV_NAME}
 ROLL_ENV_TYPE=${ROLL_ENV_TYPE}
 ROLL_WEB_ROOT=/
@@ -46,7 +46,7 @@ TRAEFIK_SUBDOMAIN=app
 EOF
 
 if [[ "${ROLL_ENV_TYPE}" == "magento1" ]]; then
-  cat >> "${ROLL_ENV_PATH}/.env" <<-EOT
+  cat >> "${ROLL_ENV_PATH}/.env.roll" <<-EOT
 
 		ROLL_DB=1
 		ROLL_REDIS=1
@@ -67,7 +67,7 @@ if [[ "${ROLL_ENV_TYPE}" == "magento1" ]]; then
 fi
 
 if [[ "${ROLL_ENV_TYPE}" == "magento2" ]]; then
-  cat >> "${ROLL_ENV_PATH}/.env" <<-EOT
+  cat >> "${ROLL_ENV_PATH}/.env.roll" <<-EOT
 
 		ROLL_DB=1
 		ROLL_ELASTICSEARCH=1
@@ -75,10 +75,10 @@ if [[ "${ROLL_ENV_TYPE}" == "magento2" ]]; then
 		ROLL_RABBITMQ=1
 		ROLL_REDIS=1
 
-		ELASTICSEARCH_VERSION=7.6
+		ELASTICSEARCH_VERSION=7.17
 		MARIADB_VERSION=10.3
 		NODE_VERSION=12
-		COMPOSER_VERSION=1
+		COMPOSER_VERSION=2
 		PHP_VERSION=7.4
 		PHP_XDEBUG_3=1
 		RABBITMQ_VERSION=3.8
@@ -87,10 +87,8 @@ if [[ "${ROLL_ENV_TYPE}" == "magento2" ]]; then
 
 		ROLL_SYNC_IGNORE=
 
-		ROLL_NO_STATIC_CACHING=0
-
-		# Uncomment to disable static content caching
-    #ROLL_NO_STATIC_CACHING=1
+		# Comment to enable static content caching
+    ROLL_NO_STATIC_CACHING=1
 
 		ROLL_ALLURE=0
 		ROLL_SELENIUM=0
@@ -102,7 +100,7 @@ if [[ "${ROLL_ENV_TYPE}" == "magento2" ]]; then
 fi
 
 if [[ "${ROLL_ENV_TYPE}" == "laravel" ]]; then
-  cat >> "${ROLL_ENV_PATH}/.env" <<-EOT
+  cat >> "${ROLL_ENV_PATH}/.env.roll" <<-EOT
 
 		MARIADB_VERSION=10.4
 		NODE_VERSION=12
@@ -139,7 +137,7 @@ if [[ "${ROLL_ENV_TYPE}" == "laravel" ]]; then
 fi
 
 if [[ "${ROLL_ENV_TYPE}" =~ ^symfony|shopware|typo3$ ]]; then
-  cat >> "${ROLL_ENV_PATH}/.env" <<-EOT
+  cat >> "${ROLL_ENV_PATH}/.env.roll" <<-EOT
 
 		ROLL_DB=1
 		ROLL_REDIS=1
@@ -159,7 +157,7 @@ if [[ "${ROLL_ENV_TYPE}" =~ ^symfony|shopware|typo3$ ]]; then
 fi
 
 if [[ "${ROLL_ENV_TYPE}" == "wordpress" ]]; then
-  cat >> "${ROLL_ENV_PATH}/.env" <<-EOT
+  cat >> "${ROLL_ENV_PATH}/.env.roll" <<-EOT
 
 		MARIADB_VERSION=10.4
 		NODE_VERSION=12

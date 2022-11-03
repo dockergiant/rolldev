@@ -47,7 +47,7 @@ RollDev version $(cat ${ROLL_DIR}/version)
 
 \033[33mCommands:\033[0m
   svc               	Orchestrates global services such as traefik, portainer and dnsmasq via docker-compose
-  env-init          	Configure environment by adding \033[31m'.env'\033[0m file to the current working directory
+  env-init          	Configure environment by adding \033[31m'.env.roll'\033[0m file to the current working directory
   env               	Controls an environment from any point within the root project directory
   db                	Interacts with the db service on an environment (see \033[31m'roll db -h'\033[0m for details)
   redis             	Interacts with the redis service on an environment (see \033[31m'roll redis -h'\033[0m for details)
@@ -59,7 +59,7 @@ RollDev version $(cat ${ROLL_DIR}/version)
 
 \033[33mEnvoirment commands:\033[0m
   start         	Starting current envoirement (simulair to \033[31m'roll env up'\033[0m)
-  start         	Stopping current envoirement (simulair to \033[31m'roll env down'\033[0m)
+  stop         		Stopping current envoirement (simulair to \033[31m'roll env down'\033[0m)
   restart         	Restarting current envoirement (simulair to \033[31m'roll env up && roll env down'\033[0m)
   bash         		Allocate TTY with shell (simulair to \033[31m'roll shell'\033[0m)
   cli \033[32m%command%\033[0m     	Run command inside container with TTY allocation
@@ -68,6 +68,7 @@ RollDev version $(cat ${ROLL_DIR}/version)
   rootnotty \033[32m%command%\033[0m   Run command inside container without TTY allocation as root user
   rootshell          	Allocate TTY with shell as root user
   composer \033[32m%command%\033[0m    run composer inside php-fpm container with params
+  add-php-ext \033[32m%ext%\033[0m 	add custom php extensions to the container
 ${MAGENTO_HELP:1}
 ${ROLL_DARWIN:1}
 EOF

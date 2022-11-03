@@ -4,9 +4,9 @@
 function locateEnvPath () {
     local ROLL_ENV_PATH="$(pwd -P)"
     while [[ "${ROLL_ENV_PATH}" != "/" ]]; do
-        if [[ -f "${ROLL_ENV_PATH}/.env" ]] \
-            && grep "^ROLL_ENV_NAME" "${ROLL_ENV_PATH}/.env" >/dev/null \
-            && grep "^ROLL_ENV_TYPE" "${ROLL_ENV_PATH}/.env" >/dev/null
+        if [[ -f "${ROLL_ENV_PATH}/.env.roll" ]] \
+            && grep "^ROLL_ENV_NAME" "${ROLL_ENV_PATH}/.env.roll" >/dev/null \
+            && grep "^ROLL_ENV_TYPE" "${ROLL_ENV_PATH}/.env.roll" >/dev/null
         then
             break
         fi
@@ -18,11 +18,11 @@ function locateEnvPath () {
         return 1
     fi
 
-    ## Resolve .env symlink should it exist in project sub-directory allowing sub-stacks to use relative link to parent
+    ## Resolve .env.roll symlink should it exist in project sub-directory allowing sub-stacks to use relative link to parent
     ROLL_ENV_PATH="$(
         cd "$(
             dirname "$(
-                (readlink "${ROLL_ENV_PATH}/.env" || echo "${ROLL_ENV_PATH}/.env")
+                (readlink "${ROLL_ENV_PATH}/.env.roll" || echo "${ROLL_ENV_PATH}/.env.roll")
             )"
         )" >/dev/null \
         && pwd
@@ -33,10 +33,10 @@ function locateEnvPath () {
 
 function loadEnvConfig () {
     local ROLL_ENV_PATH="${1}"
-    eval "$(cat "${ROLL_ENV_PATH}/.env" | sed 's/\r$//g' | grep "^ROLL_")"
-    eval "$(cat "${ROLL_ENV_PATH}/.env" | sed 's/\r$//g' | grep "^TRAEFIK_")"
-    eval "$(cat "${ROLL_ENV_PATH}/.env" | sed 's/\r$//g' | grep "^PHP_")"
-    eval "$(cat "${ROLL_ENV_PATH}/.env" | sed 's/\r$//g' | grep "^NGINX_")"
+    eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "^ROLL_")"
+    eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "^TRAEFIK_")"
+    eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "^PHP_")"
+    eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "^NGINX_")"
 
     ROLL_ENV_NAME="${ROLL_ENV_NAME:-}"
     ROLL_ENV_TYPE="${ROLL_ENV_TYPE:-}"

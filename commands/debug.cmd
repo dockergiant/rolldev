@@ -5,7 +5,7 @@ ROLL_ENV_PATH="$(locateEnvPath)" || exit $?
 loadEnvConfig "${ROLL_ENV_PATH}" || exit $?
 
 ## set defaults for this command which can be overridden either using exports in the user
-## profile or setting them in the .env configuration on a per-project basis
+## profile or setting them in the .env.roll configuration on a per-project basis
 ROLL_ENV_DEBUG_COMMAND=${ROLL_ENV_DEBUG_COMMAND:-bash}
 ROLL_ENV_DEBUG_CONTAINER=${ROLL_ENV_DEBUG_CONTAINER:-php-debug}
 ROLL_ENV_DEBUG_HOST=${ROLL_ENV_DEBUG_HOST:-}

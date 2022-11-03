@@ -142,13 +142,14 @@ fi
 
 ## connect peered service containers to environment network
 if [[ "${ROLL_PARAMS[0]}" == "up" ]]; then
+
+		# update images if needed
+		roll env pull
     ## create environment network for attachments if it does not already exist
     if [[ -z "$(docker network ls -f 'name=$(renderEnvNetworkName)' -q)" ]]; then
-    		# update images if needed
-      	roll env pull
 
         docker-compose \
-            --project-directory "${ROLL_ENV_PATH}" -p "${ROLL_ENV_NAME}" \
+            --env-file "${ROLL_ENV_PATH}/.env.roll" --project-directory "${ROLL_ENV_PATH}" -p "${ROLL_ENV_NAME}" \
             "${DOCKER_COMPOSE_ARGS[@]}" up --no-start
     fi
 
@@ -187,7 +188,7 @@ fi
 
 ## pass ochestration through to docker-compose
 docker-compose \
-    --project-directory "${ROLL_ENV_PATH}" -p "${ROLL_ENV_NAME}" \
+    --env-file "${ROLL_ENV_PATH}/.env.roll" --project-directory "${ROLL_ENV_PATH}" -p "${ROLL_ENV_NAME}" \
     "${DOCKER_COMPOSE_ARGS[@]}" "${ROLL_PARAMS[@]}" "$@"
 
 ## resume mutagen sync if available and php-fpm container id hasn't changed
