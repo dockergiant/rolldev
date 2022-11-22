@@ -13,7 +13,7 @@
         }
         body {
             max-width: 940px;
-            margin: 0 auto;
+            margin: 100px auto;
         }
         header {
             text-align: center;
