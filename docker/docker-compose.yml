@@ -13,6 +13,7 @@ services:
       - traefik.http.services.startpage.loadbalancer.server.port=3000
     environment:
       - ROLL_SERVICE_DOMAIN=${ROLL_SERVICE_DOMAIN:-roll.test}
+      - ROLL_VERSION=${DEN_VERSION:-"in-dev"}
     restart: ${ROLL_RESTART_POLICY:-always}
 
   traefik:

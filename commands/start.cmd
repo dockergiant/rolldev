@@ -11,10 +11,6 @@ echo "Starting containers..."
 sleep 1
 
 echo ""
-echo "fixing owns..."
-"${ROLL_DIR}/bin/roll" fixowns
-
-echo ""
 echo "containers started"
 
 

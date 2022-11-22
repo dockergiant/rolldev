@@ -1,10 +1,9 @@
-FROM node:latest
+FROM nginx
 
-USER root
-RUN apt-get update; apt-get install -y gettext-base
-RUN mkdir -p /home/node/app
-COPY data/* /home/node/app
-# Configure Docker entrypoint
-COPY docker-entrypoint /usr/local/bin
+ADD docker_entrypoint /docker_entrypoint
+ADD index.html.template /usr/share/nginx/html/index.html.template
+ADD img/Dnsmasq_icon.svg /usr/share/nginx/html/img/Dnsmasq_icon.svg
+ADD img/portainer.png /usr/share/nginx/html/img/portainer.png
+ADD img/mailhog.png /usr/share/nginx/html/img/mailhog.png
 
-ENTRYPOINT ["docker-entrypoint"]
+ENTRYPOINT [ "/docker_entrypoint" ]
