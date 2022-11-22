@@ -87,7 +87,7 @@
     </div><br>
     by Rick Bouma<br>
     fork of Warden by David Alger<br>
-    v.{{ROLL_VERSION}}<br>
+    v.${ROLL_VERSION}<br>
     <a href="https://github.com/dockergiant/rolldev/releases">Check for Updates</a>
 </header>
 <ul class="services-list">
