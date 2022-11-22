@@ -31,7 +31,6 @@ RUN npm install -g n; \
 
 COPY docker-entrypoint /usr/local/bin/
 COPY etc/profile.d/*.sh /etc/profile.d/
-COPY etc/opcache-config /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini
 COPY etc/php.d/*.ini /usr/local/etc/php/conf.d
 COPY etc/php.d/05-additions.ini.template /usr/local/etc/php/conf.d
 
@@ -44,16 +43,11 @@ RUN mkdir -p /tmp/mhsendmail; \
     mv mhsendmail_linux_$TARGETARCH /usr/local/bin/mhsendmail;
 
 # Configure www-data user as primary php-fpm user for better local dev experience
-RUN mkdir -p /home/www-data \
-    && chown www-data:www-data /home/www-data \
-    && usermod -d /home/www-data www-data \
+RUN groupmod -g 1000 www-data && usermod -u 1000 www-data \
     && chmod 0755 ~www-data \
     && mkdir -p /var/www/html \
     && chown www-data:www-data /var/www/html \
-    && echo "www-data ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd \
-    && PHP_FPM_USER=$(grep -i '^user = ' /usr/local/etc/php-fpm.d/www.conf | awk '{print $3}') \
-    && PHP_FPM_GROUP=$(grep -i '^group = ' /usr/local/etc/php-fpm.d/www.conf | awk '{print $3}') \
-    && perl -pi -e 's/^(user|group) = php-fpm$/$1 = www-data/g' /usr/local/etc/php-fpm.d/www.conf
+    && echo "www-data ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
 
 WORKDIR /var/www/html
 USER www-data
