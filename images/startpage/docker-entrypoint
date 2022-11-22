@@ -7,4 +7,4 @@ cat /usr/share/nginx/html/index.html.template \
   | tee /usr/share/nginx/html/index.html
 
 # Start Nginx
-/docker-entrypoint.sh nginx -g 'daemon off;'
+nginx -g 'daemon off;'
