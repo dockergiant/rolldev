@@ -9,8 +9,8 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.startpage.tls=true
-      - traefik.http.routers.startpage.rule=Host(`${ROLL_SERVICE_DOMAIN:-roll.test}`)
-      - traefik.http.services.startpage.loadbalancer.server.port=3000
+      - traefik.http.routers.startpage.rule=Host(`${WARDEN_SERVICE_DOMAIN:-roll.test}`)||Host(`www.${WARDEN_SERVICE_DOMAIN:-roll.test}`)
+      - traefik.http.services.startpage.loadbalancer.server.port=80
     environment:
       - ROLL_SERVICE_DOMAIN=${ROLL_SERVICE_DOMAIN:-roll.test}
       - ROLL_VERSION=${DEN_VERSION:-"in-dev"}
