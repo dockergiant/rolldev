@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Den by SwiftOtter</title>
+    <title>RollDev by DockerGiant</title>
     <style>
         html {
             background: #111;
@@ -85,7 +85,7 @@
     ██║  ██║╚██████╔╝███████╗███████╗██████╔╝███████╗ ╚████╔╝
     ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝╚═════╝ ╚══════╝  ╚═══╝
     </div><br>
-    by Rick Bouma<br>
+    by DockerGiant<br>
     fork of Warden by David Alger<br>
     v.${ROLL_VERSION}<br>
     <a href="https://github.com/dockergiant/rolldev/releases">Check for Updates</a>
