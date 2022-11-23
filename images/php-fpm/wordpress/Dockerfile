@@ -10,5 +10,3 @@ RUN set -eux \
 
 # Create wp alias for wp-cli
 RUN ln -s /usr/local/bin/wp-cli /usr/local/bin/wp
-
-USER www-data

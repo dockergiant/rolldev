@@ -2,7 +2,7 @@ version: "3.9"
 services:
   nginx:
     hostname: "${ROLL_ENV_NAME}-nginx"
-    image: ${ROLL_IMAGE_REPOSITORY}/nginx:${NGINX_VERSION:-1.16}
+    image: ${ROLL_IMAGE_REPOSITORY}/nginx:${NGINX_VERSION:-1.16}-dev
     labels:
       - traefik.enable=true
       - traefik.http.routers.${ROLL_ENV_NAME}-nginx.tls=true

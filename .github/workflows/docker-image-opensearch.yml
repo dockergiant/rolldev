@@ -50,5 +50,5 @@ jobs:
           context: images/opensearch
           platforms: linux/amd64,linux/arm64
           build-args: OPENSEARCH_VERSION=${{ env.OPENSEARCH_VERSION }}
-          push: ${{ github.ref == 'refs/heads/develop' && !env.ACT }}
-          tags: docker.io/rollupdev/opensearch:${{ matrix.version }}
+          push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
+          tags: docker.io/rollupdev/opensearch:${{ matrix.version }}-dev

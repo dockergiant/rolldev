@@ -55,5 +55,5 @@ jobs:
           context: images/elasticsearch
           platforms: linux/amd64,linux/arm64
           build-args: ES_VERSION=${{ env.ES_VERSION }}
-          push: ${{ github.ref == 'refs/heads/develop' && !env.ACT }}
-          tags: docker.io/rollupdev/elasticsearch:${{ matrix.version }}
+          push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
+          tags: docker.io/rollupdev/elasticsearch:${{ matrix.version }}-dev

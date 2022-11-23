@@ -3,12 +3,16 @@ ARG PHP_VERSION
 ARG PHP_VARIANT="fpm"
 FROM ${PHP_SOURCE_IMAGE}:${PHP_VERSION}-${PHP_VARIANT}
 
+USER root
 # Clear undesired settings from base fpm images
 ENV COMPOSER_ALLOW_SUPERUSER=
 ENV COMPOSER_HOME=
 
 ENV MAILHOG_HOST    mailhog
 ENV MAILHOG_PORT    1025
+ENV USER_ID         501
+ENV GROUP_ID        20
+ENV OSTYPE          darwin220
 
 RUN set -eux; \
     apt-get update -y; \
@@ -46,6 +50,7 @@ RUN mkdir -p /tmp/mhsendmail; \
 RUN mkdir -p /home/www-data \
     && chown www-data:www-data /home/www-data \
     && usermod -d /home/www-data www-data \
+    && install -d -m 0755 -o www-data -g www-data /home/www-data \
     && chmod 0755 ~www-data \
     && mkdir -p /var/www/html \
     && chown www-data:www-data /var/www/html \
@@ -54,5 +59,9 @@ RUN mkdir -p /home/www-data \
     && PHP_FPM_GROUP=$(grep -i '^group = ' /usr/local/etc/php-fpm.d/www.conf | awk '{print $3}') \
     && perl -pi -e 's/^(user|group) = php-fpm$/$1 = www-data/g' /usr/local/etc/php-fpm.d/www.conf
 
+STOPSIGNAL SIGQUIT
+
+ENTRYPOINT ["docker-entrypoint"]
 WORKDIR /var/www/html
-USER www-data
+EXPOSE 9000
+CMD ["php-fpm"]

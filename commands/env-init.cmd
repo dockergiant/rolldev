@@ -179,3 +179,26 @@ if [[ "${ROLL_ENV_TYPE}" == "wordpress" ]]; then
 		DB_PASSWORD=wordpress
 	EOT
 fi
+
+if [[ "${ROLL_ENV_TYPE}" == "akeneo" ]]; then
+  cat >> "${ROLL_ENV_PATH}/.env.roll" <<-EOT
+
+		ELASTICSEARCH_VERSION=7.16
+		NODE_VERSION=12
+		COMPOSER_VERSION=2
+		PHP_VERSION=8.0
+		PHP_XDEBUG_3=1
+
+		ROLL_DB=1
+		ROLL_ELASTICSEARCH=1
+
+		APP_ENV=local
+		APP_DEBUG=true
+		APP_DATABASE_HOST=db
+		APP_DATABASE_PORT=null
+		APP_DATABASE_NAME=akeneo
+		APP_DATABASE_USER=akeneo
+		APP_DATABASE_PASSWORD=akeneo
+		APP_INDEX_HOSTS='elasticsearch:9200'
+	EOT
+fi

@@ -48,5 +48,5 @@ jobs:
           context: images/varnish
           platforms: linux/amd64,linux/arm64
           build-args: VARNISH_VERSION=${{ env.VARNISH_VERSION }}
-          push: ${{ github.ref == 'refs/heads/develop' && !env.ACT }}
-          tags: docker.io/rollupdev/varnish:${{ matrix.version }}
+          push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
+          tags: docker.io/rollupdev/varnish:${{ matrix.version }}-dev

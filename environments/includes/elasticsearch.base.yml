@@ -2,7 +2,7 @@ version: "3.9"
 services:
   elasticsearch:
     hostname: "${ROLL_ENV_NAME}-elasticsearch"
-    image: ${ROLL_IMAGE_REPOSITORY}/elasticsearch:${ELASTICSEARCH_VERSION:-7.8}
+    image: ${ROLL_IMAGE_REPOSITORY}/elasticsearch:${ELASTICSEARCH_VERSION:-7.8}-dev
     labels:
       - traefik.enable=true
       - traefik.http.routers.${ROLL_ENV_NAME}-elasticsearch.tls=true

@@ -143,8 +143,8 @@ fi
 ## connect peered service containers to environment network
 if [[ "${ROLL_PARAMS[0]}" == "up" ]]; then
 
-		# update images if needed
-		roll env pull
+#		# update images if needed
+#		roll env pull
     ## create environment network for attachments if it does not already exist
     if [[ -z "$(docker network ls -f 'name=$(renderEnvNetworkName)' -q)" ]]; then
 

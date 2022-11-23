@@ -1,6 +1,29 @@
 #!/bin/bash
 set -e
 
+echo "USER ID: $(id -g)"
+echo "USER GROUP ID: $(id -g)"
+echo "CHANGE TO USER ID: ${USER_ID}"
+echo "CHANGE TO GROUP ID: ${GROUP_ID}"
+echo "OSTYPE: ${OSTYPE}"
+
+if [[ "$OSTYPE" =~ ^linux ]]; then
+	userdel -f www-data
+	groupadd -g ${GROUP_ID} www-data &&\
+	useradd -l -u ${USER_ID} -g www-data www-data &&\
+	usermod -a -G ${GROUP_ID} www-data &&\
+	install -d -m 0755 -o www-data -g www-data /home/www-data &&\
+	mkdir -p /var/www/html &&\
+	chown --changes --silent --no-dereference --recursive \
+				--from=33:33 ${USER_ID}:${GROUP_ID} \
+			/home/www-data \
+			/var/www \
+			/var/www/html &&\
+	chmod 0755 ~www-data &&\
+	echo "www-data ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
+fi
+
+
 # configure php additions.ini
 cat /usr/local/etc/php/conf.d/05-additions.ini.template \
   | envsubst '${MAILHOG_HOST} ${MAILHOG_PORT}' \

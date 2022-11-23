@@ -14,5 +14,3 @@ RUN set -eux \
 
 # Create mr alias for n98-magerun
 RUN ln -s /usr/local/bin/n98-magerun /usr/local/bin/mr
-
-USER www-data

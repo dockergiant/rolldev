@@ -9,5 +9,3 @@ COPY debug/etc/*.ini ${PHP_INI_DIR}/
 COPY debug/etc/conf.d/* ${PHP_INI_DIR}/conf.d/
 
 RUN docker-php-ext-enable xdebug
-
-USER www-data

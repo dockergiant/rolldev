@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  db:
+    hostname: "${ROLL_ENV_NAME}-mysql"
+    image: ${ROLL_IMAGE_REPOSITORY}/mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-akeneo}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-akeneo}
+      - MYSQL_USER=${MYSQL_USER:-akeneo}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-akeneo}
+    command:
+      - mysqld
+      - --max_allowed_packet=1024M
+      - --explicit_defaults_for_timestamp=on

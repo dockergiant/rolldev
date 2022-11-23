@@ -39,8 +39,8 @@ jobs:
           context: images/mysql/8.0
           platforms: linux/amd64,linux/arm64
           build-args: MYSQL_VERSION=${{ matrix.version }}
-          push: ${{ github.ref == 'refs/heads/develop' && !env.ACT }}
-          tags: docker.io/rollupdev/mysql:${{ matrix.version }}
+          push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
+          tags: docker.io/rollupdev/mysql:${{ matrix.version }}-dev
 
   mysql7min:
     name: MySQL
@@ -75,5 +75,5 @@ jobs:
           context: images/mysql/5.x
           platforms: linux/amd64
           build-args: MYSQL_VERSION=${{ matrix.version }}
-          push: ${{ github.ref == 'refs/heads/develop' && !env.ACT }}
-          tags: docker.io/rollupdev/mysql:${{ matrix.version }}
+          push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
+          tags: docker.io/rollupdev/mysql:${{ matrix.version }}-dev

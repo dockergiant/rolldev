@@ -33,5 +33,5 @@ jobs:
         with:
           context: images/startpage
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.ref == 'refs/heads/develop' && !env.ACT }}
+          push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: docker.io/rollupdev/startpage:latest

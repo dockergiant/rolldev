@@ -44,5 +44,5 @@ jobs:
           context: images/nginx
           platforms: linux/amd64,linux/arm64
           build-args: NGINX_VERSION=${{ matrix.version }}
-          push: ${{ github.ref == 'refs/heads/develop' && !env.ACT }}
-          tags: docker.io/rollupdev/nginx:${{ matrix.version }}
+          push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
+          tags: docker.io/rollupdev/nginx:${{ matrix.version }}-dev

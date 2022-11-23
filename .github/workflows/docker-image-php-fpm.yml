@@ -1,14 +1,12 @@
 name: Docker Image PHP-FPM
 on:
-  schedule:
-    - cron: "0 6 1 * *" # 6 AM U
   push:
     paths:
     - images/.trigger
     - images/php-fpm/**
     - .github/workflows/*php-fpm*
     branches:
-    - develop
+    - alpha
 jobs:
   php-fpm:
     name: FPM ${{ matrix.php_version }}

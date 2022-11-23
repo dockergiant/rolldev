@@ -124,6 +124,6 @@ for file in $(find ${SEARCH_PATH} -type f -name Dockerfile | sort -V); do
     docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
     docker buildx create --use
 
-    docker buildx build ${PUSH} --platform linux/amd64,linux/arm64 -t "${IMAGE_TAG}" -f ${BUILD_DIR}/Dockerfile ${BUILD_ARGS[@]} ${BUILD_CONTEXT}
+    docker buildx build ${PUSH} --platform linux/amd64,linux/arm64 -t "${IMAGE_TAG}-dev" -f ${BUILD_DIR}/Dockerfile ${BUILD_ARGS[@]} ${BUILD_CONTEXT}
 
 done
