@@ -43,11 +43,16 @@ RUN mkdir -p /tmp/mhsendmail; \
     mv mhsendmail_linux_$TARGETARCH /usr/local/bin/mhsendmail;
 
 # Configure www-data user as primary php-fpm user for better local dev experience
-RUN groupmod -g 1000 www-data && usermod -u 1000 www-data \
+RUN mkdir -p /home/www-data \
+    && chown www-data:www-data /home/www-data \
+    && usermod -d /home/www-data www-data \
     && chmod 0755 ~www-data \
     && mkdir -p /var/www/html \
     && chown www-data:www-data /var/www/html \
-    && echo "www-data ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
+    && echo "www-data ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd \
+    && PHP_FPM_USER=$(grep -i '^user = ' /usr/local/etc/php-fpm.d/www.conf | awk '{print $3}') \
+    && PHP_FPM_GROUP=$(grep -i '^group = ' /usr/local/etc/php-fpm.d/www.conf | awk '{print $3}') \
+    && perl -pi -e 's/^(user|group) = php-fpm$/$1 = www-data/g' /usr/local/etc/php-fpm.d/www.conf
 
 WORKDIR /var/www/html
 USER www-data
