@@ -36,7 +36,7 @@ jobs:
   magento1-dev:
     name: PHP-FPM ${{ matrix.php_version }} (magento1) DEV
     runs-on: ubuntu-latest
-    needs: php-fpm
+    needs: php-fpm-dev
     strategy:
       fail-fast: false
       matrix:
@@ -61,7 +61,7 @@ jobs:
   magento2-dev:
     name: PHP-FPM ${{ matrix.php_version }} (magento2) DEV
     runs-on: ubuntu-latest
-    needs: php-fpm
+    needs: php-fpm-dev
     strategy:
       fail-fast: false
       matrix:
@@ -86,7 +86,7 @@ jobs:
   wordpress-dev:
     name: PHP-FPM ${{ matrix.php_version }} (wordpress) DEV
     runs-on: ubuntu-latest
-    needs: php-fpm
+    needs: php-fpm-dev
     strategy:
       fail-fast: false
       matrix:
