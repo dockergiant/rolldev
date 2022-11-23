@@ -19,6 +19,8 @@ jobs:
             tag: "5.0"
           - from: "6-bullseye"
             tag: "6.0"
+          - from: "6.2-bullseye"
+            tag: "6.2"
           - from: "7-bullseye"
             tag: "7.0"
 
