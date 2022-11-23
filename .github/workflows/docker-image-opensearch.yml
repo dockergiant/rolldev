@@ -1,4 +1,4 @@
-name: Docker Image OpenSearch
+name: Docker Image OpenSearch DEV
 on:
   push:
     paths:

@@ -1,4 +1,4 @@
-name: Docker Image MariaDB
+name: Docker Image MariaDB DEV
 on:
   push:
     paths:

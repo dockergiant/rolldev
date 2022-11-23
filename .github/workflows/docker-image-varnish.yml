@@ -1,4 +1,4 @@
-name: Docker Image Varnish
+name: Docker Image Varnish DEV
 on:
   push:
     paths:

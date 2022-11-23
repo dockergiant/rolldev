@@ -1,4 +1,4 @@
-name: Docker Image PHP-FPM
+name: Docker Image PHP-FPM DEV
 on:
   push:
     paths:

@@ -1,4 +1,4 @@
-name: Docker Image MailHog
+name: Docker Image MailHog DEV
 on:
   push:
     paths:

@@ -1,4 +1,4 @@
-name: Docker Image RabbitMQ
+name: Docker Image RabbitMQ DEV
 on:
   push:
     paths:

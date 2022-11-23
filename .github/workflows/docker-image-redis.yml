@@ -1,4 +1,4 @@
-name: Docker Image Redis
+name: Docker Image Redis DEV
 on:
   push:
     paths:

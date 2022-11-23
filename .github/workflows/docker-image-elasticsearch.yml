@@ -1,4 +1,4 @@
-name: Docker Image Elasticsearch
+name: Docker Image Elasticsearch DEV
 on:
   push:
     paths:

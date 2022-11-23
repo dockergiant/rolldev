@@ -1,4 +1,4 @@
-name: Docker Image MySQL
+name: Docker Image MySQL DEV
 on:
   push:
     paths:
