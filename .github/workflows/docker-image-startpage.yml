@@ -7,8 +7,8 @@ on:
       - .github/workflows/*startpage*
 
 jobs:
-  startpage:
-    name: Startpage
+  startpage-dev:
+    name: Startpage DEV
     runs-on: ubuntu-latest
 
     steps:

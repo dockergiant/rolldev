@@ -7,8 +7,8 @@ on:
       - .github/workflows/*nginx*
 
 jobs:
-  nginx:
-    name: Nginx
+  nginx-dev:
+    name: Nginx DEV
     runs-on: ubuntu-latest
 
     strategy:

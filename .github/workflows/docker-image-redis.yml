@@ -7,8 +7,8 @@ on:
       - .github/workflows/*redis*
 
 jobs:
-  redis:
-    name: Redis
+  redis-dev:
+    name: Redis DEV
     runs-on: ubuntu-latest
 
     strategy:

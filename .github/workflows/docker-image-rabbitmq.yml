@@ -7,8 +7,8 @@ on:
       - .github/workflows/*rabbitmq*
 
 jobs:
-  rabbitmq:
-    name: RabbitMQ
+  rabbitmq-dev:
+    name: RabbitMQ DEV
     runs-on: ubuntu-latest
 
     strategy:

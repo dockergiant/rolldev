@@ -7,8 +7,8 @@ on:
       - .github/workflows/*mariadb*
 
 jobs:
-  mariadb:
-    name: MariaDB
+  mariadb-dev:
+    name: MariaDB DEV
     runs-on: ubuntu-latest
 
     strategy:

@@ -7,8 +7,8 @@ on:
       - .github/workflows/*varnish*
 
 jobs:
-  varnish:
-    name: Varnish
+  varnish-dev:
+    name: Varnish DEV
     runs-on: ubuntu-latest
 
     strategy:

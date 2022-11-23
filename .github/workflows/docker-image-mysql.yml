@@ -7,8 +7,8 @@ on:
       - .github/workflows/*mysql*
 
 jobs:
-  mysql8:
-    name: MySQL
+  mysql8-dev:
+    name: MySQL DEV
     runs-on: ubuntu-latest
 
     strategy:
@@ -42,8 +42,8 @@ jobs:
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: docker.io/rollupdev/mysql:${{ matrix.version }}-dev
 
-  mysql7min:
-    name: MySQL
+  mysql7min-dev:
+    name: MySQL DEV
     runs-on: ubuntu-latest
 
     strategy:

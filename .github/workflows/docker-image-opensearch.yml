@@ -7,8 +7,8 @@ on:
       - .github/workflows/*opensearch*
 
 jobs:
-  opensearch:
-    name: OpenSearch
+  opensearch-dev:
+    name: OpenSearch DEV
     runs-on: ubuntu-latest
 
     strategy:

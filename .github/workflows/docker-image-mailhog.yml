@@ -7,8 +7,8 @@ on:
       - .github/workflows/*mailhog*
 
 jobs:
-  mailhog:
-    name: MailHog
+  mailhog-dev:
+    name: MailHog DEV
     runs-on: ubuntu-latest
 
     steps:

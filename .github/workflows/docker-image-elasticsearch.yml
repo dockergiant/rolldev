@@ -7,8 +7,8 @@ on:
       - .github/workflows/*elasticsearch*
 
 jobs:
-  elasticsearch:
-    name: Elasticsearch
+  elasticsearch-dev:
+    name: Elasticsearch DEV
     runs-on: ubuntu-latest
 
     strategy:
