@@ -86,7 +86,7 @@ services:
 
   mailhog:
     container_name: mailhog
-    image: rollupdev/mailhog:dev
+    image: rollupdev/mailhog:latest-dev
     labels:
       - traefik.enable=true
       - traefik.http.routers.mailhog.tls=true
