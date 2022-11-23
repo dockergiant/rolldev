@@ -45,4 +45,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: REDIS_VERSION=${{ matrix.version.from }}
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
-          tags: docker.io/rollupdev/redis:${{ matrix.version.tag }}
+          tags: docker.io/rollupdev/redis:${{ matrix.version.tag }}-dev
