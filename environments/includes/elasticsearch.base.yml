@@ -10,7 +10,7 @@ services:
       - traefik.http.services.${ROLL_ENV_NAME}-elasticsearch.loadbalancer.server.port=9200
       - traefik.docker.network=${ROLL_ENV_NAME}_default
     environment:
-      - indices.query.bool.max_clause_count=4096
+      - indices.query.bool.max_clause_count=16384
       - discovery.type=single-node
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms64m -Xmx512m"
