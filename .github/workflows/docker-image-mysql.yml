@@ -10,7 +10,7 @@ on:
 
 jobs:
   mysql8-dev:
-    name: MySQL DEV
+    name: MySQL
     runs-on: ubuntu-latest
 
     strategy:

@@ -1,4 +1,4 @@
-name: Docker Image MariaDB DEV
+name: Docker Image MariaDB
 on:
   schedule:
     - cron: "0 6 * * *" # 6 AM Daily

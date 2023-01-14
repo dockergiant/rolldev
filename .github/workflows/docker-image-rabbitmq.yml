@@ -9,7 +9,7 @@ on:
       - .github/workflows/*rabbitmq*
 
 jobs:
-  rabbitmq-dev:
+  rabbitmq:
     name: RabbitMQ
     runs-on: ubuntu-latest
 
