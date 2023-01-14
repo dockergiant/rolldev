@@ -64,7 +64,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: MYSQL_VERSION=${{ env.MYSQL_VERSION }}
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
-          tags: ghcr.io/${{ github.repository_owner }}/den-mysql:${{ matrix.version }}
+          tags: ghcr.io/${{ github.repository_owner }}/rolldev-mysql:${{ matrix.version }}
         if: ${{ !env.ACT && github.ref == 'refs/heads/alpha'}}
 
   mysql-legacy:
