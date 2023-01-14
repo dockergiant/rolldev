@@ -1,4 +1,5 @@
 ARG ENV_SOURCE_IMAGE
+ARG PHP_VERSION
 ARG OS_RELEASE
 
 FROM golang:alpine AS mhs-builder
