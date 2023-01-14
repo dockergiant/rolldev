@@ -1,12 +1,13 @@
-ARG PHP_SOURCE_IMAGE="docker.io/rollupdev/php"
-ARG PHP_VERSION
-ARG PHP_VARIANT="fpm"
-FROM ${PHP_SOURCE_IMAGE}:${PHP_VERSION}-${PHP_VARIANT}
+ARG ENV_SOURCE_IMAGE
+ARG OS_RELEASE
 
+FROM golang:alpine AS mhs-builder
+RUN go install github.com/mailhog/mhsendmail@latest
+
+
+FROM ${ENV_SOURCE_IMAGE:-php}:${PHP_VERSION}-fpm-${OS_RELEASE:-bullseye}
 USER root
-# Clear undesired settings from base fpm images
-ENV COMPOSER_ALLOW_SUPERUSER=
-ENV COMPOSER_HOME=
+ARG PHP_VERSION
 
 ENV MAILHOG_HOST    mailhog
 ENV MAILHOG_PORT    1025
@@ -14,37 +15,93 @@ ENV USER_ID         501
 ENV GROUP_ID        20
 ENV OSTYPE          darwin220
 
+# PHP Extension Installer
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+
+# Copy mhsendmail to PHP
+COPY --from=mhs-builder /go/bin/mhsendmail /usr/local/bin/mhsendmail
+
+# Install PHP Extensions required by Magento OS, Adobe Commerce, and the UCT (pcntl)
+RUN chmod +x /usr/local/bin/install-php-extensions && install-php-extensions \
+    apcu \
+    amqp \
+    bcmath \
+    calendar \
+    exif \
+    gd \
+    intl \
+    imagick \
+    imap \
+    mcrypt \
+    mysqli \
+    pcntl \
+    pdo_mysql \
+    redis \
+    soap \
+    sockets \
+    sodium \
+    xsl \
+    zip
+
+# Install helpful utilities
 RUN set -eux; \
     apt-get update -y; \
-    PHP_VERSION=$(php -v | head -n1 | cut -d' ' -f2 | awk -F '.' '{print $1$2}'); \
-    if [ ${PHP_VERSION} -gt 72 ]; \
-            then apt-get install -y --no-install-recommends bind9-utils; \
-            else apt-get install -y --no-install-recommends bind9utils; \
-    fi; \
-    apt-get install -y --no-install-recommends pv sudo python3-pip bash-completion rsync socat oathtool \
-        wget ack automake autoconf nano vim cron mariadb-client python2; \
-    ln -nsf /usr/bin/python2 /usr/bin/python; \
-    rm -rf /var/lib/apt/lists/*
-
-RUN npm install -g grunt-cli gulp yarn
-
-ENV NODE_VERSION    10
-RUN npm install -g n; \
-    n install ${NODE_VERSION}; \
-    rm -rf /usr/local/n/versions/node;
+    apt-get install -y --no-install-recommends \
+    jq \
+    bash \
+    patch \
+    pv \
+    procps \
+    nano \
+    vim \
+    mariadb-client \
+    sudo \
+    busybox-suid \
+    gettext \
+    ca-certificates \
+    shadow \
+    git \
+    rsync \
+    bash-completion \
+    zsh \
+    git-zsh-completion \
+    fish \
+    pwgen \
+    openssh \
+    rsync \
+    socat \
+    oathtool \
+    wget \
+    ack  \
+    automake  \
+    autoconf \
+    cron
 
 COPY docker-entrypoint /usr/local/bin/
 COPY etc/profile.d/*.sh /etc/profile.d/
 COPY etc/php.d/*.ini /usr/local/etc/php/conf.d
 COPY etc/php.d/05-additions.ini.template /usr/local/etc/php/conf.d
 
-ARG TARGETARCH
-# Install mhsendmail to support routing email through mailhog
-RUN mkdir -p /tmp/mhsendmail; \
-    cd /tmp/mhsendmail; \
-    curl -vLOs https://github.com/dockergiant/mhsendmail/releases/download/v0.3.0/mhsendmail_linux_$TARGETARCH; \
-    chmod +x mhsendmail_linux_$TARGETARCH; \
-    mv mhsendmail_linux_$TARGETARCH /usr/local/bin/mhsendmail;
+# Install Composer
+COPY --from=composer:1 /usr/bin/composer /usr/bin/composer1
+COPY --from=composer:2.2 /usr/bin/composer /usr/bin/composer2lts
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer2
+
+# If PHP < 7.2
+RUN if [[ $(printf "7.2\n${PHP_VERSION}" | sort -g | head -n1) != "7.2" ]]; \
+    then mv /usr/bin/composer2lts /usr/bin/composer2; fi
+
+# If PHP < 7.3
+RUN if [[ $(printf "7.3\n${PHP_VERSION}" | sort -g | head -n1) != "7.3" ]]; \
+    then apt-get install -y --no-install-recommends bind9utils; fi
+
+# If PHP >= 7.1
+RUN if [[ $(printf "7.1\n${PHP_VERSION}" | sort -g | head -n1) == "7.1" ]]; \
+    then apt-get install -y --no-install-recommends libmariadb3 libmariadb-dev; fi
+
+# If PHP >= 7.3
+RUN if [[ $(printf "7.3\n${PHP_VERSION}" | sort -g | head -n1) == "7.3" ]]; \
+    then apt-get install -y --no-install-recommends bind9-utils; fi
 
 # Configure www-data user as primary php-fpm user for better local dev experience
 RUN mkdir -p /home/www-data \
@@ -60,5 +117,6 @@ STOPSIGNAL SIGQUIT
 
 ENTRYPOINT ["docker-entrypoint"]
 WORKDIR /var/www/html
+USER www-data
 EXPOSE 9000
 CMD ["php-fpm"]
