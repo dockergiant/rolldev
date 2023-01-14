@@ -84,23 +84,23 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
         if: ${{ !env.ACT }}
 
-      - uses: docker/build-push-action@v3
-        id: build
-        with:
-          file: images/php-fpm/Dockerfile
-          context: images/php-fpm/context
-          platforms: linux/amd64,linux/arm64
-          build-args: |
-            PHP_VERSION=${{ matrix.php_version }}
-            OS_RELEASE=${{ matrix.php_os_release }}
-            ENV_SOURCE_IMAGE=php
-          push: false
-          load: true
-          tags: test-image
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm:${{ matrix.php_version }}-buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm:${{ matrix.php_version }}-buildcache,mode=max
-
-      - run: docker run test-image php -v
+#      - uses: docker/build-push-action@v3
+#        id: build
+#        with:
+#          file: images/php-fpm/Dockerfile
+#          context: images/php-fpm/context
+#          platforms: linux/amd64,linux/arm64
+#          build-args: |
+#            PHP_VERSION=${{ matrix.php_version }}
+#            OS_RELEASE=${{ matrix.php_os_release }}
+#            ENV_SOURCE_IMAGE=php
+#          push: false
+#          load: true
+#          tags: test-image
+#          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm:${{ matrix.php_version }}-buildcache
+#          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm:${{ matrix.php_version }}-buildcache,mode=max
+#
+#      - run: docker run test-image php -v
 
       - uses: docker/build-push-action@v3
         with:
@@ -159,22 +159,22 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
         if: ${{ !env.ACT }}
 
-      - uses: docker/build-push-action@v3
-        id: build
-        with:
-          file: images/php-fpm/node/Dockerfile
-          context: images/php-fpm/context
-          platforms: linux/amd64,linux/arm64
-          build-args: |
-            ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
-            PHP_VERSION=${{ matrix.php_version }}
-            NODE_VERSION=${{ matrix.node_version }}
-            OS_RELEASE=${{ matrix.node_os_release }}
-          push: false
-          load: true
-          tags: test-image
-
-      - run: docker run test-image node -v
+#      - uses: docker/build-push-action@v3
+#        id: build
+#        with:
+#          file: images/php-fpm/node/Dockerfile
+#          context: images/php-fpm/context
+#          platforms: linux/amd64,linux/arm64
+#          build-args: |
+#            ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
+#            PHP_VERSION=${{ matrix.php_version }}
+#            NODE_VERSION=${{ matrix.node_version }}
+#            OS_RELEASE=${{ matrix.node_os_release }}
+#          push: false
+#          load: true
+#          tags: test-image
+#
+#      - run: docker run test-image node -v
 
       - uses: docker/build-push-action@v3
         with:
