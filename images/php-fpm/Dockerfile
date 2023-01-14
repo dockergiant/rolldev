@@ -100,6 +100,16 @@ RUN if [[ $(printf "7.1\n${PHP_VERSION}" | sort -g | head -n1) == "7.1" ]]; \
 RUN if [[ $(printf "7.3\n${PHP_VERSION}" | sort -g | head -n1) == "7.3" ]]; \
     then apt-get install -y --no-install-recommends bind9-utils; fi
 
+RUN mkdir -p /etc/zsh/zshrc.d  \
+    && echo "autoload -U compinit; compinit" > /etc/zsh/zshrc.d/completions.zsh \
+    && ln -s /usr/bin/fish /bin/fish
+
+# Install Oh My Zsh including the following Plugins: git, composer and n98-magerun
+RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+RUN git clone https://github.com/zsh-users/zsh-autosuggestions.git $ZSH_CUSTOM/plugins/zsh-autosuggestions \
+    && git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $ZSH_CUSTOM/plugins/zsh-syntax-highlighting \
+    && sed -i 's/plugins=(git)/plugins=(git composer n98-magerun zsh-autosuggestions zsh-syntax-highlighting)/g' /root/.zshrc
+
 # Configure www-data user as primary php-fpm user for better local dev experience
 RUN mkdir -p /home/www-data \
     && chown www-data:www-data /home/www-data \

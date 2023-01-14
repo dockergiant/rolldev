@@ -111,6 +111,9 @@ jobs:
             PHP_VERSION=${{ matrix.php_version }}
             OS_RELEASE=${{ matrix.php_os_release }}
             ENV_SOURCE_IMAGE=php
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm:${{ matrix.php_version }}
           cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm:${{ matrix.php_version }}-buildcache
@@ -126,6 +129,9 @@ jobs:
             PHP_VERSION=${{ matrix.php_version }}
             OS_RELEASE=${{ matrix.php_os_release }}
             ENV_SOURCE_IMAGE=php
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm:latest
           cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm:${{ matrix.php_version }}-buildcache
@@ -186,8 +192,12 @@ jobs:
             PHP_VERSION=${{ matrix.php_version }}
             NODE_VERSION=${{ matrix.node_version }}
             OS_RELEASE=${{ matrix.node_os_release }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm:${{ matrix.php_version }}-node${{ matrix.node_version }}
+
       - uses: docker/build-push-action@v3
         if: ${{ matrix.latest }}
         with:
@@ -199,6 +209,9 @@ jobs:
             PHP_VERSION=${{ matrix.php_version }}
             NODE_VERSION=${{ matrix.node_version }}
             OS_RELEASE=${{ matrix.node_os_release }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm:latest-nodelatest
 
@@ -240,6 +253,9 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}-node${{ matrix.node_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-debug:${{ matrix.php_version }}-node${{ matrix.node_version }}
 
@@ -253,6 +269,9 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-debug:${{ matrix.php_version }}
 
@@ -266,6 +285,9 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}-node${{ matrix.node_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-debug:latest-nodelatest
 
@@ -279,6 +301,9 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-debug:latest
           
@@ -319,6 +344,9 @@ jobs:
           build-args: |
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}-node${{ matrix.node_version }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento1:${{ matrix.php_version }}-node${{ matrix.node_version }}
 
@@ -331,6 +359,9 @@ jobs:
           build-args: |
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento1:${{ matrix.php_version }}
 
@@ -343,6 +374,9 @@ jobs:
           build-args: |
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}-node${{ matrix.node_version }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento1:latest-nodelatest
 
@@ -355,6 +389,9 @@ jobs:
           build-args: |
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento1:latest
   magento1-xdebug:
@@ -395,6 +432,9 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento1
             PHP_VERSION=${{ matrix.php_version }}-node${{ matrix.node_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento1-debug:${{ matrix.php_version }}-node${{ matrix.node_version }}
 
@@ -408,6 +448,9 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento1
             PHP_VERSION=${{ matrix.php_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento1-debug:${{ matrix.php_version }}
 
@@ -421,6 +464,9 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento1
             PHP_VERSION=${{ matrix.php_version }}-node${{ matrix.node_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento1-debug:latest-nodelatest
 
@@ -434,6 +480,9 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento1
             PHP_VERSION=${{ matrix.php_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento1-debug:latest
           
@@ -474,6 +523,9 @@ jobs:
           build-args: |
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}-node${{ matrix.node_version }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento2:${{ matrix.php_version }}-node${{ matrix.node_version }}
 
@@ -486,6 +538,9 @@ jobs:
           build-args: |
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento2:${{ matrix.php_version }}
 
@@ -498,6 +553,9 @@ jobs:
           build-args: |
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}-node${{ matrix.node_version }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento2:latest-nodelatest
 
@@ -510,6 +568,9 @@ jobs:
           build-args: |
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento2:latest
   magento2-xdebug:
@@ -550,6 +611,9 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento2
             PHP_VERSION=${{ matrix.php_version }}-node${{ matrix.node_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento2-debug:${{ matrix.php_version }}-node${{ matrix.node_version }}
 
@@ -563,6 +627,9 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento2
             PHP_VERSION=${{ matrix.php_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento2-debug:${{ matrix.php_version }}
 
@@ -576,6 +643,9 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento2
             PHP_VERSION=${{ matrix.php_version }}-node${{ matrix.node_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento2-debug:latest-nodelatest
 
@@ -589,6 +659,9 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento2
             PHP_VERSION=${{ matrix.php_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-magento2-debug:latest
 
@@ -629,6 +702,9 @@ jobs:
           build-args: |
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}-node${{ matrix.node_version }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-wordpress:${{ matrix.php_version }}-node${{ matrix.node_version }}
 
@@ -641,6 +717,9 @@ jobs:
           build-args: |
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-wordpress:${{ matrix.php_version }}
 
@@ -653,6 +732,9 @@ jobs:
           build-args: |
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}-node${{ matrix.node_version }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-wordpress:latest-nodelatest
 
@@ -665,6 +747,9 @@ jobs:
           build-args: |
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm
             PHP_VERSION=${{ matrix.php_version }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-wordpress:latest
   wordpress-xdebug:
@@ -705,6 +790,9 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-wordpress
             PHP_VERSION=${{ matrix.php_version }}-node${{ matrix.node_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-wordpress-debug:${{ matrix.php_version }}-node${{ matrix.node_version }}
 
@@ -718,6 +806,9 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-wordpress
             PHP_VERSION=${{ matrix.php_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-wordpress-debug:${{ matrix.php_version }}
 
@@ -731,6 +822,9 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-wordpress
             PHP_VERSION=${{ matrix.php_version }}-node${{ matrix.node_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-wordpress-debug:latest-nodelatest
 
@@ -744,5 +838,8 @@ jobs:
             ENV_SOURCE_IMAGE=ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-wordpress
             PHP_VERSION=${{ matrix.php_version }}
             XDEBUG_TYPE=${{ matrix.xdebug_type }}
+          max_attempts: 3
+          retry_on: error
+          timeout_seconds: 5
           push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-php-fpm-wordpress-debug:latest
