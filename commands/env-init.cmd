@@ -88,7 +88,7 @@ if [[ "${ROLL_ENV_TYPE}" == "magento2" ]]; then
 		ROLL_SYNC_IGNORE=
 
 		# Comment to enable static content caching
-    ROLL_NO_STATIC_CACHING=1
+        ROLL_NO_STATIC_CACHING=1
 
 		ROLL_ALLURE=0
 		ROLL_SELENIUM=0
@@ -177,6 +177,22 @@ if [[ "${ROLL_ENV_TYPE}" == "wordpress" ]]; then
 		DB_DATABASE=wordpress
 		DB_USERNAME=wordpress
 		DB_PASSWORD=wordpress
+	EOT
+fi
+
+if [[ "${ROLL_ENV_TYPE}" == "php" ]]; then
+  cat >> "${ROLL_ENV_PATH}/.env.roll" <<-EOT
+
+		ROLL_DB=0
+		ROLL_REDIS=0
+		ROLL_VARNISH=0
+
+		MARIADB_VERSION=10.4
+		NODE_VERSION=12
+		COMPOSER_VERSION=2
+		PHP_VERSION=7.4
+		PHP_XDEBUG_3=1
+		REDIS_VERSION=5.0
 	EOT
 fi
 
