@@ -57,18 +57,14 @@ RUN set -eux; \
     vim \
     mariadb-client \
     sudo \
-    busybox-suid \
     gettext \
     ca-certificates \
-    shadow \
     git \
     rsync \
     bash-completion \
     zsh \
-    git-zsh-completion \
     fish \
     pwgen \
-    openssh \
     rsync \
     socat \
     oathtool \
