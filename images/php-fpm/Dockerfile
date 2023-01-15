@@ -72,6 +72,7 @@ RUN set -eux; \
     ack  \
     automake  \
     autoconf \
+    python \
     cron
 
 COPY docker-entrypoint /usr/local/bin/
@@ -125,5 +126,12 @@ STOPSIGNAL SIGQUIT
 ENTRYPOINT ["docker-entrypoint"]
 WORKDIR /var/www/html
 USER www-data
+
+# Install Oh My Zsh including the following Plugins: git, composer and n98-magerun
+RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+RUN git clone https://github.com/zsh-users/zsh-autosuggestions.git $ZSH_CUSTOM/plugins/zsh-autosuggestions \
+    && git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $ZSH_CUSTOM/plugins/zsh-syntax-highlighting \
+    && sed -i 's/plugins=(git)/plugins=(git composer n98-magerun zsh-autosuggestions zsh-syntax-highlighting)/g' /$HOME/.zshrc
+
 EXPOSE 9000
 CMD ["php-fpm"]

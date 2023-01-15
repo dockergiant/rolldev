@@ -5,6 +5,7 @@ ARG NODE_VERSION
 
 FROM node:${NODE_VERSION}-${OS_RELEASE:-bullseye} AS node
 RUN npm install -g grunt-cli gulp
+RUN mv /opt/yarn* /opt/yarn
 
 FROM ${ENV_SOURCE_IMAGE}:${PHP_VERSION}
 USER root

@@ -8,7 +8,7 @@ echo "CHANGE TO GROUP ID: ${GROUP_ID}"
 echo "OSTYPE: ${OSTYPE}"
 
 if [[ "$OSTYPE" =~ ^linux ]]; then
-	userdel -f www-data
+	userdel -f www-data && true
 	groupadd -g ${GROUP_ID} www-data &&\
 	useradd -l -u ${USER_ID} -g www-data www-data &&\
 	usermod -a -G ${GROUP_ID} www-data &&\
