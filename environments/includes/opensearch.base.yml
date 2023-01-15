@@ -10,6 +10,7 @@ services:
       - traefik.http.services.${ROLL_ENV_NAME}-opensearch.loadbalancer.server.port=9200
       - traefik.docker.network=${ROLL_ENV_NAME}_default
     environment:
+      - indices.query.bool.max_clause_count=16384
       - DISABLE_SECURITY_PLUGIN=true
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms64m -Xmx512m"

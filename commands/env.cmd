@@ -23,8 +23,6 @@ if [[ ${ROLL_ENV_TYPE} =~ ^magento || ${ROLL_ENV_TYPE} =~ ^wordpress ]]; then
     export ROLL_SVC_PHP_VARIANT=-${ROLL_ENV_TYPE}
 fi
 
-echo "NODE VERSION: ${NODE_VERSION}"
-
 if [[ ${NODE_VERSION} -ne 0 ]]; then
     export ROLL_SVC_PHP_NODE=-node${NODE_VERSION}
 fi
