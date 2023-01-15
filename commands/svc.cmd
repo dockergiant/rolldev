@@ -68,7 +68,7 @@ if [[ "${ROLL_PARAMS[0]}" == "up" ]]; then
 fi
 
 ## pass ochestration through to docker-compose
-docker-compose \
+docker compose \
     --project-directory "${ROLL_HOME_DIR}" -p roll \
     "${DOCKER_COMPOSE_ARGS[@]}" "${ROLL_PARAMS[@]}" "$@"
 

@@ -2,7 +2,7 @@ version: "3.9"
 services:
   elasticsearch:
     hostname: "${ROLL_ENV_NAME}-elasticsearch"
-    image: ${ROLL_IMAGE_REPOSITORY}/elasticsearch:${ELASTICSEARCH_VERSION:-7.8}
+    image: ${ROLL_IMAGE_REPOSITORY}/rolldev-elasticsearch:${ELASTICSEARCH_VERSION:-7.8}
     labels:
       - traefik.enable=true
       - traefik.http.routers.${ROLL_ENV_NAME}-elasticsearch.tls=true
@@ -18,19 +18,6 @@ services:
       - http.cors.allow-origin=/.*/
     volumes:
       - esdata:/usr/share/elasticsearch/data
-
-  elasticvue:
-    hostname: "${ROLL_ENV_NAME}-elasticvue"
-    image: rollupdev/elasticvue:latest
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.${ROLL_ENV_NAME}-elasticvue.tls=true
-      - traefik.http.routers.${ROLL_ENV_NAME}-elasticvue.rule=Host(`elasticvue.${TRAEFIK_DOMAIN}`)
-      - traefik.http.services.${ROLL_ENV_NAME}-elasticvue.loadbalancer.server.port=8080
-      - traefik.docker.network=${ROLL_ENV_NAME}_default
-    environment:
-      - DEFAULT_NAME=${ROLL_ENV_NAME}
-      - DEFAULT_HOST=https://elasticsearch.${TRAEFIK_DOMAIN}
 
 volumes:
   esdata:

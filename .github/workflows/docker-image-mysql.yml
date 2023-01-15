@@ -9,7 +9,7 @@ on:
       - .github/workflows/*mysql*
 
 jobs:
-  mysql8-dev:
+  mysql8:
     name: MySQL
     runs-on: ubuntu-latest
 

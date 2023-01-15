@@ -31,7 +31,6 @@ cat /usr/local/etc/php/conf.d/05-additions.ini.template \
 # append roll issued root ca cert to ca-bundle trusted by curl/openssl
 if [ -f /etc/ssl/roll-rootca-cert/ca.cert.pem ]; then
   sudo cp /etc/ssl/roll-rootca-cert/ca.cert.pem /usr/local/share/ca-certificates/roll-rootca-cert.pem.crt
-  sudo tee -a /etc/ssl/certs/ca-certificates.crt < /usr/local/share/ca-certificates/warden-rootca-cert.crt > /dev/null
 fi
 
 # update trust outside if condition above to allow mounting PEM files into /etc/pki/ca-trust/source/anchors
