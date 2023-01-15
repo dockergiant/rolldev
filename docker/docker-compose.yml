@@ -3,7 +3,7 @@ services:
 
   startpage:
     container_name: startpage
-    image: ${ROLL_IMAGE_REPOSITORY}/startpage:latest
+    image: ${ROLL_IMAGE_REPOSITORY}/rolldev-startpage:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
@@ -50,7 +50,7 @@ services:
 
   dnsmasq:
     container_name: dnsmasq
-    image: ${ROLL_IMAGE_REPOSITORY}/dnsmasq
+    image: ${ROLL_IMAGE_REPOSITORY}/rolldev-dnsmasq:latest
     ports:
       - "127.0.0.1:53:53/udp"
     environment:
@@ -86,7 +86,7 @@ services:
 
   mailhog:
     container_name: mailhog
-    image: ${ROLL_IMAGE_REPOSITORY}/mailhog:latest
+    image: ${ROLL_IMAGE_REPOSITORY}/rolldev-mailhog:latest
     labels:
       - traefik.enable=true
       - traefik.http.routers.mailhog.tls=true
