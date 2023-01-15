@@ -62,9 +62,13 @@ RUN set -eux; \
     git \
     rsync \
     bash-completion \
+    nmap  \
+    less \
     zsh \
     fish \
     pwgen \
+    openssh-client \
+    unzip \
     rsync \
     socat \
     oathtool \
@@ -73,12 +77,17 @@ RUN set -eux; \
     automake  \
     autoconf \
     python \
-    cron
+    cron \
+    htop
 
 COPY docker-entrypoint /usr/local/bin/
 COPY etc/profile.d/*.sh /etc/profile.d/
 COPY etc/php.d/*.ini /usr/local/etc/php/conf.d
 COPY etc/php.d/05-additions.ini.template /usr/local/etc/php/conf.d
+
+RUN set -eux \
+    && cp ${PHP_INI_DIR}/php.ini-development ${PHP_INI_DIR}/php.ini \
+    && perl -pi -e 's/memory_limit(.*)/memory_limit=-1/g' ${PHP_INI_DIR}/php.ini
 
 # Install Composer
 COPY --from=composer:1 /usr/bin/composer /usr/bin/composer1
@@ -104,6 +113,18 @@ RUN if [ "$(printf "7.3\n${PHP_VERSION}" | sort -g | head -n1)" = "7.3" ]; \
 RUN mkdir -p /etc/zsh/zshrc.d  \
     && echo "autoload -U compinit; compinit" > /etc/zsh/zshrc.d/completions.zsh \
     && ln -s /usr/bin/fish /bin/fish
+
+RUN set -eux; \
+	{ \
+		echo 'if [ -d /etc/profile.d ]; then'; \
+        echo '  for i in /etc/profile.d/*.sh; do'; \
+        echo '    if [ -r $i ]; then'; \
+        echo '      . $i'; \
+        echo '    fi'; \
+        echo '  done'; \
+        echo '  unset i'; \
+        echo 'fi'; \
+	} >> /etc/bash.bashrc;
 
 # Install Oh My Zsh including the following Plugins: git, composer and n98-magerun
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
