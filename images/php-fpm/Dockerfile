@@ -78,7 +78,8 @@ RUN set -eux; \
     autoconf \
     python \
     cron \
-    htop
+    htop \
+    chromium
 
 COPY docker-entrypoint /usr/local/bin/
 COPY etc/profile.d/*.sh /etc/profile.d/
