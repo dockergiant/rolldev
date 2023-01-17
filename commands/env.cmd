@@ -98,8 +98,11 @@ if [[ ${ROLL_ENV_TYPE} != local ]]; then
     appendEnvPartialIfExists "php-fpm"
 fi
 
-[[ ${ROLL_BROWSERSYNC} -eq 1 ]] \
-    && appendEnvPartialIfExists "browsersync"
+if [[ ${ROLL_BROWSERSYNC} -eq 1 ]]; then
+  export BROWSERSYNC_PORT_WEB=$(roll browsersync freeport web)
+  export BROWSERSYNC_PORT_UI=$(roll browsersync freeport ui)
+  appendEnvPartialIfExists "browsersync"
+fi
 
 [[ ${ROLL_INCLUDE_GIT} -eq 1 ]] \
     && appendEnvPartialIfExists "git"
