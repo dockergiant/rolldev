@@ -38,7 +38,7 @@ if [[ "${ROLL_PARAMS[0]}" == "freeport" ]]; then
                        }
                      }
                      END {
-                       for (i = 3000; i < 3249 && p[i]; i++){};
+                       for (i = 3005; i < 3249 && p[i]; i++){};
                        if (i == 3249) {exit 1};
                        print i
                      }
