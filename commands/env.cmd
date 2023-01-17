@@ -97,6 +97,10 @@ appendEnvPartialIfExists "networks"
 if [[ ${ROLL_ENV_TYPE} != local ]]; then
     appendEnvPartialIfExists "php-fpm"
 fi
+
+[[ ${ROLL_BROWSERSYNC} -eq 1 ]] \
+    && appendEnvPartialIfExists "browsersync"
+
 [[ ${ROLL_INCLUDE_GIT} -eq 1 ]] \
     && appendEnvPartialIfExists "git"
 

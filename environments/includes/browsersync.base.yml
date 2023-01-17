@@ -1,0 +1,6 @@
+version: "3.9"
+services:
+  php-fpm:
+    ports:
+      - 3000-3250:3000
+      - 3251-3500:3001
