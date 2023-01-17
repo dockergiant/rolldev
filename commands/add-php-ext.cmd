@@ -8,7 +8,7 @@ assertDockerRunning
 ## allow return codes from sub-process to bubble up normally
 trap '' ERR
 
-if [ -z "${ROLL_PARAMS[@]}" ]; then
+if [ -z "${ROLL_PARAMS[*]}" ]; then
 	"${ROLL_DIR}/bin/roll" add-php-ext --help
 	exit 0
 fi
@@ -18,6 +18,3 @@ ROLL_ENV_SHELL_DEBUG_CONTAINER=${ROLL_ENV_SHELL_DEBUG_CONTAINER:-php-debug}
 
 "${ROLL_DIR}/bin/roll" env exec -u root -T "${ROLL_ENV_SHELL_CONTAINER}" install-php-extensions "${ROLL_PARAMS[@]}"
 "${ROLL_DIR}/bin/roll" env exec -u root -T "${ROLL_ENV_SHELL_DEBUG_CONTAINER}" install-php-extensions "${ROLL_PARAMS[@]}"
-
-"${ROLL_DIR}/bin/roll" env exec -u root -T "${ROLL_ENV_SHELL_CONTAINER}" docker-php-ext-enable  "${ROLL_PARAMS[@]}"
-"${ROLL_DIR}/bin/roll" env exec -u root -T "${ROLL_ENV_SHELL_DEBUG_CONTAINER}" docker-php-ext-enable  "${ROLL_PARAMS[@]}"
