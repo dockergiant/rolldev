@@ -79,8 +79,7 @@ RUN set -eux; \
     python \
     cron \
     htop \
-    chromium \
-    chromium-sandbox
+    chromium
 
 COPY docker-entrypoint /usr/local/bin/
 COPY etc/profile.d/*.sh /etc/profile.d/
