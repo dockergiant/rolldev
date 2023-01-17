@@ -2,6 +2,7 @@ version: "3.9"
 
 x-volumes: &volumes
   - ${ROLL_HOME_DIR}/ssl/certs:/home/certs
+  - .${ROLL_WEB_ROOT:-}/.git:/var/www/html/.git
 
 services:
   nginx:
