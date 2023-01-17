@@ -97,7 +97,8 @@ appendEnvPartialIfExists "networks"
 if [[ ${ROLL_ENV_TYPE} != local ]]; then
     appendEnvPartialIfExists "php-fpm"
 fi
-
+[[ ${ROLL_INCLUDE_GIT} -eq 1 ]] \
+    && appendEnvPartialIfExists "git"
 
 
 [[ ${ROLL_NGINX} -eq 1 ]] \
