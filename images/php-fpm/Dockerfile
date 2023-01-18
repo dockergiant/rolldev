@@ -79,7 +79,9 @@ RUN set -eux; \
     python \
     cron \
     htop \
-    chromium
+    chromium \
+    imagemagick \
+    graphicsmagick
 
 COPY docker-entrypoint /usr/local/bin/
 COPY etc/profile.d/*.sh /etc/profile.d/
@@ -105,7 +107,8 @@ RUN if [ "$(printf "7.3\n${PHP_VERSION}" | sort -g | head -n1)" != "7.3" ]; \
 
 # If PHP >= 7.1
 RUN if [ "$(printf "7.1\n${PHP_VERSION}" | sort -g | head -n1)" = "7.1" ]; \
-    then apt-get install -y --no-install-recommends libmariadb3 libmariadb-dev; fi
+    then apt-get install -y --no-install-recommends libmariadb3 libmariadb-dev \
+    && sed -i '/disable ghostscript format types/,+6d' /etc/ImageMagick-6/policy.xml; fi
 
 # If PHP >= 7.3
 RUN if [ "$(printf "7.3\n${PHP_VERSION}" | sort -g | head -n1)" = "7.3" ]; \

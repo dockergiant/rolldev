@@ -5,6 +5,14 @@
 DOCKER_PEERED_SERVICES=("traefik" "tunnel" "mailhog")
 
 ## messaging functions
+function success {
+  >&2 printf "\033[32mSUCCESS\033[0m: $@\n"
+}
+
+function info {
+  >&2 printf "\033[33mINFO\033[0m: $@\n"
+}
+
 function warning {
   >&2 printf "\033[33mWARNING\033[0m: $@\n"
 }
