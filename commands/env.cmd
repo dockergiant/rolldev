@@ -222,7 +222,8 @@ docker compose \
     "${DOCKER_COMPOSE_ARGS[@]}" "${ROLL_PARAMS[@]}" "$@"
 
 if [[ ("${ROLL_PARAMS[0]}" == "up" || "${ROLL_PARAMS[0]}" == "start") && -n "${ROLL_EXTRA_PHP_EXT}" ]]; then
-    roll add-php-ext "${ROLL_EXTRA_PHP_EXT}"
+  info "Adding additional PHP extension, This may take a while... (output hidden)"
+  roll add-php-ext "${ROLL_EXTRA_PHP_EXT}" > /dev/null 2>&1
 fi
 
 ## resume mutagen sync if available and php-fpm container id hasn't changed
