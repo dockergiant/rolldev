@@ -1,0 +1,34 @@
+name: Tag Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The version to tag'
+        required: true
+        type: string
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update Files
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |-
+          echo $VERSION > version
+      - name: "Create Tag"
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |-
+          git add ./*
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git commit -m "Tagged ${VERSION}"
+          git tag ${VERSION}
+          git push --tags
+      - name: "Create Release"
+        uses: ncipollo/release-action@v1
+        with:
+          draft: true
+          generateReleaseNotes: true
+          tag: ${{ inputs.version }}

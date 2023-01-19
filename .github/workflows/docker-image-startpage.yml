@@ -1,5 +1,7 @@
-name: Docker Image Startpage
+name: Docker Image RollDev Dashboard
 on:
+  schedule:
+    - cron: "0 6 * * *" # 6 AM Daily
   push:
     paths:
       - images/.trigger
@@ -12,26 +14,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v3
+      - uses: docker/setup-qemu-action@v2
+      - uses: docker/setup-buildx-action@v2
 
-      - name: Set up Actions
-        uses: actions/checkout@v2
+      - name: Login to Github Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ !env.ACT }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - uses: docker/login-action@v2
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
         if: ${{ !env.ACT }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v3
+      - uses: docker/build-push-action@v3
         with:
           context: images/startpage
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.ref == 'refs/heads/develop' && !env.ACT }}
+          push: ${{ github.ref == 'refs/heads/main' && !env.ACT }}
           tags: docker.io/rollupdev/startpage:latest
+        if: ${{ !env.ACT && github.ref == 'refs/heads/main'}}
+
+
+      - uses: docker/build-push-action@v3
+        with:
+          context: images/startpage
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
+          tags: ghcr.io/${{ github.repository_owner }}/rolldev-startpage:latest
+        if: ${{ !env.ACT && github.ref == 'refs/heads/alpha'}}

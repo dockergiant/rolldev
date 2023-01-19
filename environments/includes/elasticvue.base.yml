@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  elasticvue:
+    hostname: "${ROLL_ENV_NAME}-elasticvue"
+    image: rollupdev/elasticvue:latest
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-elasticvue.tls=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-elasticvue.rule=Host(`elasticvue.${TRAEFIK_DOMAIN}`)
+      - traefik.http.services.${ROLL_ENV_NAME}-elasticvue.loadbalancer.server.port=8080
+      - traefik.docker.network=${ROLL_ENV_NAME}_default
+    environment:
+      - DEFAULT_NAME=${ROLL_ENV_NAME}
+      - DEFAULT_HOST=https://elasticsearch.${TRAEFIK_DOMAIN}
+
+volumes:
+  esdata:

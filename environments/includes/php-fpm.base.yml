@@ -18,7 +18,7 @@ services:
 
   php-fpm:
     hostname: "${ROLL_ENV_NAME}-php-fpm"
-    image: ${ROLL_IMAGE_REPOSITORY}/php-fpm:${PHP_VERSION:-7.4}${ROLL_SVC_PHP_VARIANT:-}
+    image: ${ROLL_IMAGE_REPOSITORY}/rolldev-php-fpm${ROLL_SVC_PHP_VARIANT:-}:${PHP_VERSION:-7.4}${ROLL_SVC_PHP_NODE:-}
     environment:
       - TRAEFIK_DOMAIN
       - TRAEFIK_SUBDOMAIN
@@ -28,12 +28,15 @@ services:
       - COMPOSER_MEMORY_LIMIT=-1
       - HISTFILE=/bash_history/.bash_history
       - CHOWN_DIR_LIST=${CHOWN_DIR_LIST:-}
+      - USER_ID=${USER_ID:-33}
+      - GROUP_ID=${GROUP_ID:-33}
+      - OSTYPE=${OSTYPE:-linux}
     volumes: *volumes
     extra_hosts: *extra_hosts
 
   php-debug:
     hostname: "${ROLL_ENV_NAME}-php-debug"
-    image: ${ROLL_IMAGE_REPOSITORY}/php-fpm:${PHP_VERSION:-7.4}${ROLL_SVC_PHP_VARIANT:-}-${XDEBUG_VERSION:-debug}
+    image: ${ROLL_IMAGE_REPOSITORY}/rolldev-php-fpm${ROLL_SVC_PHP_VARIANT:-}-debug:${PHP_VERSION:-7.4}${ROLL_SVC_PHP_NODE:-}
     environment:
       - TRAEFIK_DOMAIN
       - TRAEFIK_SUBDOMAIN
@@ -44,6 +47,9 @@ services:
       - PHP_IDE_CONFIG=serverName=${ROLL_ENV_NAME}-docker
       - HISTFILE=/bash_history/.bash_history
       - CHOWN_DIR_LIST=${CHOWN_DIR_LIST:-}
+      - USER_ID=${USER_ID:-33}
+      - GROUP_ID=${GROUP_ID:-33}
+      - OSTYPE=${OSTYPE:-linux}
     volumes: *volumes
     extra_hosts: *extra_hosts
     depends_on:
