@@ -55,7 +55,7 @@ jobs:
           )
           echo "OPENSEARCH_VERSION=${OPENSEARCH_VERSION}" | tee /dev/stderr >> $GITHUB_ENV
 
-      - uses: docker/build-push-action@v3
+      - uses: docker/build-push-action@v4
         with:
           context: images/opensearch
           platforms: linux/amd64,linux/arm64
@@ -64,7 +64,7 @@ jobs:
           tags: docker.io/rollupdev/opensearch:${{ matrix.version }}
         if: ${{ !env.ACT && github.ref == 'refs/heads/main'}}
 
-      - uses: docker/build-push-action@v3
+      - uses: docker/build-push-action@v4
         with:
           context: images/opensearch
           platforms: linux/amd64,linux/arm64

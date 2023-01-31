@@ -33,7 +33,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
         if: ${{ !env.ACT }}
 
-      - uses: docker/build-push-action@v3
+      - uses: docker/build-push-action@v4
         with:
           context: images/startpage
           platforms: linux/amd64,linux/arm64
@@ -42,7 +42,7 @@ jobs:
         if: ${{ !env.ACT && github.ref == 'refs/heads/main'}}
 
 
-      - uses: docker/build-push-action@v3
+      - uses: docker/build-push-action@v4
         with:
           context: images/startpage
           platforms: linux/amd64,linux/arm64
