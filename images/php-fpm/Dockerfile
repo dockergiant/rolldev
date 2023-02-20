@@ -45,7 +45,7 @@ RUN chmod +x /usr/local/bin/install-php-extensions && install-php-extensions \
 
 # If PHP < 8.2 install mcrypt
 RUN if [ "$(printf "8.2\n${PHP_VERSION}" | sort -g | head -n1)" != "8.2" ]; \
-    then install-php-extensions mcrypt fi
+    then install-php-extensions mcrypt; fi
 
 # Install helpful utilities
 RUN set -eux; \
