@@ -51,23 +51,14 @@ jobs:
           )
           echo "VARNISH_VERSION=${VARNISH_VERSION}" | tee /dev/stderr >> $GITHUB_ENV
 
-      - uses: docker/build-push-action@v2
+      - uses: docker/build-push-action@v4
         with:
           context: images/varnish
           platforms: linux/amd64,linux/arm64
           build-args: VARNISH_VERSION=${{ env.VARNISH_VERSION }}
-          push: ${{ github.ref == 'refs/heads/main' && !env.ACT }}
-          tags: docker.io/rollupdev/varnish:${{ matrix.version }}
-        if: ${{ !env.ACT && github.ref == 'refs/heads/main'}}
-
-      - uses: docker/build-push-action@v3
-        with:
-          context: images/varnish
-          platforms: linux/amd64,linux/arm64
-          build-args: VARNISH_VERSION=${{ env.VARNISH_VERSION }}
-          push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
+          push: ${{ github.ref == 'refs/heads/develop' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-varnish:${{ matrix.version }}
-        if: ${{ !env.ACT && github.ref == 'refs/heads/alpha'}}
+        if: ${{ !env.ACT && github.ref == 'refs/heads/develop'}}
 
   varnish-lts:
     name: Varnish LTS
@@ -108,25 +99,15 @@ jobs:
           )
           echo "VARNISH_VERSION=${VARNISH_VERSION}" | tee /dev/stderr >> $GITHUB_ENV
 
-      - uses: docker/build-push-action@v2
+      - uses: docker/build-push-action@v4
         with:
           context: images/varnish
           file: images/varnish/Dockerfile.lts
           platforms: linux/amd64,linux/arm64
           build-args: VARNISH_VERSION=${{ env.VARNISH_VERSION }}
-          push: ${{ github.ref == 'refs/heads/main' && !env.ACT }}
-          tags: docker.io/rollupdev/varnish:${{ matrix.version }}
-        if: ${{ !env.ACT && github.ref == 'refs/heads/main'}}
-
-      - uses: docker/build-push-action@v3
-        with:
-          context: images/varnish
-          file: images/varnish/Dockerfile.lts
-          platforms: linux/amd64,linux/arm64
-          build-args: VARNISH_VERSION=${{ env.VARNISH_VERSION }}
-          push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
+          push: ${{ github.ref == 'refs/heads/develop' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-varnish:${{ matrix.version }}
-        if: ${{ !env.ACT && github.ref == 'refs/heads/alpha'}}
+        if: ${{ !env.ACT && github.ref == 'refs/heads/develop'}}
 
   varnish-legacy:
     name: Varnish Legacy
@@ -161,22 +142,12 @@ jobs:
       - name: Configure RPM repository
         run: echo "VARNISH_VERSION=$(echo ${{ matrix.version }} | tr -d .)" >> $GITHUB_ENV
 
-      - uses: docker/build-push-action@v2
-        with:
-          context: images/varnish
-          file: images/varnish/Dockerfile.legacy
-          platforms: linux/amd64,linux/arm64
-          build-args: VARNISH_VERSION=${{ env.VARNISH_VERSION }}
-          push: ${{ github.ref == 'refs/heads/main' && !env.ACT }}
-          tags: docker.io/rollupdev/varnish:${{ matrix.version }}
-        if: ${{ !env.ACT && github.ref == 'refs/heads/main'}}
-
-      - uses: docker/build-push-action@v3
+      - uses: docker/build-push-action@v4
         with:
           context: images/varnish
           file: images/varnish/Dockerfile.legacy
           platforms: linux/amd64, linux/arm64
           build-args: VARNISH_VERSION=${{ env.VARNISH_VERSION }}
-          push: ${{ github.ref == 'refs/heads/alpha' && !env.ACT }}
+          push: ${{ github.ref == 'refs/heads/develop' && !env.ACT }}
           tags: ghcr.io/${{ github.repository_owner }}/rolldev-varnish:${{ matrix.version }}
-        if: ${{ !env.ACT && github.ref == 'refs/heads/alpha'}}
+        if: ${{ !env.ACT && github.ref == 'refs/heads/develop'}}
