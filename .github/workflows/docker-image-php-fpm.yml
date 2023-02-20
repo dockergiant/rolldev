@@ -10,7 +10,7 @@ on:
       - .github/workflows/*php-fpm*
       - .github/workflows/php-matrix/**
     branches:
-      - main
+      - develop
       - alpha
 
 jobs:
