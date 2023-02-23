@@ -2,7 +2,7 @@ ARG ENV_SOURCE_IMAGE
 ARG PHP_VERSION
 ARG OS_RELEASE
 
-FROM golang:alpine AS mhs-builder
+FROM golang:bullseye AS mhs-builder
 RUN go install github.com/mailhog/mhsendmail@latest
 
 
