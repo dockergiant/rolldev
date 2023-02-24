@@ -84,9 +84,7 @@ RUN set -eux; \
     htop \
     chromium \
     imagemagick \
-    graphicsmagick; \
-    apt-get clean; \
-    rm -rf /var/lib/apt/lists
+    graphicsmagick;
 
 COPY docker-entrypoint /usr/local/bin/
 COPY etc/profile.d/*.sh /etc/profile.d/
@@ -150,6 +148,12 @@ RUN mkdir -p /home/www-data \
     && mkdir -p /var/www/html \
     && chown www-data:www-data /var/www/html \
     && echo "www-data ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
+
+
+# clean up apt packages and temporary files
+RUN set -eux; \
+    apt-get clean; \
+    rm -rf /var/lib/apt/lists
 
 STOPSIGNAL SIGQUIT
 
