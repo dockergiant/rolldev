@@ -6,7 +6,7 @@ services:
 
   db:
     hostname: "${ROLL_ENV_NAME}-db"
-    image: ${ROLL_IMAGE_REPOSITORY}/rolldev-${DB_DISTRIBUTION:-mariadb}:${DB_DISTRIBUTION_VERSION:-10.4}
+    image: ${ROLL_IMAGE_REPOSITORY}/${DB_DISTRIBUTION:-mariadb}:${DB_DISTRIBUTION_VERSION:-10.4}
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-app}
       - MYSQL_DATABASE=${MYSQL_DATABASE:-app}

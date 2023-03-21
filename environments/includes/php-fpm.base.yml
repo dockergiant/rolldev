@@ -18,7 +18,7 @@ services:
 
   php-fpm:
     hostname: "${ROLL_ENV_NAME}-php-fpm"
-    image: ${ROLL_IMAGE_REPOSITORY}/rolldev-php-fpm${ROLL_SVC_PHP_VARIANT:-}:${PHP_VERSION:-7.4}${ROLL_SVC_PHP_NODE:-}
+    image: ${ROLL_IMAGE_REPOSITORY}/php-fpm${ROLL_SVC_PHP_VARIANT:-}:${PHP_VERSION:-7.4}${ROLL_SVC_PHP_NODE:-}
     environment:
       - TRAEFIK_DOMAIN
       - TRAEFIK_SUBDOMAIN
@@ -36,7 +36,7 @@ services:
 
   php-debug:
     hostname: "${ROLL_ENV_NAME}-php-debug"
-    image: ${ROLL_IMAGE_REPOSITORY}/rolldev-php-fpm${ROLL_SVC_PHP_VARIANT:-}-debug:${PHP_VERSION:-7.4}${ROLL_SVC_PHP_NODE:-}
+    image: ${ROLL_IMAGE_REPOSITORY}/php-fpm${ROLL_SVC_PHP_VARIANT:-}-debug:${PHP_VERSION:-7.4}${ROLL_SVC_PHP_NODE:-}
     environment:
       - TRAEFIK_DOMAIN
       - TRAEFIK_SUBDOMAIN

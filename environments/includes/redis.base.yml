@@ -2,7 +2,7 @@ version: "3.9"
 services:
   redis:
     hostname: "${ROLL_ENV_NAME}-redis"
-    image: ${ROLL_IMAGE_REPOSITORY}/rolldev-redis:${REDIS_VERSION:-5.0}
+    image: ${ROLL_IMAGE_REPOSITORY}/redis:${REDIS_VERSION:-5.0}
     volumes:
       - redis:/data
 
