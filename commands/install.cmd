@@ -85,3 +85,14 @@ fi
 
 ## append settings for tunnel.roll.test in /etc/ssh/ssh_config
 installSshConfig
+
+## Add optional RollDev configuration file
+if [[ ! -f "${ROLL_HOME_DIR}/.env" ]]; then
+	cat >> "${ROLL_HOME_DIR}/.env" <<-EOT
+		# Set to "0" to disable global startpage service
+		ROLL_SERVICE_STARTPAGE=1
+
+		# Set to "1" to enable global Portainer service
+		ROLL_SERVICE_PORTAINER=0
+	EOT
+fi

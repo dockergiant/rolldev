@@ -23,6 +23,27 @@ DOCKER_COMPOSE_ARGS=()
 DOCKER_COMPOSE_ARGS+=("-f")
 DOCKER_COMPOSE_ARGS+=("${ROLL_DIR}/docker/docker-compose.yml")
 
+# Load optional service flags
+if [[ -f "${ROLL_HOME_DIR}/.env" ]]; then
+    # Portainer service
+    eval "$(grep "^ROLL_SERVICE_PORTAINER" "${ROLL_HOME_DIR}/.env")"
+
+     # Startpage service
+    eval "$(grep "^ROLL_SERVICE_STARTPAGE" "${ROLL_HOME_DIR}/.env")"
+fi
+
+ROLL_SERVICE_PORTAINER="${DEN_SERVICE_PORTAINER:-0}"
+if [[ "${ROLL_SERVICE_PORTAINER}" == 1 ]]; then
+    DOCKER_COMPOSE_ARGS+=("-f")
+    DOCKER_COMPOSE_ARGS+=("${ROLL_DIR}/docker/portainer-service.yml")
+fi
+
+ROLL_SERVICE_STARTPAGE="${ROLL_SERVICE_STARTPAGE:-0}"
+if [[ "${ROLL_SERVICE_STARTPAGE}" == 1 ]]; then
+    DOCKER_COMPOSE_ARGS+=("-f")
+    DOCKER_COMPOSE_ARGS+=("${ROLL_DIR}/docker/startpage-service.yml")
+fi
+
 ## special handling when 'svc up' is run
 if [[ "${ROLL_PARAMS[0]}" == "up" ]]; then
 		# update images if needed

@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer:/data
+    command: --admin-password '$$2y$$05$$ZEjB7uqPrNnWCJL1AicnUeug6mzL2y42qtQU3F.Q.68ZxJll/cgIu' # user admin password admin123456789
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.portainer.tls=true
+      - traefik.http.routers.portainer.rule=Host(`portainer.${ROLL_SERVICE_DOMAIN:-roll.test}`)
+      - traefik.http.services.portainer.loadbalancer.server.port=9000
+    restart: ${ROLL_RESTART_POLICY:-always}
+
+volumes:
+  portainer:

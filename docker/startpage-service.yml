@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  startpage:
+    container_name: startpage
+    image: ${ROLL_IMAGE_REPOSITORY}/rolldev-startpage:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.startpage.tls=true
+      - traefik.http.routers.startpage.rule=Host(`${ROLL_SERVICE_DOMAIN:-roll.test}`)||Host(`www.${ROLL_SERVICE_DOMAIN:-roll.test}`)
+      - traefik.http.services.startpage.loadbalancer.server.port=80
+    environment:
+      - ROLL_SERVICE_DOMAIN=${ROLL_SERVICE_DOMAIN:-roll.test}
+      - ROLL_VERSION=${ROLL_VERSION:-"in-dev"}
+    restart: ${ROLL_RESTART_POLICY:-always}

@@ -1,21 +1,5 @@
 version: "3.9"
 services:
-
-  startpage:
-    container_name: startpage
-    image: ${ROLL_IMAGE_REPOSITORY}/rolldev-startpage:latest
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.startpage.tls=true
-      - traefik.http.routers.startpage.rule=Host(`${ROLL_SERVICE_DOMAIN:-roll.test}`)||Host(`www.${ROLL_SERVICE_DOMAIN:-roll.test}`)
-      - traefik.http.services.startpage.loadbalancer.server.port=80
-    environment:
-      - ROLL_SERVICE_DOMAIN=${ROLL_SERVICE_DOMAIN:-roll.test}
-      - ROLL_VERSION=${DEN_VERSION:-"in-dev"}
-    restart: ${ROLL_RESTART_POLICY:-always}
-
   traefik:
     container_name: traefik
     image: traefik:${TRAEFIK_VERSION:-2.2}
@@ -32,20 +16,6 @@ services:
       - traefik.http.routers.traefik.tls=true
       - traefik.http.routers.traefik.rule=Host(`traefik.${ROLL_SERVICE_DOMAIN:-roll.test}`)
       - traefik.http.routers.traefik.service=api@internal
-    restart: ${ROLL_RESTART_POLICY:-always}
-
-  portainer:
-    container_name: portainer
-    image: portainer/portainer-ce
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer:/data
-    command: --admin-password '$$2y$$05$$ZEjB7uqPrNnWCJL1AicnUeug6mzL2y42qtQU3F.Q.68ZxJll/cgIu' # user admin password admin123456789
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.portainer.tls=true
-      - traefik.http.routers.portainer.rule=Host(`portainer.${ROLL_SERVICE_DOMAIN:-roll.test}`)
-      - traefik.http.services.portainer.loadbalancer.server.port=9000
     restart: ${ROLL_RESTART_POLICY:-always}
 
   dnsmasq:
@@ -115,7 +85,6 @@ services:
     restart: ${ROLL_RESTART_POLICY:-always}
 
 volumes:
-  portainer:
   sshd_keys:
 
 networks:
