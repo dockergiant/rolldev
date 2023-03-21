@@ -33,18 +33,18 @@ RollDev is updated like other [Homebrew](https://brew.sh/) software by running b
 
 RollDev may be installed by cloning the repository to the directory of your choice and adding it to your `$PATH`. This method of installation may be when Homebrew does not already exist on your system or when preparing contributions to the RollDev project.
 
-    sudo mkdir /opt/den
-    sudo chown $(whoami) /opt/den
-    git clone -b main https://github.com/dockergiant/rolldev.git /opt/den
-    echo 'export PATH="/opt/den/bin:$PATH"' >> ~/.bashrc
-    PATH="/opt/den/bin:$PATH"
+    sudo mkdir /opt/roll
+    sudo chown $(whoami) /opt/roll
+    git clone -b main https://github.com/dockergiant/rolldev.git /opt/roll
+    echo 'export PATH="/opt/roll/bin:$PATH"' >> ~/.bashrc
+    PATH="/opt/roll/bin:$PATH"
     roll svc up
 
 ### Updating Alternative (Manual) Installations
 
 To update RollDev just pull the latest changes from git, or check out a specific release tag. You'll also want to rebuild your dashboard image to reflect the latest changes (if any).
 
-    cd /opt/den
+    cd /opt/roll
     git fetch --tags
     git pull
     # git switch <tag>
