@@ -4,9 +4,9 @@
 Currently the only images that support the alternative shells described here
 are those based off of the php-fpm image. This includes:
 
- - den-php-fpm
- - den-php-fpm-magento2
- - den-php-debug
+ - rolldev-php-fpm
+ - rolldev-php-fpm-magento2
+ - rolldev-php-debug
 :::
 
 Some RollDev containers now come with some alternative shells to BaSH. By default

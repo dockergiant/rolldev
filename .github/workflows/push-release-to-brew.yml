@@ -17,9 +17,9 @@ jobs:
           sudo apt-get install -y curl libdigest-sha-perl gettext-base
           curl "https://codeload.github.com/dockergiant/rolldev/tar.gz/refs/tags/${VERSION}" -o release.tar.gz
           export HASH=$(shasum -a256 release.tar.gz | head -n1 | awk '{print $1;}')
-          envsubst '$HASH,$VERSION' < Formula/den.rb.template > Formula/den.rb
+          envsubst '$HASH,$VERSION' < Formula/roll.rb.template > Formula/roll.rb
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add Formula/den.rb
+          git add Formula/roll.rb
           git commit -m "Mark v${VERSION}"
           git push
