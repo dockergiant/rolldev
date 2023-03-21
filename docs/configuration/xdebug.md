@@ -34,7 +34,7 @@ To configure a project in VSCode for debugging, add the following to `.vscode/la
 ```
 
 :::{note}
-If your project has (for example) ``ROLL_WEB_ROOT=/webroot`` in it's ``.env`` file, to mount ``webroot/`` to ``/var/www/html`` rather than the top-level project directory, you may need to set the ``pathMapping`` above to ``${workspaceRoot}/webroot`` for the mapping to function correctly.
+If your project has (for example) ``ROLL_WEB_ROOT=/webroot`` in it's ``.env.roll`` file, to mount ``webroot/`` to ``/var/www/html`` rather than the top-level project directory, you may need to set the ``pathMapping`` above to ``${workspaceRoot}/webroot`` for the mapping to function correctly.
 :::
 
 Once this configuration is in place, make sure you have the [PHP Debug extension by Felix Becker](https://marketplace.visualstudio.com/items?itemName=felixfbecker.php-debug) installed. This is required for Xdebug support to function in VSCode. Additional information on launch settings specific to Xdebug use in VSCode [may be found here](https://github.com/felixfbecker/vscode-php-debug#vs-code-configuration).
@@ -45,7 +45,7 @@ To learn more about debugging in VSCode, [please go here](https://code.visualstu
 
 When it receives the first request, PHP Storm should prompt you if the "Server" configuration is missing. The below image demonstrates how this is setup; the important settings are these:
 
-* Name: `clnt-docker` (this is the value of the `ROLL_ENV_NAME` variable in the `.env` file appended with a `-docker` suffix)
+* Name: `clnt-docker` (this is the value of the `ROLL_ENV_NAME` variable in the `.env.roll` file appended with a `-docker` suffix)
 * Host: `127.0.0.1`
 * Port: `80`
 * Debugger: Xdebug

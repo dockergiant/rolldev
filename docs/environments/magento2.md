@@ -7,11 +7,11 @@ The below example demonstrates the from-scratch setup of the Magento 2 applicati
         mkdir -p ~/Sites/exampleproject
         cd ~/Sites/exampleproject
 
-2.  From the root of your new project directory, run `env-init` to create the `.env` file with configuration needed for RollDev and Docker to work with the project.
+2.  From the root of your new project directory, run `env-init` to create the `.env.roll` file with configuration needed for RollDev and Docker to work with the project.
 
         roll env-init exampleproject magento2
 
-    The result of this command is a `.env` file in the project root (tip: commit this to your VCS to share the configuration with other team members) having the following contents:
+    The result of this command is a `.env.roll` file in the project root (tip: commit this to your VCS to share the configuration with other team members) having the following contents:
 
         ROLL_ENV_NAME=exampleproject
         ROLL_ENV_TYPE=magento2
@@ -54,7 +54,7 @@ The below example demonstrates the from-scratch setup of the Magento 2 applicati
         BLACKFIRE_SERVER_ID=
         BLACKFIRE_SERVER_TOKEN=
 
-3.  Sign an SSL certificate for use with the project (the input here should match the value of `TRAEFIK_DOMAIN` in the above `.env` example file):
+3.  Sign an SSL certificate for use with the project (the input here should match the value of `TRAEFIK_DOMAIN` in the above `.env.roll` example file):
 
         roll sign-certificate exampleproject.test
 

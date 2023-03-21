@@ -2,7 +2,7 @@
 
 For information what **Magento Functional Testing Framework** is - please follow to [MFTF DevDocs](https://devdocs.magento.com/mftf/docs/introduction.html).
 
-MFTF is part of Magento 2. To run tests you need [Selenium](https://selenium.dev/) instance with [Chrome Webdriver](https://sites.google.com/a/chromium.org/chromedriver/). RollDev provides Docker setup that contains Selenium Standalone with Chrome. You can enable it by adding the following to the project's `.env` file (or exporting them to environment variables prior to starting the environment):
+MFTF is part of Magento 2. To run tests you need [Selenium](https://selenium.dev/) instance with [Chrome Webdriver](https://sites.google.com/a/chromium.org/chromedriver/). RollDev provides Docker setup that contains Selenium Standalone with Chrome. You can enable it by adding the following to the project's `.env.roll` file (or exporting them to environment variables prior to starting the environment):
 
 ```
 ROLL_SELENIUM=1
@@ -21,7 +21,7 @@ We provide complex instruction on {ref}`How to run MFTF Tests <magento2-testing-
 
 ## Debugging MFTF Tests
 
-By default RollDev uses headless Chrome browser. If you want to preview the tests - you need to extend `.env` file and update environment containers (`roll env up`)
+By default RollDev uses headless Chrome browser. If you want to preview the tests - you need to extend `.env.roll` file and update environment containers (`roll env up`)
 
 ```
 ROLL_SELENIUM_DEBUG=1

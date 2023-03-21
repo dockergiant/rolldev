@@ -34,7 +34,7 @@ ROLL_ENV_SHELL_COMMAND=fish
 
 ### Project Specific
 
-Within your project environment, edit the `.env` file and specify the
+Within your project environment, edit the `.env.roll` file and specify the
 `ROLL_ENV_SHELL_COMMAND` variable with your choise of shell from below:
 
 ```

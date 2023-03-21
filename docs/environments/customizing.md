@@ -2,11 +2,11 @@
 
 Further information on customizing or extending an environment is forthcoming. For now, this section is limited to very simple and somewhat common customizations.
 
-To configure your project with a non-default PHP version, add the following to the project's `.env` file and run `roll env up` to re-create the affected containers:
+To configure your project with a non-default PHP version, add the following to the project's `.env.roll` file and run `roll env up` to re-create the affected containers:
 
     PHP_VERSION=7.2
 
-The versions of MariaDB/Mysql, Elasticsearch, Varnish, Redis, NodeJS and Composer may also be similarly configured using variables in the `.env` file:
+The versions of MariaDB/Mysql, Elasticsearch, Varnish, Redis, NodeJS and Composer may also be similarly configured using variables in the `.env.roll` file:
 
   * `DB_DISTRIBUTION_VERSION` (Available distributions: `DB_DISTRIBUTION=mysql` or `DB_DISTRIBUTION=mariadb`)
   * `ELASTICSEARCH_VERSION`
@@ -17,7 +17,7 @@ The versions of MariaDB/Mysql, Elasticsearch, Varnish, Redis, NodeJS and Compose
   * `NODE_VERSION`
   * `COMPOSER_VERSION`
 
-Start of some environments could be skipped by using variables in `.env` file:
+Start of some environments could be skipped by using variables in `.env.roll` file:
 
   * `ROLL_DB=0`
   * `ROLL_REDIS=0`
@@ -30,7 +30,7 @@ One example for a use case is {doc}`the setup of multiple domains <../configurat
 
 If that's not enough, it's possible to extend the environment config by leveraging, like for example (`.roll/environments/magento2/magento2.base.yml`):
 ```
-version: "3.5"
+version: "3.9"
 services:
   nginx:
     image: my_custom_nginx_image:latest
@@ -47,7 +47,7 @@ To override default php settings, follow the docker customization above and incl
 In this case the `roll-env.yml` should look like this:
 
 ```
-version: "3.5"
+version: "3.9"
 services:
   php-fpm:
     volumes:
@@ -77,7 +77,7 @@ upload_max_filesize = 25M
 To override the default nginx configuration of your project, add a new file
 `.roll/roll-env.yml` to your project root with the following content:
 ```
-version: "3.5"
+version: "3.9"
 services:
   nginx:
     volumes:
@@ -92,12 +92,12 @@ The `.modman` folder and the corresponding `.basedir` file will be recognized an
 
 ## Magento 2 Specific Customizations
 
-The following variables can be added to the project's `.env` file to enable additional database containers for use with the Magento 2 (Commerce Only) [split-database solution](https://devdocs.magento.com/guides/v2.3/config-guide/multi-master/multi-master.html).
+The following variables can be added to the project's `.env.roll` file to enable additional database containers for use with the Magento 2 (Commerce Only) [split-database solution](https://devdocs.magento.com/guides/v2.3/config-guide/multi-master/multi-master.html).
 
   * `ROLL_SPLIT_SALES=1`
   * `ROLL_SPLIT_CHECKOUT=1`
 
-Start of some Magento 2 specific environments could be skipped by using variables in `.env` file:
+Start of some Magento 2 specific environments could be skipped by using variables in `.env.roll` file:
 
   * `ROLL_ELASTICSEARCH=0`
   * `ROLL_OPENSEARCH=0`

@@ -4,7 +4,7 @@
 
 ## Configuration
 
-To enable Allure in your project environment, add to your `.env` file:
+To enable Allure in your project environment, add to your `.env.roll` file:
 
 ```
 ROLL_ALLURE=1

@@ -7,7 +7,7 @@ RollDev supports use of Elasticsearch. It is enabled by default on some environm
 
 ## Configuration
 
-To enable Elasticsearch in your project environment, add to your `.env` file:
+To enable Elasticsearch in your project environment, add to your `.env.roll` file:
 
 ```
 ROLL_ELASTICSEARCH=1

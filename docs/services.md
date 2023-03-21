@@ -9,7 +9,7 @@ After running `roll svc up` for the first time following installation, the follo
 
 ## Customizable Settings
 
-When spinning up global services via `docker-compose` RollDev uses `~/.roll` as the project directory allowing a `.env` placed at `~/.roll/.env` to function for overriding variables in the `docker-compose` configuration used to deploy these services.
+When spinning up global services via `docker-compose` RollDev uses `~/.roll` as the project directory allowing a `.env.roll` placed at `~/.roll/.env.roll` to function for overriding variables in the `docker-compose` configuration used to deploy these services.
 
 The following options are available (with default values indicated):
 
@@ -22,4 +22,4 @@ The following options are available (with default values indicated):
 Setting ``TRAEFIK_LISTEN=0.0.0.0`` can be quite useful in some cases, but be aware that causing Traefik to listen for requests publicly poses a security risk when on public WiFi or networks otherwise outside of your control.
 :::
 
-After changing settings in `~/.roll/.env`, please run `roll svc up` to apply.
+After changing settings in `~/.roll/.env.roll`, please run `roll svc up` to apply.

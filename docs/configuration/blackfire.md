@@ -2,7 +2,7 @@
 
 For information on what Blackfire is, please see the [introduction to Blackfire](https://blackfire.io/docs/introduction) in Blackfire documentation.
 
-Blackfire may be enabled on both `magento1` and `magento2` env types by adding the following to the project's `.env` file (or exporting them to environment variables prior to starting the environment):
+Blackfire may be enabled on both `magento1` and `magento2` env types by adding the following to the project's `.env.roll` file (or exporting them to environment variables prior to starting the environment):
 
 ```
 ROLL_BLACKFIRE=1
