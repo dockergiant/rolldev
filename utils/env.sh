@@ -68,6 +68,12 @@ function renderEnvNetworkName() {
     echo "${ROLL_ENV_NAME}_default" | tr '[:upper:]' '[:lower:]'
 }
 
+function renderEnvType() {
+    ROLL_ENV_PATH="$(locateEnvPath)" || exit $?
+    loadEnvConfig "${ROLL_ENV_PATH}" || exit $?
+    echo "${ROLL_ENV_TYPE:-}"
+}
+
 function fetchEnvInitFile () {
     local envInitPath=""
 

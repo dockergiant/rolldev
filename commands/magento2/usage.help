@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
-MAGENTO_HELP=$(cat <<EOF
+ENV_TYPE_USAGE=$(cat <<EOF
 
 
 \033[33mMagento 2 commands:\033[0m
   magento \033[32m%command%\033[0m     run bin/magento inside php-fpm container with params
+  magerun \033[32m%command%\033[0m     run magerun inside php-fpm container with params
   cache     		clean magento 2 cache (simulair to \033[31m'bin/magento cache:clean'\033[0m)
   fixowns 		Fix ownerships inside container
   fixperms 		Fix permissions inside container
   grunt \033[32m%command%\033[0m 	Run grunt inside container
-  setup-grunt 		Setup grunt files inside container\n
-
+  setup-grunt 		Setup grunt files inside container
 
 EOF
 )
