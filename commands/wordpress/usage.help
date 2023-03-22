@@ -2,8 +2,8 @@
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
 ENV_TYPE_USAGE=$(cat <<EOF
 
-\n\033[33mMagento 1 commands:\033[0m
-  magerun \033[32m%command%\033[0m     run magerun inside php-fpm container with params\n
+\n\033[33mWordpress commands:\033[0m
+  wp \033[32m%command%\033[0m     run commands through wp-cli inside php-fpm container with params\n
 
 EOF
 )

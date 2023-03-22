@@ -9,6 +9,9 @@ if [[ -n "$ROLL_ENV_PATH" ]];then
 	if [[ -n "$ROLL_ENV_TYPE" && -f "${ROLL_DIR}/commands/${ROLL_ENV_TYPE}/usage.help" ]]; then
     source "${ROLL_DIR}/commands/${ROLL_ENV_TYPE}/usage.help"
   fi
+  if [[ -n "$ROLL_ENV_TYPE" && -f "${HOME}/.roll/reclu/${ROLL_ENV_TYPE}/usage.help" ]]; then
+    source "${HOME}/.roll/reclu/${ROLL_ENV_TYPE}/usage.help"
+  fi
 fi
 
 

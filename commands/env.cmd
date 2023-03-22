@@ -60,10 +60,10 @@ if [[ ${ROLL_ENV_TYPE} == "magento1" ]]; then
   	export NGINX_PUBLIC='/'$(cat "${ROLL_ENV_PATH}/.modman/.basedir")
   fi
 
-  if [[ ${ROLL_NO_STATIC_CACHING} -eq 1 ]]; then
-    export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento1-dev.conf}
+  if [[ ${ROLL_MAGENTO_STATIC_CACHING} -eq 1 ]]; then
+    export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento1.conf}
   fi
-  export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento1.conf}
+  export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento1-dev.conf}
 fi
 export NGINX_PUBLIC=${NGINX_PUBLIC:-}
 
@@ -72,10 +72,10 @@ if [[ ${ROLL_ENV_TYPE} == "magento2" ]]; then
     ROLL_ELASTICSEARCH=${ROLL_ELASTICSEARCH:-1}
     ROLL_RABBITMQ=${ROLL_RABBITMQ:-1}
 
-    if [[ ${ROLL_NO_STATIC_CACHING} -eq 1 ]]; then
-      export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2-dev.conf}
+    if [[ ${ROLL_MAGENTO_STATIC_CACHING} -eq 1 ]]; then
+      export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2.conf}
     fi
-    export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2.conf}
+    export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2-dev.conf}
 fi
 export NGINX_TEMPLATE=${NGINX_TEMPLATE:-}
 
@@ -137,17 +137,14 @@ appendEnvPartialIfExists "${ROLL_ENV_TYPE}"
 [[ ${ROLL_TEST_DB} -eq 1 ]] \
     && appendEnvPartialIfExists "${ROLL_ENV_TYPE}.tests"
 
-[[ ${ROLL_SPLIT_SALES} -eq 1 ]] \
-    && appendEnvPartialIfExists "${ROLL_ENV_TYPE}.splitdb.sales"
-
-[[ ${ROLL_SPLIT_CHECKOUT} -eq 1 ]] \
-    && appendEnvPartialIfExists "${ROLL_ENV_TYPE}.splitdb.checkout"
-
 [[ ${ROLL_ALLURE} -eq 1 ]] \
     && appendEnvPartialIfExists "allure"
 
 [[ ${ROLL_SELENIUM} -eq 1 ]] \
     && appendEnvPartialIfExists "selenium"
+
+[[ ${ROLL_MAGEPACK} -eq 1 ]] \
+    && appendEnvPartialIfExists "${ROLL_ENV_TYPE}.magepack"
 
 if [[ -f "${ROLL_ENV_PATH}/.roll/roll-env.yml" ]]; then
     DOCKER_COMPOSE_ARGS+=("-f")

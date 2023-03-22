@@ -11,32 +11,8 @@ trap '' ERR
 #Update commands check.
 "${ROLL_DIR}/bin/roll" reclu-check
 
-function box_out_info() {
-	TEXT=$(echo -e "$@" | gum format -t template | gum format -t emoji)
-	gum style \
-		--border-foreground "#FAA900" --border double \
-		--align center --width 50 --margin "1 2" --padding "2 4" \
-		"$TEXT"
-}
-
-function box_out_success() {
-	TEXT=$(echo -e "$@" | gum format -t template | gum format -t emoji)
-	gum style \
-		--border-foreground "#00FF00" --border double \
-		--align center --width 50 --margin "1 2" --padding "2 4" \
-		"$TEXT"
-}
-
-function box_out_error() {
-	TEXT=$(echo -e "$@" | gum format -t template | gum format -t emoji)
-	gum style \
-		--border-foreground "#FF0000" --border double \
-		--align center --width 50 --margin "1 2" --padding "2 4" \
-		"$TEXT"
-}
-
 if [[ "${ROLL_ENV_TYPE}" != "magento2" ]]; then
-		box_out_error "This command is only working for Magento 2 projects" && exit 1
+		boxerror "This command is only working for Magento 2 projects" && exit 1
 fi
 
 echo "Confirming n98-magerun2 is installed..."

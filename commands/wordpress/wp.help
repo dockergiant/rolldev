@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+
+WORDPRESS_HELP=$("${ROLL_DIR}/bin/roll" cli "wp")
+
+ROLL_USAGE=$(cat <<EOF
+${WORDPRESS_HELP}
+EOF
+)
