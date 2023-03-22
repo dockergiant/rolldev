@@ -37,6 +37,9 @@ function loadEnvConfig () {
     eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "^TRAEFIK_")"
     eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "^PHP_")"
     eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "^NGINX_")"
+    eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "_VERSION")"
+    eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "^DB_")"
+
 
     ROLL_ENV_NAME="${ROLL_ENV_NAME:-}"
     ROLL_ENV_TYPE="${ROLL_ENV_TYPE:-}"
@@ -54,11 +57,37 @@ function loadEnvConfig () {
         ;;
     esac
 
+		export USER_ID=$(id -u)
+		export GROUP_ID=$(id -g)
+		export OSTYPE=$OSTYPE
+
     assertValidEnvType
 }
 
 function renderEnvNetworkName() {
     echo "${ROLL_ENV_NAME}_default" | tr '[:upper:]' '[:lower:]'
+}
+
+function renderEnvType() {
+    ROLL_ENV_PATH="$(locateEnvPath)" || exit $?
+    loadEnvConfig "${ROLL_ENV_PATH}" || exit $?
+    echo "${ROLL_ENV_TYPE:-}"
+}
+
+function fetchEnvInitFile () {
+    local envInitPath=""
+
+    for ENV_INIT_PATH in \
+        "${ROLL_DIR}/environments/${ROLL_ENV_TYPE}/init.env" \
+        "${ROLL_HOME_DIR}/environments/${ROLL_ENV_TYPE}/init.env" \
+        "${ROLL_ENV_PATH}/.roll/environments/${ROLL_ENV_TYPE}/init.env"
+    do
+        if [[ -f "${ENV_INIT_PATH}" ]]; then
+            envInitPath="${ENV_INIT_PATH}"
+        fi
+    done
+
+    echo $envInitPath
 }
 
 function fetchValidEnvTypes () {

@@ -48,7 +48,7 @@ case "${ROLL_PARAMS[0]}" in
         mutagen sync terminate --label-selector "roll-sync=${ROLL_ENV_NAME}"
 
         ## create sync session based on environment type configuration
-        mutagen sync create -c "${MUTAGEN_SYNC_FILE}" \
+        mutagen sync create -c "${MUTAGEN_SYNC_FILE}" --default-owner-beta="www-data" --default-group-beta="www-data" \
             --label "roll-sync=${ROLL_ENV_NAME}" --ignore "${ROLL_SYNC_IGNORE:-}" \
             "${ROLL_ENV_PATH}${ROLL_WEB_ROOT:-}" "docker://$(roll env ps -q php-fpm)/var/www/html"
 

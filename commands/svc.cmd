@@ -12,11 +12,37 @@ fi
 ## allow return codes from sub-process to bubble up normally
 trap '' ERR
 
+if [[ -f "${ROLL_HOME_DIR}/.env" ]]; then
+  eval "$(cat "${ROLL_HOME_DIR}/.env" | sed 's/\r$//g' | grep "^ROLL_")"
+fi
+export ROLL_IMAGE_REPOSITORY="${ROLL_IMAGE_REPOSITORY:-"ghcr.io/dockergiant"}"
+
 ## configure docker-compose files
 DOCKER_COMPOSE_ARGS=()
 
 DOCKER_COMPOSE_ARGS+=("-f")
 DOCKER_COMPOSE_ARGS+=("${ROLL_DIR}/docker/docker-compose.yml")
+
+# Load optional service flags
+if [[ -f "${ROLL_HOME_DIR}/.env" ]]; then
+    # Portainer service
+    eval "$(grep "^ROLL_SERVICE_PORTAINER" "${ROLL_HOME_DIR}/.env")"
+
+     # Startpage service
+    eval "$(grep "^ROLL_SERVICE_STARTPAGE" "${ROLL_HOME_DIR}/.env")"
+fi
+
+ROLL_SERVICE_PORTAINER="${ROLL_SERVICE_PORTAINER:-0}"
+if [[ "${ROLL_SERVICE_PORTAINER}" == 1 ]]; then
+    DOCKER_COMPOSE_ARGS+=("-f")
+    DOCKER_COMPOSE_ARGS+=("${ROLL_DIR}/docker/portainer-service.yml")
+fi
+
+ROLL_SERVICE_STARTPAGE="${ROLL_SERVICE_STARTPAGE:-1}"
+if [[ "${ROLL_SERVICE_STARTPAGE}" == 1 ]]; then
+    DOCKER_COMPOSE_ARGS+=("-f")
+    DOCKER_COMPOSE_ARGS+=("${ROLL_DIR}/docker/startpage-service.yml")
+fi
 
 ## special handling when 'svc up' is run
 if [[ "${ROLL_PARAMS[0]}" == "up" ]]; then
@@ -63,7 +89,7 @@ if [[ "${ROLL_PARAMS[0]}" == "up" ]]; then
 fi
 
 ## pass ochestration through to docker-compose
-docker-compose \
+docker compose \
     --project-directory "${ROLL_HOME_DIR}" -p roll \
     "${DOCKER_COMPOSE_ARGS[@]}" "${ROLL_PARAMS[@]}" "$@"
 

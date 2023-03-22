@@ -51,7 +51,7 @@ openssl x509 -req -days 365 -sha256 -extensions v3_req            \
   -in "${ROLL_SSL_DIR}/certs/${CERTIFICATE_NAME}.csr.pem"       \
   -out "${ROLL_SSL_DIR}/certs/${CERTIFICATE_NAME}.crt.pem"
 
-if [[ "$(cd "${ROLL_HOME_DIR}" && docker-compose -p roll -f "${ROLL_DIR}/docker/docker-compose.yml" ps -q traefik)" ]]
+if [[ "$(cd "${ROLL_HOME_DIR}" && docker compose -p roll -f "${ROLL_DIR}/docker/docker-compose.yml" ps -q traefik)" ]]
 then
   echo "==> Updating traefik"
   "${ROLL_DIR}/bin/roll" svc up traefik

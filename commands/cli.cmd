@@ -11,5 +11,5 @@ ROLL_ENV_SHELL_CONTAINER=${ROLL_ENV_SHELL_CONTAINER:-php-fpm}
 ## allow return codes from sub-process to bubble up normally
 trap '' ERR
 
-"${ROLL_DIR}/bin/roll" env exec "${ROLL_ENV_SHELL_CONTAINER}" \
+"${ROLL_DIR}/bin/roll" env exec -u www-data "${ROLL_ENV_SHELL_CONTAINER}" \
     "${ROLL_PARAMS[@]}" "$@"

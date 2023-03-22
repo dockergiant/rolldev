@@ -5,6 +5,14 @@
 DOCKER_PEERED_SERVICES=("traefik" "tunnel" "mailhog")
 
 ## messaging functions
+function success {
+  >&2 printf "\033[32mSUCCESS\033[0m: $@\n"
+}
+
+function info {
+  >&2 printf "\033[33mINFO\033[0m: $@\n"
+}
+
 function warning {
   >&2 printf "\033[33mWARNING\033[0m: $@\n"
 }
@@ -16,6 +24,63 @@ function error {
 function fatal {
   error "$@"
   exit -1
+}
+
+function boxinfo() {
+	local s=("$@") b w
+	for l in "${s[@]}"; do
+		((w < ${#l})) && {
+			b="$l"
+			w="${#l}"
+		}
+	done
+	tput setaf 3
+	echo " -${b//?/-}-
+| ${b//?/ } |"
+	for l in "${s[@]}"; do
+		printf '| %s%*s%s |\n' "$(tput setaf 7)" "-$w" "$l" "$(tput setaf 3)"
+	done
+	echo "| ${b//?/ } |
+ -${b//?/-}-"
+	tput sgr 0
+}
+
+function boxsuccess() {
+	local s=("$@") b w
+	for l in "${s[@]}"; do
+		((w < ${#l})) && {
+			b="$l"
+			w="${#l}"
+		}
+	done
+	tput setaf 3
+	echo " -${b//?/-}-
+| ${b//?/ } |"
+	for l in "${s[@]}"; do
+		printf '| %s%*s%s |\n' "$(tput setaf 2)" "-$w" "$l" "$(tput setaf 3)"
+	done
+	echo "| ${b//?/ } |
+ -${b//?/-}-"
+	tput sgr 0
+}
+
+function boxerror() {
+	local s=("$@") b w
+	for l in "${s[@]}"; do
+		((w < ${#l})) && {
+			b="$l"
+			w="${#l}"
+		}
+	done
+	tput setaf 3
+	echo " -${b//?/-}-
+| ${b//?/ } |"
+	for l in "${s[@]}"; do
+		printf '| %s%*s%s |\n' "$(tput setaf 1)" "-$w" "$l" "$(tput setaf 3)"
+	done
+	echo "| ${b//?/ } |
+ -${b//?/-}-"
+	tput sgr 0
 }
 
 function version {

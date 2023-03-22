@@ -24,5 +24,5 @@ fi
 ## allow return codes from sub-process to bubble up normally
 trap '' ERR
 
-"${ROLL_DIR}/bin/roll" env exec -e "XDEBUG_REMOTE_HOST=${ROLL_ENV_DEBUG_HOST}" \
+"${ROLL_DIR}/bin/roll" env exec -u www-data -e "XDEBUG_REMOTE_HOST=${ROLL_ENV_DEBUG_HOST}" \
     "${ROLL_ENV_DEBUG_CONTAINER}" "${ROLL_ENV_DEBUG_COMMAND}" "${ROLL_PARAMS[@]}" "$@"

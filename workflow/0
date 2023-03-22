@@ -1,1 +1,0 @@
-sudo chown runner:docker /var/run/docker.sock

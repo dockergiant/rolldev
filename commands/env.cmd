@@ -16,11 +16,27 @@ trap '' ERR
 if [[ -f "${ROLL_HOME_DIR}/.env" ]]; then
   eval "$(cat "${ROLL_HOME_DIR}/.env" | sed 's/\r$//g' | grep "^ROLL_")"
 fi
-export ROLL_IMAGE_REPOSITORY="${ROLL_IMAGE_REPOSITORY:-"docker.io/rollupdev"}"
+export ROLL_IMAGE_REPOSITORY="${ROLL_IMAGE_REPOSITORY:-"ghcr.io/dockergiant"}"
 
 ## configure environment type defaults
 if [[ ${ROLL_ENV_TYPE} =~ ^magento || ${ROLL_ENV_TYPE} =~ ^wordpress ]]; then
     export ROLL_SVC_PHP_VARIANT=-${ROLL_ENV_TYPE}
+fi
+
+if [[ ${NODE_VERSION} -ne 0 ]]; then
+    export ROLL_SVC_PHP_NODE=-node${NODE_VERSION}
+fi
+
+if [[ -z ${DB_DISTRIBUTION} ]]; then
+    export DB_DISTRIBUTION="mariadb"
+fi
+
+if [[ -z ${DB_DISTRIBUTION_VERSION} ]]; then
+    if [[ ${DB_DISTRIBUTION} == "mysql" ]]; then
+        export DB_DISTRIBUTION_VERSION=${MYSQL_VERSION:-8.0}
+    else
+        export DB_DISTRIBUTION_VERSION=${MARIADB_VERSION:-10.4}
+    fi
 fi
 
 ## configure xdebug version
@@ -45,9 +61,9 @@ if [[ ${ROLL_ENV_TYPE} == "magento1" ]]; then
   fi
 
   if [[ ${ROLL_NO_STATIC_CACHING} -eq 1 ]]; then
-          export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento1-dev.conf}
-      fi
-      export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento1.conf}
+    export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento1-dev.conf}
+  fi
+  export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento1.conf}
 fi
 export NGINX_PUBLIC=${NGINX_PUBLIC:-}
 
@@ -57,7 +73,7 @@ if [[ ${ROLL_ENV_TYPE} == "magento2" ]]; then
     ROLL_RABBITMQ=${ROLL_RABBITMQ:-1}
 
     if [[ ${ROLL_NO_STATIC_CACHING} -eq 1 ]]; then
-        export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2-dev.conf}
+      export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2-dev.conf}
     fi
     export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2.conf}
 fi
@@ -82,6 +98,14 @@ if [[ ${ROLL_ENV_TYPE} != local ]]; then
     appendEnvPartialIfExists "php-fpm"
 fi
 
+if [[ ${ROLL_BROWSERSYNC} -eq 1 ]]; then
+  export BROWSERSYNC_PORT_WEB=$(roll browsersync freeport web)
+  export BROWSERSYNC_PORT_UI=$(roll browsersync freeport ui)
+  appendEnvPartialIfExists "browsersync"
+fi
+
+[[ ${ROLL_INCLUDE_GIT} -eq 1 ]] \
+    && appendEnvPartialIfExists "git"
 
 
 [[ ${ROLL_NGINX} -eq 1 ]] \
@@ -92,6 +116,12 @@ fi
 
 [[ ${ROLL_ELASTICSEARCH} -eq 1 ]] \
     && appendEnvPartialIfExists "elasticsearch"
+
+[[ ${ROLL_ELASTICVUE} -eq 1 ]] \
+    && appendEnvPartialIfExists "elasticvue"
+
+[[ ${ROLL_OPENSEARCH} -eq 1 ]] \
+    && appendEnvPartialIfExists "opensearch"
 
 [[ ${ROLL_VARNISH} -eq 1 ]] \
     && appendEnvPartialIfExists "varnish"
@@ -143,12 +173,12 @@ fi
 ## connect peered service containers to environment network
 if [[ "${ROLL_PARAMS[0]}" == "up" ]]; then
 
-		# update images if needed
-		roll env pull
+#		# update images if needed
+#		roll env pull
     ## create environment network for attachments if it does not already exist
     if [[ -z "$(docker network ls -f 'name=$(renderEnvNetworkName)' -q)" ]]; then
 
-        docker-compose \
+        docker compose \
             --env-file "${ROLL_ENV_PATH}/.env.roll" --project-directory "${ROLL_ENV_PATH}" -p "${ROLL_ENV_NAME}" \
             "${DOCKER_COMPOSE_ARGS[@]}" up --no-start
     fi
@@ -187,9 +217,14 @@ then
 fi
 
 ## pass ochestration through to docker-compose
-docker-compose \
+docker compose \
     --env-file "${ROLL_ENV_PATH}/.env.roll" --project-directory "${ROLL_ENV_PATH}" -p "${ROLL_ENV_NAME}" \
     "${DOCKER_COMPOSE_ARGS[@]}" "${ROLL_PARAMS[@]}" "$@"
+
+if [[ ("${ROLL_PARAMS[0]}" == "up" || "${ROLL_PARAMS[0]}" == "start") && -n "${ROLL_EXTRA_PHP_EXT}" ]]; then
+  info "Adding additional PHP extension, This may take a while... (output hidden)"
+  roll add-php-ext "${ROLL_EXTRA_PHP_EXT}" > /dev/null 2>&1
+fi
 
 ## resume mutagen sync if available and php-fpm container id hasn't changed
 if ([[ "${ROLL_PARAMS[0]}" == "up" ]] || [[ "${ROLL_PARAMS[0]}" == "start" ]]) \

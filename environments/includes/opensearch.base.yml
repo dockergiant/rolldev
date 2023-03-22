@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  opensearch:
+    hostname: "${ROLL_ENV_NAME}-opensearch"
+    image: ${ROLL_IMAGE_REPOSITORY}/opensearch:${OPENSEARCH_VERSION:-1.2}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-opensearch.tls=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-opensearch.rule=Host(`opensearch.${TRAEFIK_DOMAIN}`)
+      - traefik.http.services.${ROLL_ENV_NAME}-opensearch.loadbalancer.server.port=9200
+      - traefik.docker.network=${ROLL_ENV_NAME}_default
+    environment:
+      - indices.query.bool.max_clause_count=16384
+      - DISABLE_SECURITY_PLUGIN=true
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms64m -Xmx512m"
+    volumes:
+      - osdata:/usr/share/opensearch/data
+
+volumes:
+  osdata:

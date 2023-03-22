@@ -17,6 +17,27 @@ function installSshConfig () {
 			## ROLL END ##
 			EOT
   fi
+
+  if [[ -f "${HOME}/.ssh/config" ]]; then
+    if grep 'Host \*' "$HOME/.ssh/config" >/dev/null; then
+      if ! grep '## ROLL START ##' "$HOME/.ssh/config" >/dev/null; then
+        echo ""
+        echo "==> Conflicting configuration found in your $HOME/.ssh/config file"
+        echo "    You need to add the following configuration to your $HOME/.ssh/config file"
+        echo "
+
+          ## ROLL START ##
+          Host tunnel.roll.test
+          HostName 127.0.0.1
+          User user
+          Port 2222
+          IdentityFile ~/.roll/tunnel/ssh_key
+          ## ROLL END ##
+
+        "
+      fi
+    fi
+  fi
 }
 
 function assertRollDevInstall {
