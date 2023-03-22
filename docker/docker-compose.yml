@@ -20,7 +20,7 @@ services:
 
   dnsmasq:
     container_name: dnsmasq
-    image: ${ROLL_IMAGE_REPOSITORY}/rolldev-dnsmasq:latest
+    image: ${ROLL_IMAGE_REPOSITORY}/dnsmasq:latest
     ports:
       - "127.0.0.1:53:53/udp"
     environment:
@@ -56,7 +56,7 @@ services:
 
   mailhog:
     container_name: mailhog
-    image: ${ROLL_IMAGE_REPOSITORY}/rolldev-mailhog:latest
+    image: ${ROLL_IMAGE_REPOSITORY}/mailhog:latest
     labels:
       - traefik.enable=true
       - traefik.http.routers.mailhog.tls=true
