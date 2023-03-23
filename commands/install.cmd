@@ -89,10 +89,28 @@ installSshConfig
 ## Add optional RollDev configuration file
 if [[ ! -f "${ROLL_HOME_DIR}/.env" ]]; then
 	cat >> "${ROLL_HOME_DIR}/.env" <<-EOT
-		# Set to "0" to disable global startpage service
-		ROLL_SERVICE_STARTPAGE=1
+# Set to "0" to disable global startpage service
+ROLL_SERVICE_STARTPAGE=1
 
-		# Set to "1" to enable global Portainer service
-		ROLL_SERVICE_PORTAINER=0
-	EOT
+# Set to "1" to enable global Portainer service
+ROLL_SERVICE_PORTAINER=1
+EOT
+fi
+
+if [[ -f "${ROLL_HOME_DIR}/.env" ]]; then
+  if [[ -z "$(grep -e 'ROLL_SERVICE_STARTPAGE' "${ROLL_HOME_DIR}/.env")" ]]; then
+    cat >> "${ROLL_HOME_DIR}/.env" <<-EOT
+
+# Set to "0" to disable global startpage service
+ROLL_SERVICE_STARTPAGE=1
+EOT
+  fi
+
+  if [[ -z "$(grep -e 'ROLL_SERVICE_PORTAINER' "${ROLL_HOME_DIR}/.env")" ]]; then
+    cat >> "${ROLL_HOME_DIR}/.env" <<-EOT
+
+# Set to "0" to disable global Portainer service
+ROLL_SERVICE_PORTAINER=1
+EOT
+  fi
 fi
