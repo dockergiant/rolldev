@@ -12,7 +12,7 @@ ROLL_USAGE=$(cat <<EOF
   local               Declares the docker-compose version and labels the project
                       network allowing RollDev to recognize it. Must be coupled with
                       per-project configuration. See documentation for details:
-                      https://docs.roll.dev/environments/types.html#local
+                      https://dockergiant.github.io/rolldev/environments/types.html#local
 
   magento2            Nginx, varnish, php-fpm, db (mariadb), elasticsearch, redis,
                       and rabbitmq services pre configured for Magento 2; on macOS

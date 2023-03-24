@@ -21,7 +21,7 @@ If you desire to have more than this route through the `dnsmasq` container, you 
 1.0.0.1
 ```
 
-### systemd-resolved
+### systemd-resolved (incl Ubuntu >= 20.10 )
 
 This approach works on most modern (systemd based) operating systems.
 
@@ -29,10 +29,10 @@ This approach works on most modern (systemd based) operating systems.
 
     sudo mkdir -p /etc/systemd/resolved.conf.d
     echo -e "[Resolve]\nDNS=127.0.0.1\nDomains=~test\n" \
-      | sudo tee /etc/systemd/resolved.conf.d/den.conf > /dev/null
+      | sudo tee /etc/systemd/resolved.conf.d/rolldev.conf > /dev/null
     sudo systemctl restart systemd-resolved
 
-### Ubuntu resolvconf
+### Ubuntu resolvconf (=< 20.04)
 
 Use the `resolvconf` service to add a permanent entry in your `/etc/resolv.conf` file.
 

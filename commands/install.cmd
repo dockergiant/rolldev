@@ -62,7 +62,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     echo "nameserver 127.0.0.1" | sudo tee /etc/resolver/test >/dev/null
   fi
 else
-  warning "Manual configuration required for Automatic DNS resolution: https://docs.roll.dev/configuration/dns-resolver.html"
+  warning "Manual configuration required for Automatic DNS resolution: ttps://dockergiant.github.io/rolldev/configuration/dns-resolver.html"
 fi
 
 ## generate rsa keypair for authenticating to roll sshd service
