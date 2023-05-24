@@ -9,6 +9,9 @@ if (( ${#ROLL_PARAMS[@]} == 0 )) || [[ "${ROLL_PARAMS[0]}" == "help" ]]; then
   roll env --help || exit $? && exit $?
 fi
 
+if [[ ${ROLL_REDIS} -eq 1 && ${ROLL_DRAGONFLY} -eq 1 ]]; then
+  fatal "In-memory db distribution collision detected. Redis and Dragonfly service can't run at the same time set one of them off with (ROLL_REDIS=0|ROLL_DRAGONFLY=0)."
+fi
 ## allow return codes from sub-process to bubble up normally
 trap '' ERR
 
@@ -131,6 +134,9 @@ fi
 
 [[ ${ROLL_REDIS} -eq 1 ]] \
     && appendEnvPartialIfExists "redis"
+
+[[ ${ROLL_DRAGONFLY} -eq 1 ]] \
+    && appendEnvPartialIfExists "dragonfly"
 
 appendEnvPartialIfExists "${ROLL_ENV_TYPE}"
 

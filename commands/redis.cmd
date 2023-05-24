@@ -5,8 +5,8 @@ ROLL_ENV_PATH="$(locateEnvPath)" || exit $?
 loadEnvConfig "${ROLL_ENV_PATH}" || exit $?
 assertDockerRunning
 
-if [[ ${ROLL_REDIS:-1} -eq 0 ]]; then
-  fatal "Redis environment is not used (ROLL_REDIS=0)."
+if [[ ${ROLL_REDIS:-1} -eq 0 && ${ROLL_DRAGONFLY:-1} -eq 0 ]]; then
+  fatal "Redis nor Dragonfly environment is not used (ROLL_REDIS=0|ROLL_DRAGONFLY=0)."
 fi
 
 if [[ "${ROLL_PARAMS[0]}" == "help" ]]; then

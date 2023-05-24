@@ -57,8 +57,8 @@ function loadEnvConfig () {
         ;;
     esac
 
-		export USER_ID=$(id -u)
-		export GROUP_ID=$(id -g)
+		export USER_ID=$(id -u $USER)
+		export GROUP_ID=$(id -g $USER)
 		export OSTYPE=$OSTYPE
 
     assertValidEnvType
