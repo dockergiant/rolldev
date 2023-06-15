@@ -2,7 +2,7 @@ version: "3.9"
 services:
   startpage:
     container_name: startpage
-    image: ${ROLL_IMAGE_REPOSITORY}/rolldev-startpage:latest
+    image: ${ROLL_IMAGE_REPOSITORY}/startpage:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
