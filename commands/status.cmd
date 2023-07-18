@@ -7,7 +7,7 @@ rollNetworkName=$(cat ${ROLL_DIR}/docker/docker-compose.yml | grep -A3 'networks
 rollNetworkId=$(docker network ls -q --filter name="${rollNetworkName}")
 
 if [[ -z "${rollNetworkId}" ]]; then
-    echo -e "[\033[33;1m!!\033[0m] \033[31mWarden is not currently running.\033[0m Run \033[36mroll svc up\033[0m to start Warden core services."
+    echo -e "[\033[33;1m!!\033[0m] \033[31mRollDev is not currently running.\033[0m Run \033[36mroll svc up\033[0m to start RollDev core services."
 fi
 
 OLDIFS="$IFS";
@@ -31,17 +31,18 @@ for projectNetwork in "${projectNetworkList[@]}"; do
     projectName=$(cat "${projectDir}/.env.roll" | grep '^ROLL_ENV_NAME=' | sed -e 's/ROLL_ENV_NAME=[[:space:]]*//g' | tr -d -)
     projectType=$(cat "${projectDir}/.env.roll" | grep '^ROLL_ENV_TYPE=' | sed -e 's/ROLL_ENV_TYPE=[[:space:]]*//g' | tr -d -)
     traefikDomain=$(cat "${projectDir}/.env.roll" | grep '^TRAEFIK_DOMAIN=' | sed -e 's/TRAEFIK_DOMAIN=[[:space:]]*//g' | tr -d -)
+    traefikSubDomain=$(cat "${projectDir}/.env.roll" | grep '^TRAEFIK_SUBDOMAIN=' | sed -e 's/TRAEFIK_SUBDOMAIN=[[:space:]]*//g' | tr -d -)
 
     messageList+=("    \033[1;35m${projectName}\033[0m a \033[36m${projectType}\033[0m project")
     messageList+=("       Project Directory: \033[33m${projectDir}\033[0m")
-    messageList+=("       Project URL: \033[94mhttps://${traefikDomain}\033[0m")
+    messageList+=("       Project URL: \033[94mhttps://${traefikSubDomain}.${traefikDomain}\033[0m")
 
     [[ "$projectNetwork" != "${projectNetworkList[@]: -1:1}" ]] && messageList+=()
 done
 
 if [[ "${#messageList[@]}" > 0 ]]; then
     if [[ -z "${rollNetworkId}" ]]; then
-        echo -e "Found the following \033[32mrunning\033[0m projects; however, \033[31mWarden core services are currently not running\033[0m:"
+        echo -e "Found the following \033[32mrunning\033[0m projects; however, \033[31mRollDev core services are currently not running\033[0m:"
     else
         echo -e "Found the following \033[32mrunning\033[0m environments:"
     fi
