@@ -8,9 +8,6 @@ assertDockerRunning
 ## allow return codes from sub-process to bubble up normally
 trap '' ERR
 
-#Update commands check.
-"${ROLL_DIR}/bin/roll" reclu-check
-
 if [[ "${ROLL_ENV_TYPE}" != "magento2" ]]; then
 		boxerror "This command is only working for Magento 2 projects" && exit 1
 fi
