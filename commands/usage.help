@@ -53,6 +53,7 @@ RollDev version $(cat ${ROLL_DIR}/version)
   redis             	Interacts with the redis service on an environment (see \033[31m'roll redis -h'\033[0m for details)
   install           	Initializes or updates roll configuration on host machine
   shell             	Launches into a shell within the current project environment
+  status                Display list of all running RollDev project environments
   debug             	Launches debug enabled shell within current project environment
   sign-certificate  	Signs a wildcard certificate including all passed hostnames on the SAN list
   version           	Show version information
