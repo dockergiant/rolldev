@@ -56,7 +56,7 @@ services:
 
   mailhog:
     container_name: mailhog
-    image: ${ROLL_IMAGE_REPOSITORY}/mailhog:latest
+    image: axllent/mailpit:latest
     labels:
       - traefik.enable=true
       - traefik.http.routers.mailhog.tls=true
