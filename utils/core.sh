@@ -120,3 +120,7 @@ function disconnectPeeredServices {
     (docker network disconnect "$1" ${svc} 2>&1| grep -v 'is not connected') || true
   done
 }
+
+function isOnline {
+  ping -q -c1 google.com &>/dev/null && true || false
+}

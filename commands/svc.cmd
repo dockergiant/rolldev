@@ -47,7 +47,9 @@ fi
 ## special handling when 'svc up' is run
 if [[ "${ROLL_PARAMS[0]}" == "up" ]]; then
 		# update images if needed
-		roll svc pull
+		if [[ isOnline == true ]]; then
+		  roll svc pull
+		fi
 
     ## sign certificate used by global services (by default roll.test)
     if [[ -f "${ROLL_HOME_DIR}/.env" ]]; then

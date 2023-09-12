@@ -39,6 +39,7 @@ function loadEnvConfig () {
     eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "^NGINX_")"
     eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "_VERSION")"
     eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "^DB_")"
+    eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "ADD_PHP_EXT")"
 
 
     ROLL_ENV_NAME="${ROLL_ENV_NAME:-}"
@@ -60,6 +61,7 @@ function loadEnvConfig () {
 		export USER_ID=$(id -u $USER)
 		export GROUP_ID=$(id -g $USER)
 		export OSTYPE=$OSTYPE
+		export ADD_PHP_EXT=$ADD_PHP_EXT
 
     assertValidEnvType
 }
