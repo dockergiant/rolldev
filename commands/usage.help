@@ -70,6 +70,7 @@ RollDev version $(cat ${ROLL_DIR}/version)
   rootshell          	Allocate TTY with shell as root user
   composer \033[32m%command%\033[0m    run composer inside php-fpm container with params
   add-php-ext \033[32m%ext%\033[0m 	add custom php extensions to the container
+  browsersync  	      See browsersync domain and port values
 ${ENV_TYPE_USAGE:1}
 ${ROLL_DARWIN:1}
 EOF

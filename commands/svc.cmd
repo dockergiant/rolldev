@@ -47,7 +47,7 @@ fi
 ## special handling when 'svc up' is run
 if [[ "${ROLL_PARAMS[0]}" == "up" ]]; then
 		# update images if needed
-		if [[ isOnline == true ]]; then
+		if [[ $(isOnline) == true ]]; then
 		  roll svc pull
 		fi
 
