@@ -122,5 +122,5 @@ function disconnectPeeredServices {
 }
 
 function isOnline {
-  ping -q -c1 google.com &>/dev/null && true || false
+  ping -q -c1 google.com &>/dev/null && echo "true" || echo "false"
 }
