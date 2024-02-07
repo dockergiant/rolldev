@@ -4,7 +4,7 @@ Further information on customizing or extending an environment is forthcoming. F
 
 To configure your project with a non-default PHP version, add the following to the project's `.env.roll` file and run `roll env up` to re-create the affected containers:
 
-    PHP_VERSION=7.2
+    PHP_VERSION=8.1
 
 The versions of MariaDB/Mysql, Elasticsearch, Varnish, Redis, NodeJS and Composer may also be similarly configured using variables in the `.env.roll` file:
 
@@ -51,10 +51,10 @@ version: "3.9"
 services:
   php-fpm:
     volumes:
-      - ./.roll/php/zz-config.ini:/etc/php.d/zz-config.ini
+      - ./.roll/php/zz-config.ini:/usr/local/etc/php/conf.d/zz-config.ini
   php-debug:
     volumes:
-      - ./.roll/php/zz-config.ini:/etc/php.d/zz-config.ini
+      - ./.roll/php/zz-config.ini:/usr/local/etc/php/conf.d/zz-config.ini
 ```
 Now add the referenced `.roll/php/zz-config.ini` file with your wanted changes.
 For example you could change the error reporting value:
