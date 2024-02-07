@@ -2,6 +2,7 @@ version: "3.9"
 
 x-volumes: &volumes
   - ${ROLL_SSL_DIR}/rootca/certs:/etc/ssl/roll-rootca-cert:ro
+  - ${ROLL_HOME_DIR}/ssl/certs:/home/certs
   - ${ROLL_COMPOSER_DIR}:/home/www-data/.composer:cached
   - .${ROLL_WEB_ROOT:-}/:/var/www/html:cached
   - bashhistory:/bash_history
