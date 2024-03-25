@@ -173,7 +173,7 @@ The below example demonstrates the from-scratch setup of the Magento 2 applicati
 
         ## Generate localadmin user
         ADMIN_PASS="$(pwgen -n1 16)"
-        ADMIN_USER=localadmin
+        ADMIN_USER=admin
 
         bin/magento admin:user:create \
             --admin-password="${ADMIN_PASS}" \
@@ -197,8 +197,10 @@ The below example demonstrates the from-scratch setup of the Magento 2 applicati
         printf "2FA Authenticator Codes:\n%s\n" "$(oathtool -s 30 -w 10 --totp --base32 "${TFA_SECRET}")"
 
         segno "${OTPAUTH_URL}" -s 4 -o "pub/media/${ADMIN_USER}-totp-qr.png"
-        printf "%s\n\n" "https://${TRAEFIK_SUBDOMAIN}.${TRAEFIK_DOMAIN}/media/${ADMIN_USER}-totp-qr.png?t=$(date +%s)"
-
+        QR_URL="https://${TRAEFIK_SUBDOMAIN}.${TRAEFIK_DOMAIN}/media/${ADMIN_USER}-totp-qr.png?t=$(date +%s)"
+        printf "%s\n\n" "$QR_URL"
+        
+        printf "\nScan this qr code or open url below for saving 2fa\n%s\n\n%s\n" "$QR_URL" "$(qrencode -t ANSI256UTF8 \"$OTPAUTH_URL\")"
     :::{note}
     Use of 2FA is mandatory on Magento ``2.4.x`` and setup of 2FA should be skipped when installing ``2.3.x`` or earlier. Where 2FA is setup manually via UI upon login rather than using the CLI commands above, the 2FA configuration email may be retrieved from `the Mailhog service <https://mailhog.roll.test/>`_.
     :::
