@@ -117,6 +117,9 @@ fi
 [[ ${ROLL_DB} -eq 1 ]] \
     && appendEnvPartialIfExists "db"
 
+[[ ${ROLL_MONGODB} -eq 1 ]] \
+    && appendEnvPartialIfExists "mongodb"
+
 [[ ${ROLL_ELASTICSEARCH} -eq 1 ]] \
     && appendEnvPartialIfExists "elasticsearch"
 
