@@ -16,16 +16,17 @@ echo "Confirming n98-magerun2 is installed..."
 "${ROLL_DIR}/bin/roll" magerun > /dev/null 2>&1
 
 
-LOCALADMIN_EXISTS=$("${ROLL_DIR}/bin/roll" magerun admin:user:list | grep "localadmin")
-
-
+LOCALADMIN_EXISTS=$("${ROLL_DIR}/bin/roll" magerun admin:user:list | grep "localadmin" || echo '')
 if [[ -z "$LOCALADMIN_EXISTS" ]]; then
   echo "Setup user account localadmin..."
   "${ROLL_DIR}/bin/roll" magerun admin:user:create --admin-user "localadmin" --admin-password "admin123" --admin-email "localadmin@roll.test" --admin-firstname "Local" --admin-lastname "Admin"
 fi
 
-echo "Force google as default TFA Provider"
-"${ROLL_DIR}/bin/roll" magento config:set twofactorauth/general/force_providers google
+FORCE_TFA_PROVIDER_EXISTS=$("${ROLL_DIR}/bin/roll" magento config:show twofactorauth/general/force_providers | grep "google" || echo '')
+if [[ -z "$FORCE_TFA_PROVIDER_EXISTS" ]]; then
+  echo "Force google as default TFA Provider"
+  "${ROLL_DIR}/bin/roll" magento config:set twofactorauth/general/force_providers google
+fi
 
 echo "Setting autologin 2fa code"
 "${ROLL_DIR}/bin/roll" magento security:tfa:google:set-secret localadmin "LAJWZZTAI4KAHY7NBS6NOM3BDZK62IPDT3U5ARGXCJ4WVG7PJSG37FC4XODYWV2UNYMQG3LVMEUTIHO52FQGZU4Z462VNWYKPOM23M2YZNWAJW732RTNAVTQ2APUV64BPBJZKT7I4CAT62KLFEP5DZLWINPZ3JVOWJ6CPOAA77RSFK2PAG6YPS4VP55WYX5BPTX4Z7P6EZ4CY"
