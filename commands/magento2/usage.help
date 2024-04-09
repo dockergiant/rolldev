@@ -4,6 +4,7 @@ ENV_TYPE_USAGE=$(cat <<EOF
 
 \n\033[33mMagento 2 commands:\033[0m
   magento \033[32m%command%\033[0m     run bin/magento inside php-fpm container with params
+  setup-autologin       setup autologin to magento admin when visiting admin url
   magerun \033[32m%command%\033[0m     run magerun inside php-fpm container with params
   cache     		clean magento 2 cache (simulair to \033[31m'bin/magento cache:clean'\033[0m)
   fixowns 		Fix ownerships inside container

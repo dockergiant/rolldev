@@ -74,10 +74,22 @@ if [[ ${ROLL_ENV_TYPE} == "magento2" ]]; then
     ROLL_VARNISH=${ROLL_VARNISH:-1}
     ROLL_ELASTICSEARCH=${ROLL_ELASTICSEARCH:-1}
     ROLL_RABBITMQ=${ROLL_RABBITMQ:-1}
+    ROLL_ADMIN_AUTOLOGIN=${ROLL_ADMIN_AUTOLOGIN:-0}
 
     if [[ ${ROLL_MAGENTO_STATIC_CACHING} -eq 1 ]]; then
-      export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2.conf}
+      if [[ ${ROLL_ADMIN_AUTOLOGIN} -eq 1 ]]; then
+        export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2-autologin.conf}
+      else
+        export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2.conf}
+      fi
     fi
+
+    if [[ ${ROLL_ADMIN_AUTOLOGIN} -eq 1 ]]; then
+        export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2-dev-autologin.conf}
+    else
+        export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2-dev.conf}
+    fi
+
     export NGINX_TEMPLATE=${NGINX_TEMPLATE:-magento2-dev.conf}
 fi
 export NGINX_TEMPLATE=${NGINX_TEMPLATE:-}
