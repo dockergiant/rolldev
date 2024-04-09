@@ -88,6 +88,16 @@ The `wordpress` environment type supports development of WordPress projects, lau
 
 Files are currently mounted using a delegated mount on macOS and natively on Linux.
 
+## Akeneo
+
+The `akeneo` environment type supports development of Akeneo projects, launching containers including:
+
+* Nginx
+* PHP-FPM
+* MySQL
+
+Files are currently mounted using a delegated mount on macOS and natively on Linux.
+
 ## Commonalities
 
 In addition to the above, each environment type (with the exception of the `local` type) come with PHP setup to use `mhsendmail` to ensure outbound email does not inadvertently leave your network and to support simpler testing of email functionality. Mailhog may be accessed by navigating to [https://mailhog.roll.test/](https://mailhog.roll.test/) in a browser.
