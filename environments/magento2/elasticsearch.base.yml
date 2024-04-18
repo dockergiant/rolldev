@@ -1,0 +1,5 @@
+version: "3.9"
+services:
+  elasticsearch:
+    environment:
+      - indices.id_field_data.enabled=true
