@@ -26,7 +26,7 @@ fi
 LOCALADMIN_EXISTS=$("${ROLL_DIR}/bin/roll" magerun admin:user:list | grep "localadmin" || echo '')
 if [[ -z "$LOCALADMIN_EXISTS" ]]; then
   printf "Setup user account localadmin...\n\n"
-  if ! "${ROLL_DIR}/bin/roll" magerun admin:user:create --admin-user "localadmin" --admin-password "admin123" --admin-email "localadmin@roll.test" --admin-firstname "Local" --admin-lastname "Admin"; then
+  if ! "${ROLL_DIR}/bin/roll" magerun --no-interaction admin:user:create --admin-user "localadmin" --admin-password "admin123" --admin-email "localadmin@roll.test" --admin-firstname "Local" --admin-lastname "Admin"; then
     echo "Failed to create admin user." >&2
     exit 1
   fi
