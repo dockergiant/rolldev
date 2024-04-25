@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   magepack:
     hostname: "${ROLL_ENV_NAME}-magepack"

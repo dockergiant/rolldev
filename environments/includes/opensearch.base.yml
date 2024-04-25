@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   opensearch:
     hostname: "${ROLL_ENV_NAME}-opensearch"

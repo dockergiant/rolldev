@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   elasticvue:
     hostname: "${ROLL_ENV_NAME}-elasticvue"

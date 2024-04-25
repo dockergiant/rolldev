@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   allure:
     hostname: "${ROLL_ENV_NAME}-allure"

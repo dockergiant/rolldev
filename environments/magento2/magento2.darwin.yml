@@ -1,4 +1,3 @@
-version: "3.9"
 
 x-volumes: &volumes
   - .${ROLL_WEB_ROOT:-}/pub/media:/var/www/html/pub/media:cached
