@@ -12,7 +12,6 @@ Multiple top-level domains may also be setup by following the instructions below
 2. Create a `.roll/roll-env.yml` file with the contents below (this will be additive to the docker-compose config RollDev uses for the env, anything added here will be merged in, and you can see the complete config using `roll env config`):
 
     ```yaml
-    version: "3.9"
     services:
       varnish:
         labels:
@@ -43,7 +42,6 @@ Multiple top-level domains may also be setup by following the instructions below
     :::
 
     ```yaml
-    version: "3.9"
     services:
       php-fpm:
        extra_hosts:

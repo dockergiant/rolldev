@@ -30,7 +30,6 @@ One example for a use case is {doc}`the setup of multiple domains <../configurat
 
 If that's not enough, it's possible to extend the environment config by leveraging, like for example (`.roll/environments/magento2/magento2.base.yml`):
 ```
-version: "3.9"
 services:
   nginx:
     image: my_custom_nginx_image:latest
@@ -47,7 +46,6 @@ To override default php settings, follow the docker customization above and incl
 In this case the `roll-env.yml` should look like this:
 
 ```
-version: "3.9"
 services:
   php-fpm:
     volumes:
@@ -77,7 +75,6 @@ upload_max_filesize = 25M
 To override the default nginx configuration of your project, add a new file
 `.roll/roll-env.yml` to your project root with the following content:
 ```
-version: "3.9"
 services:
   nginx:
     volumes:
