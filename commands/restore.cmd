@@ -125,7 +125,7 @@ if [[ $SKIP_DB -eq 0 ]]; then
         --rm --name $CONTAINER_NAME \
         --mount source=$DB_VOLUME,target=/data \
         -v $(pwd)/.roll/backups/$LATEST_TIMESTAMP/:/backup ubuntu bash \
-        -c "cd /data && tar -xvf /backup/db.tar.gz --strip 1"
+        -c "cd /data && tar -xvf /backup/db.tar.gz --strip 1 && chown -R 999:root /data"
 fi
 
 if [[ $SKIP_REDIS -eq 0 ]]; then
@@ -133,7 +133,7 @@ if [[ $SKIP_REDIS -eq 0 ]]; then
         --rm --name $CONTAINER_NAME \
         --mount source=$REDIS_VOLUME,target=/data \
         -v $(pwd)/.roll/backups/$LATEST_TIMESTAMP/:/backup ubuntu bash \
-        -c "cd /data && tar -xvf /backup/redis.tar.gz --strip 1"
+        -c "cd /data && tar -xvf /backup/redis.tar.gz --strip 1 && chown -R 999:root /data"
 fi
 
 if [[ $SKIP_ELASTICSEARCH -eq 0 ]]; then
@@ -141,7 +141,7 @@ if [[ $SKIP_ELASTICSEARCH -eq 0 ]]; then
         --rm --name $CONTAINER_NAME \
         --mount source=$ES_VOLUME,target=/data \
         -v $(pwd)/.roll/backups/$LATEST_TIMESTAMP/:/backup ubuntu bash \
-        -c "cd /data && tar -xvf /backup/es.tar.gz --strip 1"
+        -c "cd /data && tar -xvf /backup/es.tar.gz --strip 1 && chown -R 1000:root /data"
 fi
 
 
