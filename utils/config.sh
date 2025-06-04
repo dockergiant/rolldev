@@ -339,6 +339,7 @@ function loadRollConfig() {
     # Set system-specific exports
     export USER_ID="$(id -u)"
     export GROUP_ID="$(id -g)"
+    export OSTYPE="${OSTYPE}"
     
     # Set defaults for unset values
     local i=0
