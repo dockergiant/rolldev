@@ -15,8 +15,11 @@ BACKUP_PARALLEL=1
 BACKUP_RETENTION_DAYS=30
 BACKUP_VERIFY=1
 BACKUP_QUIET=0
+BACKUP_OUTPUT_ID=0
 BACKUP_NAME=""
 BACKUP_DESCRIPTION=""
+BACKUP_DUPLICATE_NAME=""  # New environment name for duplication
+BACKUP_DUPLICATE_DOMAIN=""  # New domain for duplication
 PROGRESS=1
 
 # Parse command line arguments
@@ -38,6 +41,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --encrypt=*)
             BACKUP_ENCRYPT="${1#*=}"
+            shift
+            ;;
+        --encrypt)
+            # Flag without value - will prompt for password later
+            BACKUP_ENCRYPT="PROMPT"
             shift
             ;;
         --no-compression)
@@ -69,12 +77,26 @@ while [[ $# -gt 0 ]]; do
             PROGRESS=0
             shift
             ;;
+        --output-id)
+            BACKUP_OUTPUT_ID=1
+            BACKUP_QUIET=1
+            PROGRESS=0
+            shift
+            ;;
         --name=*)
             BACKUP_NAME="${1#*=}"
             shift
             ;;
         --description=*)
             BACKUP_DESCRIPTION="${1#*=}"
+            shift
+            ;;
+        --duplicate-name=*)
+            BACKUP_DUPLICATE_NAME="${1#*=}"
+            shift
+            ;;
+        --duplicate-domain=*)
+            BACKUP_DUPLICATE_DOMAIN="${1#*=}"
             shift
             ;;
         --no-progress)
@@ -108,6 +130,39 @@ if (( ${#BACKUP_COMMAND_PARAMS[@]} == 0 )); then
 fi
 
 # Utility functions for backup operations
+function promptPassword() {
+    local prompt="$1"
+    local password=""
+    local confirm=""
+    
+    # Don't prompt in quiet mode or non-interactive shells
+    if [[ $BACKUP_QUIET -eq 1 ]] || [[ ! -t 0 ]]; then
+        error "Password required but running in non-interactive mode. Use --encrypt=password instead."
+        exit 1
+    fi
+    
+    echo -n "$prompt: " >&2
+    read -s password
+    echo >&2
+    
+    if [[ -z "$password" ]]; then
+        error "Password cannot be empty"
+        exit 1
+    fi
+    
+    # Confirm password for security
+    echo -n "Confirm password: " >&2
+    read -s confirm
+    echo >&2
+    
+    if [[ "$password" != "$confirm" ]]; then
+        error "Passwords do not match"
+        exit 1
+    fi
+    
+    echo "$password"
+}
+
 function showProgress() {
     [[ $PROGRESS -eq 0 ]] && return
     local current=$1
@@ -122,9 +177,8 @@ function showProgress() {
     printf "%*s" $((bar_length - filled_length)) | tr ' ' '-'
     printf "] %d%% %s" $percent "$description"
     
-    if [[ $current -eq $total ]]; then
-        echo ""
-    fi
+    # Always end with a newline for clean output
+    echo ""
 }
 
 function logMessage() {
@@ -263,7 +317,7 @@ function backupVolume() {
     # Check if volume exists
     if ! docker volume inspect "$full_volume_name" >/dev/null 2>&1; then
         logMessage WARNING "Volume $full_volume_name does not exist, skipping"
-        return 0
+        return 1  # Return failure so this service won't be included in successful_services
     fi
     
     # Create backup with appropriate user permissions based on service
@@ -341,8 +395,27 @@ function backupConfigurations() {
         if [[ -f "$(pwd)/$config_file" ]]; then
             local target_dir="$backup_dir/config/$(dirname "$config_file")"
             mkdir -p "$target_dir"
-            cp "$(pwd)/$config_file" "$target_dir/"
-            logMessage INFO "Backed up $config_file"
+            
+            # Check if this is a duplication backup and needs environment name replacement
+            if [[ -n "$BACKUP_DUPLICATE_NAME" && "$config_file" == ".env.roll" ]]; then
+                # Create a modified version of .env.roll with new environment names
+                local temp_env_file="$target_dir/$(basename "$config_file")"
+                cp "$(pwd)/$config_file" "$temp_env_file"
+                
+                # Replace ROLL_ENV_NAME and TRAEFIK_DOMAIN for duplication
+                sed_inplace "s/^ROLL_ENV_NAME=.*/ROLL_ENV_NAME=${BACKUP_DUPLICATE_NAME}/" "$temp_env_file"
+                if [[ -n "$BACKUP_DUPLICATE_DOMAIN" ]]; then
+                    sed_inplace "s/^TRAEFIK_DOMAIN=.*/TRAEFIK_DOMAIN=${BACKUP_DUPLICATE_DOMAIN}/" "$temp_env_file"
+                else
+                    sed_inplace "s/^TRAEFIK_DOMAIN=.*/TRAEFIK_DOMAIN=${BACKUP_DUPLICATE_NAME}.test/" "$temp_env_file"
+                fi
+                
+                logMessage INFO "Backed up $config_file (modified for duplication: ${BACKUP_DUPLICATE_NAME})"
+            else
+                # Copy file as-is for non-duplication backups or other files
+                cp "$(pwd)/$config_file" "$target_dir/"
+                logMessage INFO "Backed up $config_file"
+            fi
         fi
     done
     
@@ -404,7 +477,7 @@ function encryptBackup() {
     local temp_checksums="$backup_dir/metadata/checksums.sha256.new"
     [[ -f "$backup_dir/metadata/checksums.sha256" ]] && cp "$backup_dir/metadata/checksums.sha256" "$temp_checksums"
     
-    # Process each tar file for encryption
+    # Process tar files for encryption
     while IFS= read -r -d '' file; do
         if command -v gpg >/dev/null 2>&1; then
             local encrypted_file="${file}.gpg"
@@ -419,8 +492,7 @@ function encryptBackup() {
                 
                 # Update checksums file to replace original with encrypted version
                 if [[ -f "$temp_checksums" ]]; then
-                    sed -i.bak "s|^[a-f0-9]*  ${relative_path}$|${checksum}  ${encrypted_relative_path}|" "$temp_checksums"
-                    rm -f "$temp_checksums.bak"
+                    sed_inplace "s|^[a-f0-9]*  ${relative_path}$|${checksum}  ${encrypted_relative_path}|" "$temp_checksums"
                 fi
                 
                 # Remove original file
@@ -438,6 +510,42 @@ function encryptBackup() {
             return 1
         fi
     done < <(find "$backup_dir" -name "*.tar*" -type f -print0)
+    
+    # Process configuration files for encryption
+    if [[ -d "$backup_dir/config" ]]; then
+        while IFS= read -r -d '' file; do
+            if command -v gpg >/dev/null 2>&1; then
+                local encrypted_file="${file}.gpg"
+                if gpg --batch --yes --cipher-algo AES256 --compress-algo 1 \
+                    --symmetric --passphrase "$passphrase" \
+                    --output "$encrypted_file" "$file"; then
+                    
+                    # Generate checksum for encrypted config file
+                    local relative_path="${file#$backup_dir/}"
+                    local encrypted_relative_path="${relative_path}.gpg"
+                    local checksum=$(sha256sum "$encrypted_file" | cut -d' ' -f1)
+                    
+                    # Add checksum entry for the encrypted config file
+                    if [[ -f "$temp_checksums" ]]; then
+                        echo "$checksum  $encrypted_relative_path" >> "$temp_checksums"
+                    fi
+                    
+                    # Remove original file
+                    rm "$file"
+                    
+                    logMessage INFO "Encrypted config file $(basename "$file")"
+                else
+                    logMessage ERROR "Failed to encrypt config file $file"
+                    rm -f "$temp_checksums"
+                    return 1
+                fi
+            else
+                logMessage WARNING "GPG not available, skipping encryption"
+                rm -f "$temp_checksums"
+                return 1
+            fi
+        done < <(find "$backup_dir/config" -type f -print0)
+    fi
     
     # Replace original checksums file with updated one
     if [[ -f "$temp_checksums" ]]; then
@@ -513,6 +621,11 @@ function performBackup() {
     # Validate inputs
     validateCompression || exit 1
     
+    # Handle interactive password prompt if needed
+    if [[ "$BACKUP_ENCRYPT" == "PROMPT" ]]; then
+        BACKUP_ENCRYPT=$(promptPassword "Enter encryption password")
+    fi
+    
     # Detect enabled services
     local enabled_services=($(detectEnabledServices))
     if [[ ${#enabled_services[@]} -eq 0 ]]; then
@@ -530,6 +643,9 @@ function performBackup() {
     
     logMessage INFO "Starting backup to: $backup_dir"
     logMessage INFO "Backup type: $backup_type, Compression: $BACKUP_COMPRESSION"
+    
+    # Track successfully backed up services
+    local successful_services=()
     
     # Calculate total steps
     local total_steps=2  # metadata + config
@@ -550,11 +666,6 @@ function performBackup() {
     
     local current_step=0
     
-    # Generate metadata
-    ((current_step++))
-    generateBackupMetadata "$backup_dir" "${enabled_services[@]}"
-    showProgress $current_step $total_steps "Generating metadata"
-    
     # Backup based on type
     case "$backup_type" in
         all)
@@ -562,7 +673,9 @@ function performBackup() {
             for service_info in "${enabled_services[@]}"; do
                 IFS=':' read -r service_name service_type volume_name <<< "$service_info"
                 ((current_step++))
-                backupVolume "$service_name" "$volume_name" "$backup_dir" $current_step $total_steps
+                if backupVolume "$service_name" "$volume_name" "$backup_dir" $current_step $total_steps; then
+                    successful_services+=("$service_info")
+                fi
             done
             
             # Backup configurations
@@ -581,7 +694,9 @@ function performBackup() {
                 IFS=':' read -r service_name service_type volume_name <<< "$service_info"
                 if [[ "$service_type" =~ ^(mysql|mariadb|postgres)$ ]]; then
                     ((current_step++))
-                    backupVolume "$service_name" "$volume_name" "$backup_dir" $current_step $total_steps
+                    if backupVolume "$service_name" "$volume_name" "$backup_dir" $current_step $total_steps; then
+                        successful_services+=("$service_info")
+                    fi
                     break
                 fi
             done
@@ -592,7 +707,9 @@ function performBackup() {
                 IFS=':' read -r service_name service_type volume_name <<< "$service_info"
                 if [[ "$service_type" =~ ^(redis|dragonfly)$ ]]; then
                     ((current_step++))
-                    backupVolume "$service_name" "$volume_name" "$backup_dir" $current_step $total_steps
+                    if backupVolume "$service_name" "$volume_name" "$backup_dir" $current_step $total_steps; then
+                        successful_services+=("$service_info")
+                    fi
                     break
                 fi
             done
@@ -603,7 +720,9 @@ function performBackup() {
                 IFS=':' read -r service_name service_type volume_name <<< "$service_info"
                 if [[ "$service_type" =~ ^(elasticsearch|opensearch)$ ]]; then
                     ((current_step++))
-                    backupVolume "$service_name" "$volume_name" "$backup_dir" $current_step $total_steps
+                    if backupVolume "$service_name" "$volume_name" "$backup_dir" $current_step $total_steps; then
+                        successful_services+=("$service_info")
+                    fi
                     break
                 fi
             done
@@ -614,7 +733,9 @@ function performBackup() {
                 IFS=':' read -r service_name service_type volume_name <<< "$service_info"
                 if [[ "$service_type" == "mongodb" ]]; then
                     ((current_step++))
-                    backupVolume "$service_name" "$volume_name" "$backup_dir" $current_step $total_steps
+                    if backupVolume "$service_name" "$volume_name" "$backup_dir" $current_step $total_steps; then
+                        successful_services+=("$service_info")
+                    fi
                     break
                 fi
             done
@@ -629,6 +750,11 @@ function performBackup() {
             exit 1
             ;;
     esac
+    
+    # Generate metadata with successfully backed up services
+    ((current_step++))
+    generateBackupMetadata "$backup_dir" "${successful_services[@]}"
+    showProgress $current_step $total_steps "Generating metadata"
     
     # Encrypt if requested
     if [[ -n "$BACKUP_ENCRYPT" ]]; then
@@ -648,10 +774,15 @@ function performBackup() {
         # Update latest symlink
         (cd "$(pwd)/.roll/backups" && ln -sf "$archive_name" "latest$(getCompressionExtension)")
         
-        logMessage SUCCESS "Backup completed successfully!"
-        logMessage INFO "Backup ID: $timestamp"
-        logMessage INFO "Archive: $archive_name ($(du -h "$(pwd)/.roll/backups/$archive_name" | cut -f1))"
-        logMessage INFO "Location: $(pwd)/.roll/backups/"
+        if [[ $BACKUP_OUTPUT_ID -eq 1 ]]; then
+            # Only output the backup ID for programmatic use
+            echo "$timestamp"
+        else
+            logMessage SUCCESS "Backup completed successfully!"
+            logMessage INFO "Backup ID: $timestamp"
+            logMessage INFO "Archive: $archive_name ($(du -h "$(pwd)/.roll/backups/$archive_name" | cut -f1))"
+            logMessage INFO "Location: $(pwd)/.roll/backups/"
+        fi
         
         # Clean up directory version (keep archive)
         rm -rf "$backup_dir"
@@ -661,9 +792,13 @@ function performBackup() {
     fi
     
     # Cleanup old backups
-    cleanupOldBackups
-    
-    logMessage SUCCESS "Backup process completed!"
+    if [[ $BACKUP_OUTPUT_ID -eq 0 ]]; then
+        cleanupOldBackups
+        logMessage SUCCESS "Backup process completed!"
+    else
+        # Silent cleanup for output-id mode
+        cleanupOldBackups >/dev/null 2>&1
+    fi
 }
 
 # Main execution

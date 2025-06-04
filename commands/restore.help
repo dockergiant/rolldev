@@ -28,6 +28,7 @@ ROLL_USAGE=$(cat <<EOF
 \033[33mVerification:\033[0m
   --no-verify             Skip backup integrity verification
   --decrypt=PASSPHRASE    Passphrase for encrypted backups
+  --decrypt               Interactive password prompt for encrypted backups
 
 \033[33mMigration:\033[0m
   --no-legacy-migration   Skip automatic Warden to Roll migration
@@ -40,7 +41,8 @@ ROLL_USAGE=$(cat <<EOF
   restore --no-config                  # Restore volumes but not config files
   restore --force                      # Overwrite existing volumes
   restore --dry-run                    # Preview what would be restored
-  restore --decrypt=mypassword         # Restore encrypted backup
+  restore --decrypt=mypassword         # Restore encrypted backup with password
+  restore --decrypt                    # Restore encrypted backup with prompt
   restore --quiet --force              # Silent forced restore
 
 \033[33mService Names:\033[0m
@@ -64,6 +66,8 @@ ROLL_USAGE=$(cat <<EOF
   • Legacy Warden environments are automatically migrated to Roll format
   • Configuration files are backed up before being overwritten
   • Use --dry-run to preview changes before actual restoration
+  • Encrypted backups are automatically detected and prompt for password
+  • Use --decrypt without password to avoid storing passwords in command history
   • Encrypted backups require the same passphrase used during creation
   • After restoration, start your environment with 'roll env up'
 

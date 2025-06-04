@@ -29,6 +29,7 @@ ROLL_USAGE=$(cat <<EOF
   --compression=FORMAT  Compression format: gzip (default), xz, lz4, none
   --no-compression      Disable compression (same as --compression=none)
   --encrypt=PASSPHRASE  Encrypt backup with GPG using passphrase
+  --encrypt             Encrypt backup with interactive password prompt
   --include-logs        Include log files in backup (excluded by default)
   --include-source      Include source code in backup
   --no-parallel         Disable parallel backup operations
@@ -37,12 +38,17 @@ ROLL_USAGE=$(cat <<EOF
   --name=NAME           Give backup a custom name
   --description=TEXT    Add description to backup metadata
 
+\033[33mDuplication Options:\033[0m
+  --duplicate-name=NAME     Replace ROLL_ENV_NAME in backup for duplication
+  --duplicate-domain=DOMAIN Replace TRAEFIK_DOMAIN in backup for duplication
+
 \033[33mExamples:\033[0m
   backup                           # Backup all enabled services
   backup db                        # Backup database only
   backup all --include-source      # Full backup including source code
   backup --compression=xz --quiet  # High compression, minimal output
-  backup --encrypt=mypassword      # Encrypted backup
+  backup --encrypt=mypassword      # Encrypted backup with explicit password
+  backup --encrypt                 # Encrypted backup with password prompt
   backup --name="before-upgrade"   # Named backup for reference
   backup redis --no-verify         # Quick Redis backup without verification
   backup list                      # Show available backups
@@ -55,6 +61,7 @@ ROLL_USAGE=$(cat <<EOF
   • All backups include metadata for restoration tracking
   • Use 'roll restore' command to restore from backups
   • Encrypted backups require GPG for decryption during restore
+  • Use --encrypt without password to avoid storing passwords in command history
   • Source code backup excludes common cache/vendor directories
 EOF
 )

@@ -60,6 +60,11 @@ while [[ $# -gt 0 ]]; do
             RESTORE_DECRYPT="${1#*=}"
             shift
             ;;
+        --decrypt)
+            # Flag without value - will prompt for password later
+            RESTORE_DECRYPT="PROMPT"
+            shift
+            ;;
         --no-progress)
             PROGRESS=0
             shift
@@ -87,6 +92,59 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Utility functions for restore operations
+function promptPassword() {
+    local prompt="$1"
+    local password=""
+    
+    # Don't prompt in quiet mode or non-interactive shells
+    if [[ $RESTORE_QUIET -eq 1 ]] || [[ ! -t 0 ]]; then
+        error "Password required but running in non-interactive mode. Use --decrypt=password instead."
+        exit 1
+    fi
+    
+    echo -n "$prompt: " >&2
+    read -s password
+    echo >&2
+    
+    if [[ -z "$password" ]]; then
+        error "Password cannot be empty"
+        exit 1
+    fi
+    
+    echo "$password"
+}
+
+function detectEncryptedBackup() {
+    local backup_path="$1"
+    
+    # Check if backup contains .gpg files
+    if [[ -d "$backup_path" ]]; then
+        # Directory format - check for .gpg files
+        if find "$backup_path" -name "*.gpg" -type f | head -1 | grep -q .; then
+            return 0  # Encrypted
+        fi
+    else
+        # Archive format - check if archive contains .gpg files
+        local archive_file="$backup_path"
+        if [[ -f "$archive_file" ]]; then
+            # Determine decompression command
+            local decompress_cmd="cat"
+            case "$archive_file" in
+                *.tar.gz) decompress_cmd="gzip -dc" ;;
+                *.tar.xz) decompress_cmd="xz -dc" ;;
+                *.tar.lz4) decompress_cmd="lz4 -dc" ;;
+            esac
+            
+            # Check if archive contains .gpg files
+            if $decompress_cmd "$archive_file" | tar -tf - 2>/dev/null | grep -q "\.gpg$"; then
+                return 0  # Encrypted
+            fi
+        fi
+    fi
+    
+    return 1  # Not encrypted
+}
+
 function showProgress() {
     [[ $PROGRESS -eq 0 ]] && return
     local current=$1
@@ -101,9 +159,8 @@ function showProgress() {
     printf "%*s" $((bar_length - filled_length)) | tr ' ' '-'
     printf "] %d%% %s" $percent "$description"
     
-    if [[ $current -eq $total ]]; then
-        echo ""
-    fi
+    # Always end with a newline for clean output
+    echo ""
 }
 
 function logMessage() {
@@ -359,9 +416,25 @@ function restoreVolume() {
     local volume_mapping=$(getVolumeMapping "$service_name")
     IFS=':' read -r volume_name service_type <<< "$volume_mapping"
     
-    # Determine backup file location
+    # Determine backup file location (check for both encrypted and unencrypted)
     local backup_file=""
-    if [[ -f "$backup_path/volumes/${service_name}.tar.gz" ]]; then
+    local is_encrypted=false
+    
+    # Check for encrypted files first (.gpg extension)
+    if [[ -f "$backup_path/volumes/${service_name}.tar.gz.gpg" ]]; then
+        backup_file="$backup_path/volumes/${service_name}.tar.gz.gpg"
+        is_encrypted=true
+    elif [[ -f "$backup_path/volumes/${service_name}.tar.xz.gpg" ]]; then
+        backup_file="$backup_path/volumes/${service_name}.tar.xz.gpg"
+        is_encrypted=true
+    elif [[ -f "$backup_path/volumes/${service_name}.tar.lz4.gpg" ]]; then
+        backup_file="$backup_path/volumes/${service_name}.tar.lz4.gpg"
+        is_encrypted=true
+    elif [[ -f "$backup_path/volumes/${service_name}.tar.gpg" ]]; then
+        backup_file="$backup_path/volumes/${service_name}.tar.gpg"
+        is_encrypted=true
+    # Check for unencrypted files
+    elif [[ -f "$backup_path/volumes/${service_name}.tar.gz" ]]; then
         backup_file="$backup_path/volumes/${service_name}.tar.gz"
     elif [[ -f "$backup_path/volumes/${service_name}.tar.xz" ]]; then
         backup_file="$backup_path/volumes/${service_name}.tar.xz"
@@ -378,8 +451,20 @@ function restoreVolume() {
     fi
     
     if [[ $RESTORE_DRY_RUN -eq 1 ]]; then
-        logMessage INFO "[DRY RUN] Would restore $service_name from $backup_file to volume $volume_name"
+        if [[ $is_encrypted == true ]]; then
+            logMessage INFO "[DRY RUN] Would decrypt and restore $service_name from $backup_file to volume $volume_name"
+        else
+            logMessage INFO "[DRY RUN] Would restore $service_name from $backup_file to volume $volume_name"
+        fi
         return 0
+    fi
+    
+    # Validate decryption password if file is encrypted
+    if [[ $is_encrypted == true ]]; then
+        if [[ -z "$RESTORE_DECRYPT" ]]; then
+            logMessage ERROR "Encrypted backup file found but no decryption password provided"
+            return 1
+        fi
     fi
     
     # Get Docker Compose version for proper labeling
@@ -405,7 +490,14 @@ function restoreVolume() {
     
     # Determine decompression command and user permissions
     local decompress_cmd="cat"
-    case "$backup_file" in
+    local original_file="$backup_file"
+    
+    # Remove .gpg extension to determine original compression
+    if [[ $is_encrypted == true ]]; then
+        original_file="${backup_file%.gpg}"
+    fi
+    
+    case "$original_file" in
         *.tar.gz) decompress_cmd="gzip -d" ;;
         *.tar.xz) decompress_cmd="xz -d" ;;
         *.tar.lz4) decompress_cmd="lz4 -d" ;;
@@ -417,20 +509,33 @@ function restoreVolume() {
         mysql|mariadb|postgres) user_id="999:999" ;;
     esac
     
-    # Restore the volume data
+    # Restore the volume data with decryption if needed
     local temp_container="${ROLL_ENV_NAME}_restore_${service_name}_$$"
     
-    if $decompress_cmd < "$backup_file" | docker run --rm --name "$temp_container" \
-        --mount source="$volume_name",target=/data \
-        --user "$user_id" \
-        -i alpine:latest \
-        sh -c "cd /data && tar -xf - --strip-components=1 && chown -R $user_id /data" 2>/dev/null; then
+    if [[ $is_encrypted == true ]]; then
+        # Decrypt and decompress pipeline - extract as root first, then fix permissions
+        local restore_cmd="gpg --batch --yes --quiet --passphrase \"$RESTORE_DECRYPT\" --decrypt \"$backup_file\" | $decompress_cmd | docker run --rm --name \"$temp_container\" --mount source=\"$volume_name\",target=/data -i alpine:latest sh -c \"cd /data && tar -xf - --strip-components=1 && chown -R $user_id /data\""
         
-        logMessage SUCCESS "Successfully restored $service_name volume"
-        return 0
+        if eval "$restore_cmd" 2>/dev/null; then
+            logMessage SUCCESS "Successfully restored and decrypted $service_name volume"
+            return 0
+        else
+            logMessage ERROR "Failed to decrypt and restore $service_name volume"
+            return 1
+        fi
     else
-        logMessage ERROR "Failed to restore $service_name volume"
-        return 1
+        # Regular restore without decryption
+        if $decompress_cmd < "$backup_file" | docker run --rm --name "$temp_container" \
+            --mount source="$volume_name",target=/data \
+            -i alpine:latest \
+            sh -c "cd /data && tar -xf - --strip-components=1 && chown -R $user_id /data" 2>/dev/null; then
+            
+            logMessage SUCCESS "Successfully restored $service_name volume"
+            return 0
+        else
+            logMessage ERROR "Failed to restore $service_name volume"
+            return 1
+        fi
     fi
 }
 
@@ -450,10 +555,21 @@ function restoreConfigurations() {
     
     # Legacy format support
     if [[ ! -d "$config_source_dir" ]]; then
-        # Check for legacy files in backup root
+        # Check for legacy files in backup root (both encrypted and unencrypted)
         local legacy_files=("env.php" "auth.json")
         for file in "${legacy_files[@]}"; do
-            if [[ -f "$backup_path/$file" ]]; then
+            local source_file=""
+            local is_encrypted=false
+            
+            # Check for encrypted version first
+            if [[ -f "$backup_path/${file}.gpg" ]]; then
+                source_file="$backup_path/${file}.gpg"
+                is_encrypted=true
+            elif [[ -f "$backup_path/$file" ]]; then
+                source_file="$backup_path/$file"
+            fi
+            
+            if [[ -n "$source_file" ]]; then
                 local target_path=""
                 case "$file" in
                     env.php) target_path="$current_dir/app/etc/env.php" ;;
@@ -462,11 +578,31 @@ function restoreConfigurations() {
                 
                 if [[ -n "$target_path" ]]; then
                     if [[ $RESTORE_DRY_RUN -eq 1 ]]; then
-                        logMessage INFO "[DRY RUN] Would restore $file to $target_path"
+                        if [[ $is_encrypted == true ]]; then
+                            logMessage INFO "[DRY RUN] Would decrypt and restore $file to $target_path"
+                        else
+                            logMessage INFO "[DRY RUN] Would restore $file to $target_path"
+                        fi
                     else
                         mkdir -p "$(dirname "$target_path")"
-                        cp "$backup_path/$file" "$target_path"
-                        logMessage INFO "Restored $file"
+                        
+                        if [[ $is_encrypted == true ]]; then
+                            # Decrypt the file directly to target location
+                            if [[ -n "$RESTORE_DECRYPT" ]]; then
+                                if gpg --batch --yes --quiet --passphrase "$RESTORE_DECRYPT" --decrypt "$source_file" > "$target_path"; then
+                                    logMessage INFO "Decrypted and restored $file"
+                                else
+                                    logMessage ERROR "Failed to decrypt $file"
+                                    return 1
+                                fi
+                            else
+                                logMessage ERROR "Encrypted config file found but no decryption password provided"
+                                return 1
+                            fi
+                        else
+                            cp "$source_file" "$target_path"
+                            logMessage INFO "Restored $file"
+                        fi
                     fi
                 fi
             fi
@@ -480,23 +616,55 @@ function restoreConfigurations() {
         return 0
     fi
     
-    # Restore configuration files
+    # Restore configuration files (both encrypted and unencrypted)
     if [[ -d "$config_source_dir" ]]; then
+        # Process all files including .gpg files
         find "$config_source_dir" -type f | while read -r config_file; do
             local relative_path="${config_file#$config_source_dir/}"
+            local is_encrypted=false
+            
+            # Check if file is encrypted
+            if [[ "$config_file" == *.gpg ]]; then
+                is_encrypted=true
+                # Remove .gpg extension for target path
+                relative_path="${relative_path%.gpg}"
+            fi
+            
             local target_path="$current_dir/$relative_path"
             
             # Create target directory if needed
             mkdir -p "$(dirname "$target_path")"
             
-            # Backup existing file if it exists and is different
-            if [[ -f "$target_path" ]] && ! cmp -s "$config_file" "$target_path"; then
-                cp "$target_path" "$target_path.backup.$(date +%s)"
-                logMessage INFO "Backed up existing $relative_path"
+            # Backup existing file if it exists
+            if [[ -f "$target_path" ]]; then
+                if [[ $is_encrypted == true ]]; then
+                    # For encrypted files, we can't easily compare so always backup
+                    cp "$target_path" "$target_path.backup.$(date +%s)"
+                    logMessage INFO "Backed up existing $relative_path"
+                elif ! cmp -s "$config_file" "$target_path"; then
+                    cp "$target_path" "$target_path.backup.$(date +%s)"
+                    logMessage INFO "Backed up existing $relative_path"
+                fi
             fi
             
-            cp "$config_file" "$target_path"
-            logMessage INFO "Restored $relative_path"
+            if [[ $is_encrypted == true ]]; then
+                # Decrypt the file
+                if [[ -n "$RESTORE_DECRYPT" ]]; then
+                    if gpg --batch --yes --quiet --passphrase "$RESTORE_DECRYPT" --decrypt "$config_file" > "$target_path"; then
+                        logMessage INFO "Decrypted and restored $relative_path"
+                    else
+                        logMessage ERROR "Failed to decrypt $relative_path"
+                        return 1
+                    fi
+                else
+                    logMessage ERROR "Encrypted config file found but no decryption password provided"
+                    return 1
+                fi
+            else
+                # Copy unencrypted file
+                cp "$config_file" "$target_path"
+                logMessage INFO "Restored $relative_path"
+            fi
         done
     fi
     
@@ -536,6 +704,24 @@ function performRestore() {
             logMessage ERROR "Backup not found: $backup_id"
             exit 1
         fi
+    fi
+    
+    # Detect if backup is encrypted and handle password prompting
+    if detectEncryptedBackup "$backup_path"; then
+        if [[ -z "$RESTORE_DECRYPT" ]]; then
+            # No password provided, prompt for it
+            RESTORE_DECRYPT=$(promptPassword "Encrypted backup detected. Enter decryption password")
+        elif [[ "$RESTORE_DECRYPT" == "PROMPT" ]]; then
+            # Explicit prompt requested
+            RESTORE_DECRYPT=$(promptPassword "Enter decryption password")
+        fi
+        
+        if [[ -z "$RESTORE_DECRYPT" ]]; then
+            logMessage ERROR "Encrypted backup requires a password. Use --decrypt=password or --decrypt to prompt."
+            exit 1
+        fi
+        
+        logMessage INFO "Encrypted backup detected, will decrypt during restoration"
     fi
     
     # Validate backup
