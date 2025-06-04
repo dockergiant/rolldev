@@ -29,6 +29,8 @@ caption: Getting Started
 installing
 services
 usage
+backup-restore
+backup-restore-quick-reference
 registry
 environments
 configuration

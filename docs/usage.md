@@ -53,6 +53,39 @@ Remove volumes completely:
 
     roll env down -v
 
+## Backup and Restore Commands
+
+Create a backup of all enabled services:
+
+    roll backup
+
+Create a backup of specific services:
+
+    roll backup db
+    roll backup redis
+
+List available backups:
+
+    roll backup list
+
+Show backup information:
+
+    roll backup info 1672531200
+
+Restore the latest backup:
+
+    roll restore
+
+Restore a specific backup:
+
+    roll restore 1672531200
+
+Preview what would be restored:
+
+    roll restore --dry-run
+
+For detailed backup and restore documentation, see the [Backup and Restore](backup-restore.md) page.
+
 ## Further Information
 
 Run `roll help` and `roll env -h` for more details and useful command information.

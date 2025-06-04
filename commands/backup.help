@@ -1,16 +1,60 @@
-
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
 
 ROLL_USAGE=$(cat <<EOF
 \033[33mUsage:\033[0m
-  backup (db, redis, elasticsearch, all)
-\033[33mOptions:\033[0m
-  -h, --help        Display this help menu
+  backup [options] [command]
+
 \033[33mCommands:\033[0m
-  db                  backup db volume
-  redis               backup redis volume
-  elasticsearch       backup elasticsearch volume
-  all                 backup db, redis and elasticsearch to one file including env.php and auth.json
+  all                     Backup all enabled services (default)
+  db, database           Backup database volumes only
+  redis                  Backup Redis cache volumes only
+  dragonfly             Backup Dragonfly cache volumes only
+  elasticsearch         Backup Elasticsearch search volumes only
+  opensearch            Backup OpenSearch search volumes only
+  mongodb               Backup MongoDB document volumes only
+  config, configuration Backup configuration files only
+  list, ls              List available backups
+  info <backup-id>      Show backup metadata and information
+  clean [days]          Clean up backups older than specified days (default: 30)
+
+\033[33mOptions:\033[0m
+  -h, --help            Display this help menu
+  -q, --quiet           Suppress output messages
+  -f, --force           Force backup creation (overwrite existing)
+  --dry-run            Show what would be backed up without doing it
+  --no-progress        Disable progress indicators
+
+\033[33mBackup Options:\033[0m
+  --compression=FORMAT  Compression format: gzip (default), xz, lz4, none
+  --no-compression      Disable compression (same as --compression=none)
+  --encrypt=PASSPHRASE  Encrypt backup with GPG using passphrase
+  --include-logs        Include log files in backup (excluded by default)
+  --include-source      Include source code in backup
+  --no-parallel         Disable parallel backup operations
+  --retention=DAYS      Auto-cleanup backups older than N days (default: 30)
+  --no-verify           Skip backup integrity verification
+  --name=NAME           Give backup a custom name
+  --description=TEXT    Add description to backup metadata
+
+\033[33mExamples:\033[0m
+  backup                           # Backup all enabled services
+  backup db                        # Backup database only
+  backup all --include-source      # Full backup including source code
+  backup --compression=xz --quiet  # High compression, minimal output
+  backup --encrypt=mypassword      # Encrypted backup
+  backup --name="before-upgrade"   # Named backup for reference
+  backup redis --no-verify         # Quick Redis backup without verification
+  backup list                      # Show available backups
+  backup info 1672531200           # Show backup details
+  backup clean 7                   # Remove backups older than 7 days
+
+\033[33mNotes:\033[0m
+  • Backups are stored in .roll/backups/ directory
+  • Service detection is automatic based on environment configuration
+  • All backups include metadata for restoration tracking
+  • Use 'roll restore' command to restore from backups
+  • Encrypted backups require GPG for decryption during restore
+  • Source code backup excludes common cache/vendor directories
 EOF
 )
