@@ -49,6 +49,7 @@ RollDev version $(cat ${ROLL_DIR}/version)
   svc               	Orchestrates global services such as traefik, portainer and dnsmasq via docker-compose
   env-init          	Configure environment by adding \033[31m'.env.roll'\033[0m file to the current working directory
   env               	Controls an environment from any point within the root project directory
+  config            	Manage and validate Roll configuration (see \033[31m'roll config -h'\033[0m for details)
   db                	Interacts with the db service on an environment (see \033[31m'roll db -h'\033[0m for details)
   redis             	Interacts with the redis service on an environment (see \033[31m'roll redis -h'\033[0m for details)
   install           	Initializes or updates roll configuration on host machine
@@ -75,3 +76,5 @@ ${ENV_TYPE_USAGE:1}
 ${ROLL_DARWIN:1}
 EOF
 )
+
+echo -e "${ROLL_USAGE}"

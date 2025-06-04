@@ -13,6 +13,7 @@ readonly ROLL_DIR="$(
   && pwd
 )"
 source "${ROLL_DIR}/utils/core.sh"
+source "${ROLL_DIR}/utils/config.sh"
 source "${ROLL_DIR}/utils/env.sh"
 
 ## verify docker is installed
