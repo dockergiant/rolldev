@@ -6,19 +6,19 @@ DOCKER_PEERED_SERVICES=("traefik" "tunnel" "mailhog")
 
 ## messaging functions
 function success {
-  >&2 printf "\033[32mSUCCESS\033[0m: $@\n"
+  >&2 printf "\033[32mSUCCESS\033[0m: %s\n" "$*"
 }
 
 function info {
-  >&2 printf "\033[33mINFO\033[0m: $@\n"
+  >&2 printf "\033[33mINFO\033[0m: %s\n" "$*"
 }
 
 function warning {
-  >&2 printf "\033[33mWARNING\033[0m: $@\n"
+  >&2 printf "\033[33mWARNING\033[0m: %s\n" "$*"
 }
 
 function error {
-  >&2 printf "\033[31mERROR\033[0m: $@\n"
+  >&2 printf "\033[31mERROR\033[0m: %s\n" "$*"
 }
 
 function fatal {
@@ -124,4 +124,25 @@ function disconnectPeeredServices {
 # Main logic with the timeout function
 function isOnline() {
   (ping -q -c1 -t 2 8.8.8.8 &>/dev/null && echo "true") || (ping -q -c1 -t 2 1.1.1.1 &>/dev/null && echo "true") || echo "false"
+}
+
+## cross-platform sed in-place editing function
+## works on both macOS (BSD sed) and Linux (GNU sed)
+function sed_inplace() {
+    local pattern="$1"
+    local file="$2"
+    local backup_ext="${3:-.bak}"
+    
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS (BSD sed) - requires backup extension
+        sed -i "$backup_ext" "$pattern" "$file"
+    else
+        # Linux (GNU sed) - backup extension is optional
+        sed -i"$backup_ext" "$pattern" "$file"
+    fi
+    
+    # Remove backup file if it exists and we used .bak extension
+    if [[ "$backup_ext" == ".bak" && -f "${file}${backup_ext}" ]]; then
+        rm -f "${file}${backup_ext}"
+    fi
 }
