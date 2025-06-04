@@ -400,16 +400,49 @@ function encryptBackup() {
     
     logMessage INFO "Encrypting backup files..."
     
-    find "$backup_dir" -name "*.tar*" -type f | while read -r file; do
+    # Create temporary file for new checksums
+    local temp_checksums="$backup_dir/metadata/checksums.sha256.new"
+    [[ -f "$backup_dir/metadata/checksums.sha256" ]] && cp "$backup_dir/metadata/checksums.sha256" "$temp_checksums"
+    
+    # Process each tar file for encryption
+    while IFS= read -r -d '' file; do
         if command -v gpg >/dev/null 2>&1; then
-            gpg --batch --yes --cipher-algo AES256 --compress-algo 1 \
+            local encrypted_file="${file}.gpg"
+            if gpg --batch --yes --cipher-algo AES256 --compress-algo 1 \
                 --symmetric --passphrase "$passphrase" \
-                --output "$file.gpg" "$file" && rm "$file"
+                --output "$encrypted_file" "$file"; then
+                
+                # Generate new checksum for encrypted file
+                local relative_path="${file#$backup_dir/}"
+                local encrypted_relative_path="${relative_path}.gpg"
+                local checksum=$(sha256sum "$encrypted_file" | cut -d' ' -f1)
+                
+                # Update checksums file to replace original with encrypted version
+                if [[ -f "$temp_checksums" ]]; then
+                    sed -i.bak "s|^[a-f0-9]*  ${relative_path}$|${checksum}  ${encrypted_relative_path}|" "$temp_checksums"
+                    rm -f "$temp_checksums.bak"
+                fi
+                
+                # Remove original file
+                rm "$file"
+                
+                logMessage INFO "Encrypted $(basename "$file")"
+            else
+                logMessage ERROR "Failed to encrypt $file"
+                rm -f "$temp_checksums"
+                return 1
+            fi
         else
             logMessage WARNING "GPG not available, skipping encryption"
+            rm -f "$temp_checksums"
             return 1
         fi
-    done
+    done < <(find "$backup_dir" -name "*.tar*" -type f -print0)
+    
+    # Replace original checksums file with updated one
+    if [[ -f "$temp_checksums" ]]; then
+        mv "$temp_checksums" "$backup_dir/metadata/checksums.sha256"
+    fi
     
     logMessage SUCCESS "Backup encryption completed"
 }
@@ -424,11 +457,28 @@ function verifyBackup() {
     logMessage INFO "Verifying backup integrity..."
     
     if [[ -f "$backup_dir/metadata/checksums.sha256" ]]; then
-        if (cd "$backup_dir" && sha256sum -c metadata/checksums.sha256 >/dev/null 2>&1); then
+        # Verify checksums with detailed output
+        local verify_output
+        if verify_output=$(cd "$backup_dir" && sha256sum -c metadata/checksums.sha256 2>&1); then
             logMessage SUCCESS "Backup verification passed"
             return 0
         else
             logMessage ERROR "Backup verification failed"
+            
+            # Show which files failed verification
+            local failed_files=$(echo "$verify_output" | grep -E "(No such file|FAILED)" | head -5)
+            if [[ -n "$failed_files" ]]; then
+                logMessage ERROR "Failed files:"
+                echo "$failed_files" | while read -r line; do
+                    logMessage ERROR "  $line"
+                done
+                
+                # Check if this might be an encryption issue
+                if echo "$verify_output" | grep -q "No such file or directory"; then
+                    logMessage INFO "Files may be encrypted. Use --no-verify to skip verification for encrypted backups."
+                fi
+            fi
+            
             return 1
         fi
     else

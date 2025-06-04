@@ -332,4 +332,42 @@ The restore command automatically handles migration from legacy formats:
 - **Old Backup Format**: Supports backups created with the previous backup system
 - **Configuration Migration**: Updates configuration files during restoration
 
-This ensures seamless upgrades and backward compatibility with existing backup archives. 
+This ensures seamless upgrades and backward compatibility with existing backup archives.
+
+# Encryption Support
+
+RollDev supports GPG encryption for backup files using AES256 cipher with passphrase protection:
+
+```bash
+# Create encrypted backup
+roll backup --encrypt=mypassword
+
+# Restore encrypted backup
+roll restore --decrypt=mypassword
+```
+
+## Encryption Behavior
+
+- **File Encryption**: All `.tar.gz` files are encrypted to `.tar.gz.gpg` format
+- **Checksum Updates**: Checksums are automatically recalculated for encrypted files
+- **Verification**: Integrity verification works seamlessly with encrypted backups
+- **Security**: Uses GPG with AES256 cipher and compression
+
+## Troubleshooting Encryption
+
+If you encounter issues with encrypted backups:
+
+```bash
+# Skip verification for problematic encrypted backups
+roll backup --encrypt=password --no-verify
+
+# Check GPG availability
+which gpg
+
+# Restore with explicit decryption
+roll restore --decrypt=password --backup-id=1672531200
+```
+
+**Note**: Encrypted backups require the same passphrase for restoration. Store your passphrase securely!
+
+## Backup Structure 
