@@ -339,11 +339,20 @@ This ensures seamless upgrades and backward compatibility with existing backup a
 RollDev supports GPG encryption for backup files using AES256 cipher with passphrase protection:
 
 ```bash
-# Create encrypted backup
+# Create encrypted backup with explicit password
 roll backup --encrypt=mypassword
 
-# Restore encrypted backup
+# Create encrypted backup with interactive prompt (recommended)
+roll backup --encrypt
+
+# Restore encrypted backup with explicit password
 roll restore --decrypt=mypassword
+
+# Restore encrypted backup with interactive prompt (recommended)
+roll restore --decrypt
+
+# Automatic detection - encrypted backups prompt for password automatically
+roll restore 1672531200
 ```
 
 ## Encryption Behavior
@@ -352,6 +361,19 @@ roll restore --decrypt=mypassword
 - **Checksum Updates**: Checksums are automatically recalculated for encrypted files
 - **Verification**: Integrity verification works seamlessly with encrypted backups
 - **Security**: Uses GPG with AES256 cipher and compression
+- **Auto-Detection**: Restore automatically detects encrypted backups and prompts for password
+- **Interactive Prompts**: Use `--encrypt` or `--decrypt` without password to avoid command history
+
+## Security Best Practices
+
+```bash
+# Recommended: Use interactive prompts to avoid passwords in command history
+roll backup --encrypt                    # Will prompt securely for password
+roll restore --decrypt                   # Will prompt securely for password
+
+# Avoid: Passwords visible in command history and process lists
+roll backup --encrypt=mysecretpassword   # NOT recommended for production
+```
 
 ## Troubleshooting Encryption
 
@@ -359,13 +381,16 @@ If you encounter issues with encrypted backups:
 
 ```bash
 # Skip verification for problematic encrypted backups
-roll backup --encrypt=password --no-verify
+roll backup --encrypt --no-verify
 
 # Check GPG availability
 which gpg
 
 # Restore with explicit decryption
 roll restore --decrypt=password --backup-id=1672531200
+
+# Test decryption in dry-run mode
+roll restore --decrypt --dry-run
 ```
 
 **Note**: Encrypted backups require the same passphrase for restoration. Store your passphrase securely!

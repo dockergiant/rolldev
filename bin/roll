@@ -40,7 +40,7 @@ declare ROLL_PARAMS=()
 declare ROLL_CMD_VERB=
 declare ROLL_CMD_EXEC=
 declare ROLL_CMD_HELP=
-declare ROLL_CMD_ANYARGS=(svc env db redis sync shell debug rootnotty rootshell clinotty root node npm cli copyfromcontainer copytocontainer composer grunt magento magerun backup restore)
+declare ROLL_CMD_ANYARGS=(svc env db redis sync shell debug rootnotty rootshell clinotty root node npm cli copyfromcontainer copytocontainer composer grunt magento magerun backup restore duplicate)
 
 ## parse first argument as command and determine validity
 if (( "$#" )); then

@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+
+ROLL_USAGE=$(cat <<EOF
+\033[33mUsage:\033[0m
+  duplicate <new-environment-name> [options]
+
+\033[33mDescription:\033[0m
+  Duplicates the current Roll environment to a new environment with a different name.
+
+\033[33mArguments:\033[0m
+  <new-environment-name>    Name for the new environment (required)
+
+\033[33mOptions:\033[0m
+  -h, --help              Display this help menu
+  -q, --quiet             Suppress output messages
+  -f, --force             Overwrite existing target directory
+  --dry-run              Show what would be done without executing
+  --encrypt              Encrypt backup with interactive password prompt
+  --no-source            Don't include source code in duplication
+  --no-start             Don't start the new environment automatically
+
+\033[33mExamples:\033[0m
+  duplicate moduleshop-upgrade              # Basic duplication
+  duplicate moduleshop-staging --encrypt    # With encryption 
+  duplicate moduleshop-upgrade --dry-run    # Preview what would happen
+
+\033[33mNotes:\033[0m
+  • Creates new environment in ../new-environment-name/
+  • Generates new SSL certificates automatically
+  • Updates database URLs for new environment
+EOF
+) 
