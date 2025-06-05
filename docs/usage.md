@@ -45,7 +45,7 @@ Flush redis completely:
 
     roll redis flushall
 
-Run redis continous stat mode
+Run redis continuous stat mode
 
     roll redis --stat
 
