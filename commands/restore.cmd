@@ -488,33 +488,12 @@ function restoreVolume() {
         --label com.docker.compose.version="$docker_compose_version" \
         --label com.docker.compose.volume="$volume_base_name" >/dev/null 2>&1
     
-    # Determine decompression command and user permissions
-    local decompress_cmd="cat"
-    local original_file="$backup_file"
-    
-    # Remove .gpg extension to determine original compression
-    if [[ $is_encrypted == true ]]; then
-        original_file="${backup_file%.gpg}"
-    fi
-    
-    case "$original_file" in
-        *.tar.gz) decompress_cmd="gzip -d" ;;
-        *.tar.xz) decompress_cmd="xz -d" ;;
-        *.tar.lz4) decompress_cmd="lz4 -d" ;;
-    esac
-    
-    local user_id="0:0"  # Default to root
-    case "$service_type" in
-        elasticsearch|opensearch) user_id="1000:1000" ;;
-        mysql|mariadb|postgres) user_id="999:999" ;;
-    esac
-    
     # Restore the volume data with decryption if needed
     local temp_container="${ROLL_ENV_NAME}_restore_${service_name}_$$"
     
     if [[ $is_encrypted == true ]]; then
-        # Decrypt and decompress pipeline - extract as root first, then fix permissions
-        local restore_cmd="gpg --batch --yes --quiet --passphrase \"$RESTORE_DECRYPT\" --decrypt \"$backup_file\" | $decompress_cmd | docker run --rm --name \"$temp_container\" --mount source=\"$volume_name\",target=/data -i alpine:latest sh -c \"cd /data && tar -xf - --strip-components=1 && chown -R $user_id /data\""
+        # Decrypt and decompress pipeline - use ubuntu and original tar approach with strip components
+        local restore_cmd="gpg --batch --yes --quiet --passphrase \"$RESTORE_DECRYPT\" --decrypt \"$backup_file\" | docker run --rm --name \"$temp_container\" --mount source=\"$volume_name\",target=/data -i ubuntu bash -c \"cd /data && tar -xf - --strip-components=1\""
         
         if eval "$restore_cmd" 2>/dev/null; then
             logMessage SUCCESS "Successfully restored and decrypted $service_name volume"
@@ -524,18 +503,70 @@ function restoreVolume() {
             return 1
         fi
     else
-        # Regular restore without decryption
-        if $decompress_cmd < "$backup_file" | docker run --rm --name "$temp_container" \
-            --mount source="$volume_name",target=/data \
-            -i alpine:latest \
-            sh -c "cd /data && tar -xf - --strip-components=1 && chown -R $user_id /data" 2>/dev/null; then
-            
-            logMessage SUCCESS "Successfully restored $service_name volume"
-            return 0
-        else
-            logMessage ERROR "Failed to restore $service_name volume"
-            return 1
-        fi
+        # Regular restore without decryption - use ubuntu and original tar approach with strip components
+        # For compressed files, we need to handle decompression properly
+        case "$backup_file" in
+            *.tar.gz)
+                if docker run --rm --name "$temp_container" \
+                    --mount source="$volume_name",target=/data \
+                    -v "$(dirname "$backup_file")":/backup \
+                    ubuntu bash \
+                    -c "cd /data && tar -xzf /backup/$(basename "$backup_file") --strip-components=1" 2>/dev/null; then
+                    
+                    logMessage SUCCESS "Successfully restored $service_name volume"
+                    return 0
+                else
+                    logMessage ERROR "Failed to restore $service_name volume"
+                    return 1
+                fi
+                ;;
+            *.tar.xz)
+                if docker run --rm --name "$temp_container" \
+                    --mount source="$volume_name",target=/data \
+                    -v "$(dirname "$backup_file")":/backup \
+                    ubuntu bash \
+                    -c "cd /data && tar -xJf /backup/$(basename "$backup_file") --strip-components=1" 2>/dev/null; then
+                    
+                    logMessage SUCCESS "Successfully restored $service_name volume"
+                    return 0
+                else
+                    logMessage ERROR "Failed to restore $service_name volume"
+                    return 1
+                fi
+                ;;
+            *.tar.lz4)
+                if docker run --rm --name "$temp_container" \
+                    --mount source="$volume_name",target=/data \
+                    -v "$(dirname "$backup_file")":/backup \
+                    ubuntu bash \
+                    -c "cd /data && lz4 -d /backup/$(basename "$backup_file") - | tar -xf - --strip-components=1" 2>/dev/null; then
+                    
+                    logMessage SUCCESS "Successfully restored $service_name volume"
+                    return 0
+                else
+                    logMessage ERROR "Failed to restore $service_name volume"
+                    return 1
+                fi
+                ;;
+            *.tar)
+                if docker run --rm --name "$temp_container" \
+                    --mount source="$volume_name",target=/data \
+                    -v "$(dirname "$backup_file")":/backup \
+                    ubuntu bash \
+                    -c "cd /data && tar -xf /backup/$(basename "$backup_file") --strip-components=1" 2>/dev/null; then
+                    
+                    logMessage SUCCESS "Successfully restored $service_name volume"
+                    return 0
+                else
+                    logMessage ERROR "Failed to restore $service_name volume"
+                    return 1
+                fi
+                ;;
+            *)
+                logMessage ERROR "Unsupported backup file format: $backup_file"
+                return 1
+                ;;
+        esac
     fi
 }
 

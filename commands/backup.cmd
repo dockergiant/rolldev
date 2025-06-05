@@ -320,33 +320,72 @@ function backupVolume() {
         return 1  # Return failure so this service won't be included in successful_services
     fi
     
-    # Create backup with appropriate user permissions based on service
-    local user_id="0:0"  # Default to root
-    case "$service_name" in
-        elasticsearch|opensearch) user_id="1000:1000" ;;
-        mysql|mariadb|postgres) user_id="999:999" ;;
+    # Use the same approach as the original working backup script
+    # Switch back to ubuntu and use the original tar command structure
+    local tar_compression_flag=""
+    case "$BACKUP_COMPRESSION" in
+        gzip) tar_compression_flag="z" ;;
+        xz) tar_compression_flag="J" ;;
+        lz4) tar_compression_flag="" ;; # lz4 doesn't have direct tar support, fallback to pipe
+        none) tar_compression_flag="" ;;
     esac
     
-    local tar_cmd="tar -cf - /data"
-    if [[ $BACKUP_EXCLUDE_LOGS -eq 1 ]]; then
-        tar_cmd="tar --exclude='*.log' --exclude='*log*' --exclude='*.tmp' -cf - /data"
+    # Create backup directory for volume if it doesn't exist
+    mkdir -p "$backup_dir/volumes"
+    
+    # Execute backup with the original working approach - use ubuntu and direct tar compression
+    if [[ "$BACKUP_COMPRESSION" == "lz4" ]]; then
+        # Handle lz4 separately since tar doesn't support it directly
+        if [[ $BACKUP_OUTPUT_ID -eq 1 ]]; then
+            docker run --rm --name "$temp_container" \
+                --mount source="$full_volume_name",target=/data \
+                -v "$backup_dir/volumes":/backup \
+                ubuntu bash \
+                -c "tar -cf - /data | lz4 -9 > /backup/${service_name}.tar.lz4" >/dev/null 2>&1
+        else
+            docker run --rm --name "$temp_container" \
+                --mount source="$full_volume_name",target=/data \
+                -v "$backup_dir/volumes":/backup \
+                ubuntu bash \
+                -c "tar -cf - /data | lz4 -9 > /backup/${service_name}.tar.lz4"
+        fi
+    else
+        # Use original working approach for gzip, xz, and none
+        local tar_cmd="tar -c${tar_compression_flag}vf /backup/${service_name}$(getCompressionExtension) /data"
+        if [[ $BACKUP_EXCLUDE_LOGS -eq 1 ]]; then
+            tar_cmd="tar -c${tar_compression_flag}vf /backup/${service_name}$(getCompressionExtension) --exclude='*.log' --exclude='*_log' --exclude='log_*' --exclude='*.tmp' /data"
+        fi
+        
+        if [[ $BACKUP_OUTPUT_ID -eq 1 ]]; then
+            # Suppress all output when using --output-id
+            docker run --rm --name "$temp_container" \
+                --mount source="$full_volume_name",target=/data \
+                -v "$backup_dir/volumes":/backup \
+                ubuntu bash \
+                -c "$tar_cmd" >/dev/null 2>&1
+        else
+            docker run --rm --name "$temp_container" \
+                --mount source="$full_volume_name",target=/data \
+                -v "$backup_dir/volumes":/backup \
+                ubuntu bash \
+                -c "$tar_cmd"
+        fi
     fi
     
-    # Execute backup with progress and error handling
-    if docker run --rm --name "$temp_container" \
-        --mount source="$full_volume_name",target=/data,readonly \
-        --user "$user_id" \
-        alpine:latest \
-        sh -c "$tar_cmd" | $(getCompressionCommand) > "$output_file" 2>/dev/null; then
-        
+    # Check if backup was successful
+    if [[ $? -eq 0 && -f "$backup_dir/volumes/${service_name}$(getCompressionExtension)" ]]; then
         # Generate checksum
-        local checksum=$(sha256sum "$output_file" | cut -d' ' -f1)
+        local checksum=$(sha256sum "$backup_dir/volumes/${service_name}$(getCompressionExtension)" | cut -d' ' -f1)
         echo "$checksum  volumes/${service_name}$(getCompressionExtension)" >> "$backup_dir/metadata/checksums.sha256"
         
-        logMessage SUCCESS "Successfully backed up $service_name volume ($(du -h "$output_file" | cut -f1))"
+        if [[ $BACKUP_OUTPUT_ID -eq 0 ]]; then
+            logMessage SUCCESS "Successfully backed up $service_name volume ($(du -h "$backup_dir/volumes/${service_name}$(getCompressionExtension)" | cut -f1))"
+        fi
         return 0
     else
-        logMessage ERROR "Failed to backup $service_name volume"
+        if [[ $BACKUP_OUTPUT_ID -eq 0 ]]; then
+            logMessage ERROR "Failed to backup $service_name volume"
+        fi
         return 1
     fi
 }
@@ -768,7 +807,12 @@ function performBackup() {
     local archive_name="backup_${ROLL_ENV_NAME}_${timestamp}$(getCompressionExtension)"
     logMessage INFO "Creating final backup archive: $archive_name"
     
-    (cd "$(pwd)/.roll/backups" && tar -cf - "$timestamp" | $(getCompressionCommand) > "$archive_name")
+    # Suppress tar warnings when using --output-id
+    if [[ $BACKUP_OUTPUT_ID -eq 1 ]]; then
+        (cd "$(pwd)/.roll/backups" && tar -cf - "$timestamp" 2>/dev/null | $(getCompressionCommand) > "$archive_name")
+    else
+        (cd "$(pwd)/.roll/backups" && tar -cf - "$timestamp" | $(getCompressionCommand) > "$archive_name")
+    fi
     
     if [[ $? -eq 0 ]]; then
         # Update latest symlink
