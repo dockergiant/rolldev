@@ -234,7 +234,7 @@ then
     roll sync pause
 fi
 
-## pass ochestration through to docker-compose
+## pass orchestration through to docker-compose
 docker compose \
     --env-file "${ROLL_ENV_PATH}/.env.roll" --project-directory "${ROLL_ENV_PATH}" -p "${ROLL_ENV_NAME}" \
     "${DOCKER_COMPOSE_ARGS[@]}" "${ROLL_PARAMS[@]}" "$@"
