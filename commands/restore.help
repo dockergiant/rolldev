@@ -1,11 +1,81 @@
-
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
 
 ROLL_USAGE=$(cat <<EOF
 \033[33mUsage:\033[0m
-  restore                     restore redis, elasticsearch and database
+  restore [options] [backup-id]
+
+\033[33mDescription:\033[0m
+  Restore data and configuration from a previous backup. If no backup ID is
+  specified, the most recent backup will be used automatically.
+
 \033[33mOptions:\033[0m
-  -h, --help        Display this help menu
+  -h, --help              Display this help menu
+  -q, --quiet             Suppress output messages
+  -f, --force             Force restore (overwrite existing volumes)
+  --dry-run               Show what would be restored without doing it
+  --no-progress           Disable progress indicators
+
+\033[33mBackup Selection:\033[0m
+  --backup-id=ID          Specify backup ID/timestamp to restore from
+  --backup=ID             Alias for --backup-id
+
+\033[33mService Selection:\033[0m
+  --services=LIST         Comma-separated list of services to restore
+                         (e.g., --services=db,redis,config)
+  --no-config             Skip restoring configuration files
+
+\033[33mVerification:\033[0m
+  --no-verify             Skip backup integrity verification
+  --decrypt=PASSPHRASE    Passphrase for encrypted backups
+  --decrypt               Interactive password prompt for encrypted backups
+
+\033[33mMigration:\033[0m
+  --no-legacy-migration   Skip automatic Warden to Roll migration
+
+\033[33mExamples:\033[0m
+  restore                              # Restore latest backup (all services)
+  restore 1672531200                   # Restore specific backup by timestamp
+  restore --backup-id=1672531200       # Same as above, explicit syntax
+  restore --services=db,redis          # Restore only database and Redis
+  restore --no-config                  # Restore volumes but not config files
+  restore --force                      # Overwrite existing volumes
+  restore --dry-run                    # Preview what would be restored
+  restore --decrypt=mypassword         # Restore encrypted backup with password
+  restore --decrypt                    # Restore encrypted backup with prompt
+  restore --quiet --force              # Silent forced restore
+
+\033[33mService Names:\033[0m
+  db, database           Database volumes (MySQL/MariaDB/PostgreSQL)
+  redis                  Redis cache volumes
+  dragonfly             Dragonfly cache volumes
+  elasticsearch         Elasticsearch search volumes
+  opensearch            OpenSearch search volumes
+  mongodb               MongoDB document volumes
+  rabbitmq              RabbitMQ message queue volumes
+  varnish               Varnish cache volumes
+  config                Configuration files only
+
+\033[33mBackup ID Format:\033[0m
+  Backup IDs are Unix timestamps (e.g., 1672531200) representing when the
+  backup was created. Use 'roll backup list' to see available backups.
+
+\033[33mNotes:\033[0m
+  • Restore automatically stops the environment before proceeding
+  • Existing volumes are backed up before restoration when using --force
+  • Legacy Warden environments are automatically migrated to Roll format
+  • Configuration files are backed up before being overwritten
+  • Use --dry-run to preview changes before actual restoration
+  • Encrypted backups are automatically detected and prompt for password
+  • Use --decrypt without password to avoid storing passwords in command history
+  • Encrypted backups require the same passphrase used during creation
+  • After restoration, start your environment with 'roll env up'
+
+\033[33mTroubleshooting:\033[0m
+  • If restore fails, check backup integrity with 'roll backup info <id>'
+  • Use --force to overwrite existing volumes if they conflict
+  • Use --no-verify to skip checksums if backup is known to be good
+  • Check .roll/backups/ directory for available backups
+  • Legacy backups (old format) are automatically detected and supported
 EOF
 )
