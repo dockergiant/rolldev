@@ -28,10 +28,10 @@ for projectNetwork in "${projectNetworkList[@]}"; do
     [[ -z "${container}" ]] && continue # Project is not running, skip it
 
     projectDir=$(docker container inspect --format '{{ index .Config.Labels "com.docker.compose.project.working_dir"}}' "$container")
-    projectName=$(cat "${projectDir}/.env.roll" | grep '^ROLL_ENV_NAME=' | sed -e 's/ROLL_ENV_NAME=[[:space:]]*//g' | tr -d -)
-    projectType=$(cat "${projectDir}/.env.roll" | grep '^ROLL_ENV_TYPE=' | sed -e 's/ROLL_ENV_TYPE=[[:space:]]*//g' | tr -d -)
-    traefikDomain=$(cat "${projectDir}/.env.roll" | grep '^TRAEFIK_DOMAIN=' | sed -e 's/TRAEFIK_DOMAIN=[[:space:]]*//g' | tr -d -)
-    traefikSubDomain=$(cat "${projectDir}/.env.roll" | grep '^TRAEFIK_SUBDOMAIN=' | sed -e 's/TRAEFIK_SUBDOMAIN=[[:space:]]*//g' | tr -d -)
+    projectName=$(cat "${projectDir}/.env.roll" | grep '^ROLL_ENV_NAME=' | sed -e 's/ROLL_ENV_NAME=[[:space:]]*//g' | tr -d '\r')
+    projectType=$(cat "${projectDir}/.env.roll" | grep '^ROLL_ENV_TYPE=' | sed -e 's/ROLL_ENV_TYPE=[[:space:]]*//g' | tr -d '\r')
+    traefikDomain=$(cat "${projectDir}/.env.roll" | grep '^TRAEFIK_DOMAIN=' | sed -e 's/TRAEFIK_DOMAIN=[[:space:]]*//g' | tr -d '\r')
+    traefikSubDomain=$(cat "${projectDir}/.env.roll" | grep '^TRAEFIK_SUBDOMAIN=' | sed -e 's/TRAEFIK_SUBDOMAIN=[[:space:]]*//g' | tr -d '\r')
 
     messageList+=("    \033[1;35m${projectName}\033[0m a \033[36m${projectType}\033[0m project")
     messageList+=("       Project Directory: \033[33m${projectDir}\033[0m")
