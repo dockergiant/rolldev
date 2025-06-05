@@ -92,7 +92,7 @@ fi
 
 ROLL_VERSION=$(cat ${ROLL_DIR}/version)
 
-## pass ochestration through to docker-compose
+## pass orchestration through to docker-compose
 ROLL_VERSION=${ROLL_VERSION:-"in-dev"} docker compose \
     --project-directory "${ROLL_HOME_DIR}" -p roll \
     "${DOCKER_COMPOSE_ARGS[@]}" "${ROLL_PARAMS[@]}" "$@"
