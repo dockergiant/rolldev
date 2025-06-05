@@ -53,6 +53,22 @@ Remove volumes completely:
 
     roll env down -v
 
+## Environment Duplication
+
+Duplicate the current environment to create a new environment with a different name:
+
+    roll duplicate new-environment-name
+
+Create an encrypted duplicate:
+
+    roll duplicate staging-env --encrypt
+
+Preview what would be duplicated without executing:
+
+    roll duplicate test-env --dry-run
+
+For detailed duplication documentation, see the [Environment Duplication](duplicate.md) page.
+
 ## Backup and Restore Commands
 
 Create a backup of all enabled services:

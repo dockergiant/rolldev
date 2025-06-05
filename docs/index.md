@@ -29,6 +29,7 @@ caption: Getting Started
 installing
 services
 usage
+duplicate
 backup-restore
 backup-restore-quick-reference
 registry
