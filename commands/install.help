@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+
+ROLL_USAGE=$(cat <<EOF
+\033[33mUsage:\033[0m
+  install
+
+\033[33mDescription:\033[0m
+  Sets up the complete Roll development environment including SSL certificates,
+  DNS resolution, SSH tunneling, and required directories.
+
+  This command performs the following setup tasks:
+  • Generates local Root CA certificate for SSL/TLS
+  • Trusts the Root CA certificate in the system certificate store
+  • Configures DNS resolver for .test domains (macOS only)
+  • Generates SSH keypair for tunnel service authentication
+  • Creates necessary directories and configuration files
+  • Sets up SSH configuration for tunnel.roll.test
+  • Creates default RollDev configuration file
+
+\033[33mPlatform Support:\033[0m
+  • macOS: Full DNS resolution and certificate trust setup
+  • Linux (Fedora/CentOS): Certificate trust via ca-trust
+  • Linux (Ubuntu/Debian): Certificate trust via ca-certificates
+  • Linux: Manual DNS configuration required
+
+\033[33mPrerequisites:\033[0m
+  • OpenSSL (for certificate generation)
+  • sudo privileges (for system-level configuration)
+
+\033[33mFiles Created:\033[0m
+  • ~/.roll/ssl/rootca/* (Root CA certificate and key)
+  • ~/.roll/tunnel/ssh_key* (SSH keypair for tunnel service)
+  • ~/.roll/.env (RollDev configuration)
+  • /etc/resolver/test (macOS DNS resolver)
+
+\033[33mExamples:\033[0m
+  roll install              # Perform complete Roll environment setup
+
+\033[33mNotes:\033[0m
+  • This command is typically run once after initial Roll installation
+  • Safe to run multiple times (will skip existing configurations)
+  • Requires sudo privileges for system certificate and DNS setup
+  • On Linux, manual DNS configuration may be required
+
+\033[33mSee Also:\033[0m
+  roll env-init             # Initialize a new project environment
+  roll --help               # General Roll help
+EOF
+) 

@@ -13,6 +13,8 @@ readonly ROLL_DIR="$(
   && pwd
 )"
 source "${ROLL_DIR}/utils/core.sh"
+source "${ROLL_DIR}/utils/config.sh"
+source "${ROLL_DIR}/utils/registry.sh"
 source "${ROLL_DIR}/utils/env.sh"
 
 ## verify docker is installed
@@ -46,37 +48,15 @@ if (( "$#" )); then
   ROLL_ENV_PATH="$(locateEnvPath 2>/dev/null)" || true
   ROLL_ENV_TYPE="$(renderEnvType 2>/dev/null)" || true
 
-	if [[ -f "${ROLL_HOME_DIR}/reclu/${1}.cmd" ]]; then
+  # Use registry system for command discovery
+  COMMAND_RESULT="$(findCommand "$1")"
+  
+  if [[ "$COMMAND_RESULT" =~ ^found: ]]; then
     ROLL_CMD_VERB="$1"
-    ROLL_CMD_EXEC="${ROLL_HOME_DIR}/reclu/${1}.cmd"
-    ROLL_CMD_HELP="${ROLL_HOME_DIR}/reclu/${1}.help"
-    shift
-  elif [[ -f "${ROLL_HOME_DIR}/reclu/${ROLL_ENV_TYPE}/${1}.cmd" ]]; then
-    ROLL_CMD_VERB="$1"
-    ROLL_CMD_EXEC="${ROLL_HOME_DIR}/reclu/${ROLL_ENV_TYPE}/${1}.cmd"
-    ROLL_CMD_HELP="${ROLL_HOME_DIR}/reclu/${ROLL_ENV_TYPE}/${1}.help"
-    shift
-  elif [[ -f "${ROLL_DIR}/commands/${1}.cmd" ]]; then
-    ROLL_CMD_VERB="$1"
-    ROLL_CMD_EXEC="${ROLL_DIR}/commands/${1}.cmd"
-    ROLL_CMD_HELP="${ROLL_DIR}/commands/${1}.help"
-    shift
-  elif [[ -f "${ROLL_DIR}/commands/${ROLL_ENV_TYPE}/${1}.cmd" ]]; then
-    ROLL_CMD_VERB="$1"
-    ROLL_CMD_EXEC="${ROLL_DIR}/commands/${ROLL_ENV_TYPE}/${1}.cmd"
-    ROLL_CMD_HELP="${ROLL_DIR}/commands/${ROLL_ENV_TYPE}/${1}.help"
-    shift
-  elif [[ -f "${ROLL_ENV_PATH}/.roll/commands/${1}.cmd" ]]; then
-    ROLL_CMD_VERB="$1"
-    ROLL_CMD_ANYARGS+=("$1")
-    ROLL_CMD_EXEC="${ROLL_ENV_PATH}/.roll/commands/${1}.cmd"
-    ROLL_CMD_HELP="${ROLL_ENV_PATH}/.roll/commands/${1}.help"
-    shift
-  elif [[ -f "${ROLL_HOME_DIR}/commands/${1}.cmd" ]]; then
-    ROLL_CMD_VERB="$1"
-    ROLL_CMD_ANYARGS+=("$1")
-    ROLL_CMD_EXEC="${ROLL_HOME_DIR}/commands/${1}.cmd"
-    ROLL_CMD_HELP="${ROLL_HOME_DIR}/commands/${1}.help"
+    # Extract cmd_path and help_path from "found:cmd_path:help_path"
+    COMMAND_RESULT="${COMMAND_RESULT#found:}"
+    ROLL_CMD_EXEC="${COMMAND_RESULT%%:*}"
+    ROLL_CMD_HELP="${COMMAND_RESULT#*:}"
     shift
   else
     ROLL_HELP=1

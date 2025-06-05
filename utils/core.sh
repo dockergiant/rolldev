@@ -121,6 +121,7 @@ function disconnectPeeredServices {
   done
 }
 
-function isOnline {
-  ping -q -c1 google.com &>/dev/null && echo "true" || echo "false"
+# Main logic with the timeout function
+function isOnline() {
+  (ping -q -c1 -t 2 8.8.8.8 &>/dev/null && echo "true") || (ping -q -c1 -t 2 1.1.1.1 &>/dev/null && echo "true") || echo "false"
 }

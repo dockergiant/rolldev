@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+
+ROLL_USAGE=$(cat <<EOF
+\033[33mUsage:\033[0m
+  version
+
+\033[33mDescription:\033[0m
+  Displays the current version of the Roll Docker Stack.
+
+  This command reads and outputs the version information from the Roll
+  installation directory. The version follows semantic versioning format
+  (major.minor.patch) and may include additional build information.
+
+\033[33mOutput Format:\033[0m
+  The version is displayed as a simple string, typically in the format:
+  X.Y.Z or X.Y.Z-build
+
+\033[33mExamples:\033[0m
+  roll version              # Display current Roll version
+  roll --version            # Alternative syntax (if supported)
+
+\033[33mUse Cases:\033[0m
+  • Check which version of Roll is currently installed
+  • Verify compatibility with project requirements
+  • Debug installation issues
+  • Report version when filing bug reports
+
+\033[33mNotes:\033[0m
+  • Version information is stored in the Roll installation directory
+  • No network connection required
+  • Safe to run in any directory or environment
+
+\033[33mSee Also:\033[0m
+  roll --help               # General Roll help
+  roll env show             # Show current environment information
+EOF
+) 

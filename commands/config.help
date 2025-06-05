@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+
+ROLL_USAGE=$(cat <<EOF
+\033[33mUsage:\033[0m
+  config <command> [options]
+
+\033[33mCommands:\033[0m
+  show [filter]         Display current environment configuration
+                        Optional filter to show only matching keys (regex)
+  
+  validate [file]       Validate configuration file syntax and values
+                        Uses current environment config if no file specified
+  
+  conflicts             Check for configuration conflicts and compatibility issues
+  
+  schema                Display the configuration schema with all available options
+  
+  set <key> <value>     Set configuration value in current environment
+                        Creates backup before modifying
+  
+  get <key> [default]   Get configuration value from current environment
+                        Returns default if key is not set
+
+\033[33mExamples:\033[0m
+  roll config show                    # Show all configuration
+  roll config show ROLL_             # Show only ROLL_* variables
+  roll config validate                # Validate current environment config
+  roll config conflicts               # Check for conflicts
+  roll config schema                  # Show configuration schema
+  roll config set ROLL_REDIS 1       # Enable Redis
+  roll config get PHP_VERSION 8.1    # Get PHP version (default 8.1)
+
+\033[33mOptions:\033[0m
+  -h, --help        Display this help menu
+
+\033[33mNotes:\033[0m
+  • Configuration files use KEY=value format
+  • Boolean values must be 0 or 1
+  • The 'set' command creates automatic backups
+  • Use 'schema' to see all available configuration options
+EOF
+) 

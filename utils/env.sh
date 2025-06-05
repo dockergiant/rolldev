@@ -31,39 +31,19 @@ function locateEnvPath () {
     echo "${ROLL_ENV_PATH}"
 }
 
+# Legacy function - now uses centralized config system
 function loadEnvConfig () {
     local ROLL_ENV_PATH="${1}"
-    eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "^ROLL_")"
-    eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "^TRAEFIK_")"
-    eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "^PHP_")"
-    eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "^NGINX_")"
-    eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "_VERSION")"
-    eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "^DB_")"
-    eval "$(cat "${ROLL_ENV_PATH}/.env.roll" | sed 's/\r$//g' | grep "ADD_PHP_EXT")"
-
-
-    ROLL_ENV_NAME="${ROLL_ENV_NAME:-}"
-    ROLL_ENV_TYPE="${ROLL_ENV_TYPE:-}"
-    ROLL_ENV_SUBT=""
-
-    case "${OSTYPE:-undefined}" in
-        darwin*)
-            ROLL_ENV_SUBT=darwin
-        ;;
-        linux*)
-            ROLL_ENV_SUBT=linux
-        ;;
-        *)
-            fatal "Unsupported OSTYPE '${OSTYPE:-undefined}'"
-        ;;
-    esac
-
-		export USER_ID=$(id -u $USER)
-		export GROUP_ID=$(id -g $USER)
-		export OSTYPE=$OSTYPE
-		export ADD_PHP_EXT=$ADD_PHP_EXT
-
-    assertValidEnvType
+    
+    # Load new centralized configuration
+    if ! loadRollConfig "${ROLL_ENV_PATH}"; then
+        return 1
+    fi
+    
+    # Set global environment path for backward compatibility
+    export ROLL_ENV_PATH="${ROLL_ENV_PATH}"
+    
+    return 0
 }
 
 function renderEnvNetworkName() {

@@ -29,6 +29,7 @@ caption: Getting Started
 installing
 services
 usage
+registry
 environments
 configuration
 ```
