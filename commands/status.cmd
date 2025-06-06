@@ -3,7 +3,7 @@
 
 assertDockerRunning
 
-rollNetworkName=$(cat ${ROLL_DIR}/docker/docker-compose.yml | grep -A3 'networks:' | tail -n1 | sed -e 's/[[:blank:]]*name:[[:blank:]]*//g')
+rollNetworkName=$(grep -A3 'networks:' "${ROLL_DIR}/docker/docker-compose.yml" | tail -n1 | sed -e 's/[[:blank:]]*name:[[:blank:]]*//g')
 rollNetworkId=$(docker network ls -q --filter name="${rollNetworkName}")
 
 if [[ -z "${rollNetworkId}" ]]; then
@@ -12,10 +12,11 @@ fi
 
 OLDIFS="$IFS";
 IFS=$'\n'
-projectNetworkList=( $(docker network ls --format '{{.Name}}' -q --filter "label=dev.roll.environment.name") )
+mapfile -t projectNetworkList < <(docker network ls --format '{{.Name}}' -q --filter "label=dev.roll.environment.name")
 IFS="$OLDIFS"
 
 messageList=()
+lastNetwork="${projectNetworkList[-1]}"
 for projectNetwork in "${projectNetworkList[@]}"; do
     [[ -z "${projectNetwork}" || "${projectNetwork}" == "${rollNetworkName}" ]] && continue # Skip empty project network names (if any)
 
@@ -28,19 +29,22 @@ for projectNetwork in "${projectNetworkList[@]}"; do
     [[ -z "${container}" ]] && continue # Project is not running, skip it
 
     projectDir=$(docker container inspect --format '{{ index .Config.Labels "com.docker.compose.project.working_dir"}}' "$container")
-    projectName=$(cat "${projectDir}/.env.roll" | grep '^ROLL_ENV_NAME=' | sed -e 's/ROLL_ENV_NAME=[[:space:]]*//g' | tr -d '\r')
-    projectType=$(cat "${projectDir}/.env.roll" | grep '^ROLL_ENV_TYPE=' | sed -e 's/ROLL_ENV_TYPE=[[:space:]]*//g' | tr -d '\r')
-    traefikDomain=$(cat "${projectDir}/.env.roll" | grep '^TRAEFIK_DOMAIN=' | sed -e 's/TRAEFIK_DOMAIN=[[:space:]]*//g' | tr -d '\r')
-    traefikSubDomain=$(cat "${projectDir}/.env.roll" | grep '^TRAEFIK_SUBDOMAIN=' | sed -e 's/TRAEFIK_SUBDOMAIN=[[:space:]]*//g' | tr -d '\r')
+    projectName=$(grep -m1 '^ROLL_ENV_NAME=' "${projectDir}/.env.roll" | cut -d '=' -f2- | tr -d '\r')
+    projectType=$(grep -m1 '^ROLL_ENV_TYPE=' "${projectDir}/.env.roll" | cut -d '=' -f2- | tr -d '\r')
+    traefikDomain=$(grep -m1 '^TRAEFIK_DOMAIN=' "${projectDir}/.env.roll" | cut -d '=' -f2- | tr -d '\r')
+    traefikSubDomain=$(grep -m1 '^TRAEFIK_SUBDOMAIN=' "${projectDir}/.env.roll" | cut -d '=' -f2- | tr -d '\r')
+    containerCount=$(echo "$projectContainers" | wc -l | tr -d ' ')
 
     messageList+=("    \033[1;35m${projectName}\033[0m a \033[36m${projectType}\033[0m project")
     messageList+=("       Project Directory: \033[33m${projectDir}\033[0m")
     messageList+=("       Project URL: \033[94mhttps://${traefikSubDomain}.${traefikDomain}\033[0m")
+    messageList+=("       Docker Network: \033[33m${projectNetwork}\033[0m")
+    messageList+=("       Containers Running: \033[33m${containerCount}\033[0m")
 
-    [[ "$projectNetwork" != "${projectNetworkList[@]: -1:1}" ]] && messageList+=()
+    [[ "$projectNetwork" != "$lastNetwork" ]] && messageList+=("")
 done
 
-if [[ "${#messageList[@]}" > 0 ]]; then
+if (( ${#messageList[@]} > 0 )); then
     if [[ -z "${rollNetworkId}" ]]; then
         echo -e "Found the following \033[32mrunning\033[0m projects; however, \033[31mRollDev core services are currently not running\033[0m:"
     else
@@ -51,4 +55,35 @@ if [[ "${#messageList[@]}" > 0 ]]; then
     done
 else
     echo "No running environments found."
+fi
+
+if [[ -n "${rollNetworkId}" ]]; then
+    echo
+    echo -e "RollDev Services (enabled -> running):"
+
+    portainerEnabled=0
+    startpageEnabled=1
+    if [[ -f "${ROLL_HOME_DIR}/.env" ]]; then
+        portainerEnabled=$(grep -m1 '^ROLL_SERVICE_PORTAINER=' "${ROLL_HOME_DIR}/.env" | cut -d '=' -f2- | tr -d '\r')
+        startpageEnabled=$(grep -m1 '^ROLL_SERVICE_STARTPAGE=' "${ROLL_HOME_DIR}/.env" | cut -d '=' -f2- | tr -d '\r')
+    fi
+    portainerEnabled=${portainerEnabled:-0}
+    startpageEnabled=${startpageEnabled:-1}
+
+    services=(traefik dnsmasq mailhog tunnel)
+    [[ "${portainerEnabled}" == 1 ]] && services+=(portainer)
+    [[ "${startpageEnabled}" == 1 ]] && services+=(startpage)
+
+    printf '  %-12s %-10s %-20s %s\n' "NAME" "STATE" "STATUS" "PORTS"
+    for svc in "${services[@]}"; do
+        name=$(docker ps --filter "name=^${svc}$" --format '{{.Names}}')
+        state=$(docker ps --filter "name=^${svc}$" --format '{{.State}}')
+        status=$(docker ps --filter "name=^${svc}$" --format '{{.Status}}')
+        ports=$(docker ps --filter "name=^${svc}$" --format '{{.Ports}}')
+        if [[ -z "${name}" ]]; then
+            printf '  %-12s %-10s %-20s -\n' "${svc}" "stopped" "Exited"
+        else
+            printf '  %-12s %-10s %-20s %s\n' "${name}" "${state}" "${status}" "${ports}"
+        fi
+    done
 fi
