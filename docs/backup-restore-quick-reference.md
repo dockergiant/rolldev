@@ -39,6 +39,21 @@ roll restore --decrypt=password               # Decrypt backup
 roll restore --quiet                          # Silent operation
 ```
 
+### Full Environment Restore
+```bash
+# Restore into current directory
+roll restore-full backup.tar.gz
+
+# Restore into new directory
+roll restore-full backup.tar.gz /path/newenv
+
+# Restore encrypted backup with password
+roll restore-full --decrypt=password backup.tar.gz /path/newenv
+
+# Restore encrypted backup with prompt
+roll restore-full --decrypt backup.tar.gz
+```
+
 ## Common Use Cases
 
 ### Daily Development
@@ -119,4 +134,4 @@ roll restore --dry-run
 
 # Verify backup integrity
 roll backup info <timestamp>
-``` 
+```
