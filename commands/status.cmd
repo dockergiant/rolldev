@@ -23,7 +23,8 @@ fi
 IFS="$OLDIFS"
 
 messageList=()
-lastNetwork="${projectNetworkList[-1]}"
+lastIdx=$(( ${#projectNetworkList[@]} - 1 ))
+lastNetwork="${projectNetworkList[$lastIdx]}"
 for projectNetwork in "${projectNetworkList[@]}"; do
     [[ -z "${projectNetwork}" || "${projectNetwork}" == "${rollNetworkName}" ]] && continue # Skip empty project network names (if any)
 
