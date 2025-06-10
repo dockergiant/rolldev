@@ -22,6 +22,10 @@ RESTORE_LEGACY_MIGRATION=1
 
 # Parse command line arguments
 POSITIONAL_ARGS=()
+# Start with any arguments passed from the main roll script
+if [[ -n "${ROLL_PARAMS[*]}" ]]; then
+    POSITIONAL_ARGS+=("${ROLL_PARAMS[@]}")
+fi
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h)
@@ -84,6 +88,9 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Add any remaining arguments after -- to positional args
+POSITIONAL_ARGS+=("$@")
 
 # Expect exactly two positional arguments: archive and output directory
 if [[ ${#POSITIONAL_ARGS[@]} -ne 2 ]]; then
