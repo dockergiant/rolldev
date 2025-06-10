@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
 
-# Load core utilities and configuration
-ROLL_ENV_PATH="$(locateEnvPath)" || exit $?
-loadEnvConfig "${ROLL_ENV_PATH}" || exit $?
+# Load core utilities (environment config loaded later if needed)
 assertDockerRunning
 
 # Default configuration values
-RESTORE_BACKUP_ID=""
 RESTORE_SERVICES=()
 RESTORE_CONFIG=1
 RESTORE_VERIFY=1
@@ -15,21 +12,25 @@ RESTORE_FORCE=0
 RESTORE_DRY_RUN=0
 RESTORE_QUIET=0
 RESTORE_DECRYPT=""
+RESTORE_BACKUP_FILE=""
+RESTORE_OUTPUT_DIR=""
 PROGRESS=1
+ROLL_ENV_LOADED=0
 
 # Legacy migration support
 RESTORE_LEGACY_MIGRATION=1
 
 # Parse command line arguments
+POSITIONAL_ARGS=()
+# Start with any arguments passed from the main roll script
+if [[ -n "${ROLL_PARAMS[*]}" ]]; then
+    POSITIONAL_ARGS+=("${ROLL_PARAMS[@]}")
+fi
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h)
-            roll restore --help
+            roll restore-full --help
             exit 0
-            ;;
-        --backup-id=*|--backup=*)
-            RESTORE_BACKUP_ID="${1#*=}"
-            shift
             ;;
         --services=*)
             IFS=',' read -ra RESTORE_SERVICES <<< "${1#*=}"
@@ -82,14 +83,28 @@ while [[ $# -gt 0 ]]; do
             exit 1
             ;;
         *)
-            # If no backup ID specified yet, use this as the backup ID
-            if [[ -z "$RESTORE_BACKUP_ID" ]]; then
-                RESTORE_BACKUP_ID="$1"
-            fi
+            POSITIONAL_ARGS+=("$1")
             shift
             ;;
     esac
 done
+
+# Add any remaining arguments after -- to positional args
+POSITIONAL_ARGS+=("$@")
+
+# Expect exactly two positional arguments: archive and output directory
+if [[ ${#POSITIONAL_ARGS[@]} -ne 2 ]]; then
+    error "Usage: roll restore-full [options] archive output-dir"
+    exit 1
+fi
+
+RESTORE_BACKUP_FILE="${POSITIONAL_ARGS[0]}"
+RESTORE_OUTPUT_DIR="${POSITIONAL_ARGS[1]}"
+
+# Set environment path
+mkdir -p "$RESTORE_OUTPUT_DIR"
+cd "$RESTORE_OUTPUT_DIR"
+ROLL_ENV_PATH="$(pwd)"
 
 # Utility functions for restore operations
 function promptPassword() {
@@ -289,6 +304,37 @@ function extractBackupArchive() {
         *.tar.lz4) decompress_cmd="lz4 -d" ;;
     esac
     
+    if $decompress_cmd < "$archive_file" | tar -xf - -C "$extract_dir" --strip-components=1; then
+        echo "$extract_dir"
+        return 0
+    else
+        logMessage ERROR "Failed to extract backup archive"
+        rm -rf "$extract_dir"
+        return 1
+    fi
+}
+
+function extractBackupArchiveFile() {
+    local archive_file="$1"
+    local backup_dir="$(pwd)/.roll/backups"
+    local base_name="$(basename "$archive_file")"
+    base_name="${base_name%%.tar*}"
+    local extract_dir="$backup_dir/${base_name}_extracted"
+
+    if [[ -d "$extract_dir" ]]; then
+        echo "$extract_dir"
+        return 0
+    fi
+
+    mkdir -p "$extract_dir"
+
+    local decompress_cmd="cat"
+    case "$archive_file" in
+        *.tar.gz) decompress_cmd="gzip -d" ;;
+        *.tar.xz) decompress_cmd="xz -d" ;;
+        *.tar.lz4) decompress_cmd="lz4 -d" ;;
+    esac
+
     if $decompress_cmd < "$archive_file" | tar -xf - -C "$extract_dir" --strip-components=1; then
         echo "$extract_dir"
         return 0
@@ -709,8 +755,71 @@ function restoreConfigurations() {
     logMessage SUCCESS "Configuration restore completed"
 }
 
+function restoreSourceCode() {
+    local backup_path="$1"
+    local target_dir="$2"
+    local step="$3"
+    local total="$4"
+
+    showProgress $step $total "Restoring source code"
+
+    local src_file=""
+    local is_encrypted=false
+
+    for ext in ".tar.gz" ".tar.xz" ".tar.lz4" ".tar"; do
+        if [[ -f "$backup_path/source${ext}.gpg" ]]; then
+            src_file="$backup_path/source${ext}.gpg"
+            is_encrypted=true
+            break
+        elif [[ -f "$backup_path/source${ext}" ]]; then
+            src_file="$backup_path/source${ext}"
+            break
+        fi
+    done
+
+    if [[ -z "$src_file" ]]; then
+        logMessage INFO "No source code archive found in backup"
+        return 0
+    fi
+
+    if [[ $RESTORE_DRY_RUN -eq 1 ]]; then
+        logMessage INFO "[DRY RUN] Would extract source code to $target_dir"
+        return 0
+    fi
+
+    mkdir -p "$target_dir"
+
+    local decompress_cmd="cat"
+    case "$src_file" in
+        *.tar.gz*) decompress_cmd="gzip -dc" ;;
+        *.tar.xz*) decompress_cmd="xz -dc" ;;
+        *.tar.lz4*) decompress_cmd="lz4 -dc" ;;
+    esac
+
+    if [[ $is_encrypted == true ]]; then
+        if [[ -z "$RESTORE_DECRYPT" ]]; then
+            logMessage ERROR "Encrypted source archive found but no decryption password provided"
+            return 1
+        fi
+        if echo "$RESTORE_DECRYPT" | gpg --batch --yes --quiet --passphrase-fd 0 --decrypt "$src_file" | $decompress_cmd | tar -xf - -C "$target_dir"; then
+            logMessage SUCCESS "Source code restored"
+            return 0
+        else
+            logMessage ERROR "Failed to restore source code"
+            return 1
+        fi
+    else
+        if $decompress_cmd "$src_file" | tar -xf - -C "$target_dir"; then
+            logMessage SUCCESS "Source code restored"
+            return 0
+        else
+            logMessage ERROR "Failed to restore source code"
+            return 1
+        fi
+    fi
+}
+
 function performRestore() {
-    local backup_id="$1"
     
     # Perform legacy migration if needed
     performLegacyMigration
@@ -721,27 +830,16 @@ function performRestore() {
         exit 1
     fi
     
-    # Find backup if not specified
-    if [[ -z "$backup_id" ]]; then
-        backup_id=$(findLatestBackup)
-        if [[ -z "$backup_id" ]]; then
-            logMessage ERROR "No backups found and no backup ID specified"
-            exit 1
-        fi
-        logMessage INFO "Using latest backup: $backup_id"
-    fi
-    
-    # Determine backup path
-    local backup_path="$(pwd)/.roll/backups/$backup_id"
-    
-    # Check if backup exists as directory
-    if [[ ! -d "$backup_path" ]]; then
-        # Try to extract from archive
-        backup_path=$(extractBackupArchive "$backup_id")
-        if [[ $? -ne 0 ]]; then
-            logMessage ERROR "Backup not found: $backup_id"
-            exit 1
-        fi
+    # Determine backup path from archive argument
+    local backup_path=""
+
+    if [[ -f "$RESTORE_BACKUP_FILE" ]]; then
+        backup_path=$(extractBackupArchiveFile "$RESTORE_BACKUP_FILE")
+    elif [[ -d "$RESTORE_BACKUP_FILE" ]]; then
+        backup_path="$RESTORE_BACKUP_FILE"
+    else
+        logMessage ERROR "Backup file not found: $RESTORE_BACKUP_FILE"
+        exit 1
     fi
     
     # Detect if backup is encrypted and handle password prompting
@@ -767,7 +865,19 @@ function performRestore() {
     
     # Get backup metadata
     local metadata=$(getBackupMetadata "$backup_path")
-    logMessage INFO "Restoring backup: $backup_id"
+    logMessage INFO "Restoring backup from: $(basename \"$RESTORE_BACKUP_FILE\")"
+
+    local source_exists=0
+    for ext in ".tar.gz" ".tar.xz" ".tar.lz4" ".tar"; do
+        if [[ -f "$backup_path/source${ext}" ]] || [[ -f "$backup_path/source${ext}.gpg" ]]; then
+            source_exists=1
+            break
+        fi
+    done
+
+    if [[ $ROLL_ENV_LOADED -eq 0 ]]; then
+        ROLL_ENV_NAME=$(echo "$metadata" | grep -o '"environment"[^"]*"' | head -1 | sed 's/.*"environment"[ ]*:[ ]*"\([^"]*\)".*/\1/')
+    fi
     
     # Detect available services in backup
     local available_services=($(detectBackupServices "$backup_path"))
@@ -809,20 +919,33 @@ function performRestore() {
     if [[ $RESTORE_CONFIG -eq 1 ]]; then
         ((total_steps++))
     fi
+    if [[ $source_exists -eq 1 ]]; then
+        ((total_steps++))
+    fi
     
     local current_step=0
     
+    # Restore source code if available
+    if [[ $source_exists -eq 1 ]]; then
+        ((current_step++))
+        restoreSourceCode "$backup_path" "$ROLL_ENV_PATH" $current_step $total_steps
+    fi
+
+    # Restore configurations
+    if [[ $RESTORE_CONFIG -eq 1 ]]; then
+        ((current_step++))
+        restoreConfigurations "$backup_path" $current_step $total_steps
+        if [[ $ROLL_ENV_LOADED -eq 0 ]]; then
+            loadEnvConfig "$ROLL_ENV_PATH" || exit 1
+            ROLL_ENV_LOADED=1
+        fi
+    fi
+
     # Restore volumes
     for service in "${services_to_restore[@]}"; do
         ((current_step++))
         restoreVolume "$service" "$backup_path" $current_step $total_steps
     done
-    
-    # Restore configurations
-    if [[ $RESTORE_CONFIG -eq 1 ]]; then
-        ((current_step++))
-        restoreConfigurations "$backup_path" $current_step $total_steps
-    fi
     
     # Clean up extracted backup if it was temporary
     if [[ "$backup_path" =~ _extracted$ ]]; then
@@ -838,14 +961,4 @@ function performRestore() {
 }
 
 # Main execution
-if [[ -z "$RESTORE_BACKUP_ID" ]]; then
-    # If no backup ID provided, use the latest
-    RESTORE_BACKUP_ID=$(findLatestBackup)
-    if [[ -z "$RESTORE_BACKUP_ID" ]]; then
-        error "No backups found. Please create a backup first with: roll backup"
-        exit 1
-    fi
-    logMessage INFO "No backup ID specified, using latest: $RESTORE_BACKUP_ID"
-fi
-
-performRestore "$RESTORE_BACKUP_ID"
+performRestore

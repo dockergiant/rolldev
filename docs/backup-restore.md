@@ -139,6 +139,26 @@ roll restore --no-verify
 roll restore --no-legacy-migration
 ```
 
+## Full Environment Restore
+
+A full backup created with `roll backup --include-source` can be restored
+directly using the `restore-full` command. The archive file and destination
+directory must both be provided.
+
+```bash
+# Restore to a new environment path
+roll restore-full backup_envname_1672531200.tar.gz /path/to/newenv
+
+# Quiet forced restore of a specific archive
+roll restore-full --quiet --force backup_envname_1672531200.tar.gz /path/to/env
+
+# Restore encrypted backup with password
+roll restore-full --decrypt=mypassword backup_envname_1672531200.tar.gz /path/to/env
+
+# Restore encrypted backup with prompt
+roll restore-full --decrypt backup_envname_1672531200.tar.gz /path/to/newenv
+```
+
 ## Backup Structure
 
 RollDev creates organized backup archives with the following structure:

@@ -231,13 +231,19 @@ function createBackup() {
     
     logMessage INFO "Creating backup..."
     
-    # The --output-id flag outputs ONLY the backup ID (no warnings)
-    if backup_id=$("${ROLL_DIR}/bin/roll" backup "${backup_args[@]}" 2>&1); then
+    # The --output-id flag should output ONLY the backup ID
+    if backup_output=$("${ROLL_DIR}/bin/roll" backup "${backup_args[@]}" 2>&1); then
         backup_exit_code=0
-        # Remove any whitespace (should just be a number)
-        backup_id=$(echo "$backup_id" | tr -d ' \n\r\t')
+        # First try to use the output directly (clean --output-id output)
+        backup_id=$(echo "$backup_output" | tr -d ' \n\r\t')
+        
+        # If --output-id didn't work cleanly (warnings mixed in), fall back to regex
+        if [[ ! "$backup_id" =~ ^[0-9]+$ ]]; then
+            backup_id=$(echo "$backup_output" | grep -o '[0-9]\{10\}' | tail -1)
+        fi
     else
         backup_exit_code=$?
+        backup_output=""
         backup_id=""
     fi
     
@@ -247,7 +253,8 @@ function createBackup() {
         return 0
     else
         logMessage ERROR "Failed to create backup or get valid backup ID"
-        logMessage ERROR "Backup command output: '$backup_id'"
+        logMessage ERROR "Backup command output: '$backup_output'"
+        logMessage ERROR "Extracted backup ID: '$backup_id'"
         logMessage ERROR "Exit code: $backup_exit_code"
         return 1
     fi

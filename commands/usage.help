@@ -53,6 +53,9 @@ RollDev version $(cat ${ROLL_DIR}/version)
   registry          	Manage and inspect command registry (see \033[31m'roll registry -h'\033[0m for details)
   db                	Interacts with the db service on an environment (see \033[31m'roll db -h'\033[0m for details)
   redis             	Interacts with the redis service on an environment (see \033[31m'roll redis -h'\033[0m for details)
+  backup                Create archive backups of an environment (see \033[31m'roll backup -h'\033[0m for details)
+  restore               Restore data and configuration from a backup (see \033[31m'roll restore -h'\033[0m for details)
+  restore-full          Restore an entire environment including source code (see \033[31m'roll restore-full -h'\033[0m for details)
   install           	Initializes or updates roll configuration on host machine
   shell             	Launches into a shell within the current project environment
   status                Display list of all running RollDev project environments
