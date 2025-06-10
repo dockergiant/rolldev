@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+
+ROLL_USAGE=$(cat <<EOF
+\033[33mUsage:\033[0m
+  magento2-init <project_name> [magento_version] [target_directory]
+
+\033[33mArguments:\033[0m
+  project_name       Name of the Magento 2 project (required)
+                     Should contain only lowercase letters, numbers, and hyphens
+                     Must start and end with a letter or number
+
+  magento_version    Magento version to install (optional, default: 2.4.x)
+                     Supports: major.minor.patch and patch versions
+                     Examples: 2.4.x, 2.4.7, 2.4.7-p3, 2.4.6-p2, 2.3.7
+
+  target_directory   Directory to create project in (optional)
+                     Default: current directory
+                     Project will be created in a subdirectory named after the project
+
+\033[33mDescription:\033[0m
+  This command scaffolds a complete Magento 2 project from scratch, including:
+  
+  • Automatic compatible software version configuration
+  • Environment initialization with Docker services
+  • SSL certificate generation
+  • Magento installation via Composer
+  • Database setup and configuration
+  • Redis/Valkey and Elasticsearch/OpenSearch configuration
+  • Admin user creation with 2FA setup (for Magento 2.4.x)
+  • Developer mode configuration
+
+\033[33mExamples:\033[0m
+  # Create a new project with default Magento version (2.4.x)
+  roll magento2-init mystore
+
+  # Create a project with specific Magento version
+  roll magento2-init mystore 2.4.7
+
+  # Create a project with patch version
+  roll magento2-init mystore 2.4.7-p3
+
+  # Create a project in a specific directory
+  roll magento2-init mystore 2.4.x ~/Sites/
+
+  # Create a project with Magento 2.3.x (without mandatory 2FA)
+  roll magento2-init legacystore 2.3.7
+
+\033[33mPrerequisites:\033[0m
+  • RollDev services must be running (roll svc up)
+  • Magento Marketplace credentials configured globally:
+    composer global config http-basic.repo.magento.com <username> <password>
+
+\033[33mPost-Installation:\033[0m
+  After successful installation, you will have access to:
+  • Frontend: https://app.<project_name>.test/
+  • Admin Panel: https://app.<project_name>.test/shopmanager/
+  • Admin credentials in admin-credentials.txt file
+  • 2FA QR code (for Magento 2.4.x) accessible via web interface
+
+\033[33mAutomatic Version Configuration:\033[0m
+  The command automatically configures compatible software versions based on
+  the Magento version you specify:
+  • Magento 2.4.8+: PHP 8.3+, MariaDB 11.4, OpenSearch 2.19, Valkey 8
+  • Magento 2.4.7: PHP 8.3, MariaDB 10.6+, Elasticsearch 7.17, Redis 7.2
+  • Magento 2.4.6: PHP 8.2, MariaDB 10.6, Elasticsearch 7.17, Redis 7.0+
+  • Magento 2.4.5: PHP 8.1, MariaDB 10.4, Elasticsearch 7.17, Redis 6.2+
+  • Magento 2.3.x: PHP 7.4, MariaDB 10.3, Elasticsearch 7.6, Redis 5.0
+
+\033[33mNote:\033[0m
+  This process may take several minutes depending on your internet connection
+  and system performance. The command will handle all setup steps automatically.
+
+EOF
+)
+
+echo -e "${ROLL_USAGE}" 
