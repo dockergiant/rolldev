@@ -41,17 +41,14 @@ roll restore --quiet                          # Silent operation
 
 ### Full Environment Restore
 ```bash
-# Restore into current directory
-roll restore-full backup.tar.gz
-
-# Restore into new directory
+# Restore into a new directory
 roll restore-full backup.tar.gz /path/newenv
 
 # Restore encrypted backup with password
 roll restore-full --decrypt=password backup.tar.gz /path/newenv
 
 # Restore encrypted backup with prompt
-roll restore-full --decrypt backup.tar.gz
+roll restore-full --decrypt backup.tar.gz /path/newenv
 ```
 
 ## Common Use Cases

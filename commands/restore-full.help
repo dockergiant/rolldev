@@ -3,10 +3,10 @@
 
 ROLL_USAGE=$(cat <<EOF
 \033[33mUsage:\033[0m
-  restore-full [options] archive [output-dir]
+  restore-full [options] archive output-dir
 
 \033[33mDescription:\033[0m
-  Restore a complete RollDev environment from a backup archive that includes source code. If no output directory is specified, the current directory is used.
+  Restore a complete RollDev environment from a backup archive that includes source code. The archive path and output location are required.
 
 \033[33mOptions:\033[0m
   -h, --help              Display this help menu
@@ -14,12 +14,7 @@ ROLL_USAGE=$(cat <<EOF
   -f, --force             Force restore (overwrite existing volumes)
   --dry-run               Show what would be restored without doing it
   --no-progress           Disable progress indicators
-  --input=FILE            Restore from specified backup archive path
-  --output-dir=DIR        Extract source and config to DIR before restoring
 
-\033[33mBackup Selection:\033[0m
-  --backup-id=ID          Specify backup ID/timestamp to restore from
-  --backup=ID             Alias for --backup-id
 
 \033[33mService Selection:\033[0m
   --services=LIST         Comma-separated list of services to restore
@@ -35,17 +30,10 @@ ROLL_USAGE=$(cat <<EOF
   --no-legacy-migration   Skip automatic Warden to Roll migration
 
 \033[33mExamples:\033[0m
-  restore-full                              # Restore latest backup (all services)
-  restore-full 1672531200                   # Restore specific backup by timestamp
-  restore-full --backup-id=1672531200       # Same as above, explicit syntax
-  restore-full --services=db,redis          # Restore only database and Redis
-  restore-full --no-config                  # Restore volumes but not config files
-  restore-full --force                      # Overwrite existing volumes
-  restore-full --dry-run                    # Preview what would be restored
-  restore-full --decrypt=mypassword         # Restore encrypted backup with password
-  restore-full --decrypt                    # Restore encrypted backup with prompt
-  restore-full --quiet --force              # Silent forced restore
-  restore-full backup.tar.gz /tmp/newenv    # Full environment restore
+  restore-full backup.tar.gz /tmp/newenv    # Restore archive to a new path
+  restore-full --services=db,redis backup.tar.gz /tmp/newenv
+  restore-full --decrypt=mypassword backup.tar.gz /tmp/newenv
+  restore-full --quiet --force backup.tar.gz /tmp/newenv
 
 \033[33mService Names:\033[0m
   db, database           Database volumes (MySQL/MariaDB/PostgreSQL)
@@ -57,10 +45,6 @@ ROLL_USAGE=$(cat <<EOF
   rabbitmq              RabbitMQ message queue volumes
   varnish               Varnish cache volumes
   config                Configuration files only
-
-\033[33mBackup ID Format:\033[0m
-  Backup IDs are Unix timestamps (e.g., 1672531200) representing when the
-  backup was created. Use 'roll backup list' to see available backups.
 
 \033[33mNotes:\033[0m
   • Restore automatically stops the environment before proceeding

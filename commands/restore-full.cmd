@@ -5,7 +5,6 @@
 assertDockerRunning
 
 # Default configuration values
-RESTORE_BACKUP_ID=""
 RESTORE_SERVICES=()
 RESTORE_CONFIG=1
 RESTORE_VERIFY=1
@@ -22,16 +21,12 @@ ROLL_ENV_LOADED=0
 RESTORE_LEGACY_MIGRATION=1
 
 # Parse command line arguments
-EXTRA_ARGS=()
+POSITIONAL_ARGS=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h)
             roll restore-full --help
             exit 0
-            ;;
-        --backup-id=*|--backup=*)
-            RESTORE_BACKUP_ID="${1#*=}"
-            shift
             ;;
         --services=*)
             IFS=',' read -ra RESTORE_SERVICES <<< "${1#*=}"
@@ -56,22 +51,6 @@ while [[ $# -gt 0 ]]; do
         --quiet|-q)
             RESTORE_QUIET=1
             PROGRESS=0
-            shift
-            ;;
-        --input|--archive|--file)
-            RESTORE_BACKUP_FILE="$2"
-            shift 2
-            ;;
-        --input=*|--archive=*|--file=*)
-            RESTORE_BACKUP_FILE="${1#*=}"
-            shift
-            ;;
-        --output-dir|-o)
-            RESTORE_OUTPUT_DIR="$2"
-            shift 2
-            ;;
-        --output-dir=*|-o=*)
-            RESTORE_OUTPUT_DIR="${1#*=}"
             shift
             ;;
         --decrypt=*)
@@ -100,40 +79,22 @@ while [[ $# -gt 0 ]]; do
             exit 1
             ;;
         *)
-            EXTRA_ARGS+=("$1")
+            POSITIONAL_ARGS+=("$1")
             shift
             ;;
     esac
 done
 
-# Handle positional arguments for simplified full restore syntax
-if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
-    candidate="${EXTRA_ARGS[0]}"
-    if [[ -z "$RESTORE_BACKUP_FILE" && ( -f "$candidate" || -d "$candidate" || "$candidate" =~ \.tar(\..*)?$ ) ]]; then
-        RESTORE_BACKUP_FILE="$candidate"
-        if [[ ${#EXTRA_ARGS[@]} -gt 1 && -z "$RESTORE_OUTPUT_DIR" ]]; then
-            RESTORE_OUTPUT_DIR="${EXTRA_ARGS[1]}"
-            if [[ ${#EXTRA_ARGS[@]} -gt 2 ]]; then
-                error "Too many positional arguments: ${EXTRA_ARGS[2]}"
-                exit 1
-            fi
-        fi
-    else
-        if [[ -z "$RESTORE_BACKUP_ID" ]]; then
-            RESTORE_BACKUP_ID="$candidate"
-        else
-            error "Unexpected argument: $candidate"
-            exit 1
-        fi
-        if [[ ${#EXTRA_ARGS[@]} -gt 1 ]]; then
-            error "Unexpected argument: ${EXTRA_ARGS[1]}"
-            exit 1
-        fi
-    fi
+# Expect exactly two positional arguments: archive and output directory
+if [[ ${#POSITIONAL_ARGS[@]} -ne 2 ]]; then
+    error "Usage: roll restore-full [options] archive output-dir"
+    exit 1
 fi
 
+RESTORE_BACKUP_FILE="${POSITIONAL_ARGS[0]}"
+RESTORE_OUTPUT_DIR="${POSITIONAL_ARGS[1]}"
+
 # Set environment path
-RESTORE_OUTPUT_DIR="${RESTORE_OUTPUT_DIR:-$(pwd)}"
 mkdir -p "$RESTORE_OUTPUT_DIR"
 cd "$RESTORE_OUTPUT_DIR"
 ROLL_ENV_PATH="$(pwd)"
@@ -845,7 +806,6 @@ function restoreSourceCode() {
 }
 
 function performRestore() {
-    local backup_id="$1"
     
     # Perform legacy migration if needed
     performLegacyMigration
@@ -856,38 +816,16 @@ function performRestore() {
         exit 1
     fi
     
-    # Find backup if not specified
-    if [[ -z "$backup_id" ]]; then
-        backup_id=$(findLatestBackup)
-        if [[ -z "$backup_id" ]]; then
-            logMessage ERROR "No backups found and no backup ID specified"
-            exit 1
-        fi
-        logMessage INFO "Using latest backup: $backup_id"
-    fi
-    
-    # Determine backup path
+    # Determine backup path from archive argument
     local backup_path=""
 
-    if [[ -n "$RESTORE_BACKUP_FILE" ]]; then
-        if [[ -f "$RESTORE_BACKUP_FILE" ]]; then
-            backup_path=$(extractBackupArchiveFile "$RESTORE_BACKUP_FILE")
-            backup_id="$(basename "$RESTORE_BACKUP_FILE" | grep -o '[0-9]\{10\}' || echo "$backup_id")"
-        elif [[ -d "$RESTORE_BACKUP_FILE" ]]; then
-            backup_path="$RESTORE_BACKUP_FILE"
-        else
-            logMessage ERROR "Backup file not found: $RESTORE_BACKUP_FILE"
-            exit 1
-        fi
+    if [[ -f "$RESTORE_BACKUP_FILE" ]]; then
+        backup_path=$(extractBackupArchiveFile "$RESTORE_BACKUP_FILE")
+    elif [[ -d "$RESTORE_BACKUP_FILE" ]]; then
+        backup_path="$RESTORE_BACKUP_FILE"
     else
-        backup_path="$(pwd)/.roll/backups/$backup_id"
-        if [[ ! -d "$backup_path" ]]; then
-            backup_path=$(extractBackupArchive "$backup_id")
-            if [[ $? -ne 0 ]]; then
-                logMessage ERROR "Backup not found: $backup_id"
-                exit 1
-            fi
-        fi
+        logMessage ERROR "Backup file not found: $RESTORE_BACKUP_FILE"
+        exit 1
     fi
     
     # Detect if backup is encrypted and handle password prompting
@@ -913,7 +851,7 @@ function performRestore() {
     
     # Get backup metadata
     local metadata=$(getBackupMetadata "$backup_path")
-    logMessage INFO "Restoring backup: $backup_id"
+    logMessage INFO "Restoring backup from: $(basename \"$RESTORE_BACKUP_FILE\")"
 
     local source_exists=0
     for ext in ".tar.gz" ".tar.xz" ".tar.lz4" ".tar"; do
@@ -1009,14 +947,4 @@ function performRestore() {
 }
 
 # Main execution
-if [[ -z "$RESTORE_BACKUP_ID" ]]; then
-    # If no backup ID provided, use the latest
-    RESTORE_BACKUP_ID=$(findLatestBackup)
-    if [[ -z "$RESTORE_BACKUP_ID" ]]; then
-        error "No backups found. Please create a backup first with: roll backup"
-        exit 1
-    fi
-    logMessage INFO "No backup ID specified, using latest: $RESTORE_BACKUP_ID"
-fi
-
-performRestore "$RESTORE_BACKUP_ID"
+performRestore
