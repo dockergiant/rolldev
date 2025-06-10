@@ -10,9 +10,16 @@ if [[ -z "${rollNetworkId}" ]]; then
     echo -e "[\033[33;1m!!\033[0m] \033[31mRollDev is not currently running.\033[0m Run \033[36mroll svc up\033[0m to start RollDev core services."
 fi
 
-OLDIFS="$IFS";
+OLDIFS="$IFS"
 IFS=$'\n'
-mapfile -t projectNetworkList < <(docker network ls --format '{{.Name}}' -q --filter "label=dev.roll.environment.name")
+if command -v mapfile >/dev/null 2>&1; then
+    mapfile -t projectNetworkList < <(docker network ls --format '{{.Name}}' -q --filter "label=dev.roll.environment.name")
+else
+    projectNetworkList=()
+    while IFS= read -r net; do
+        projectNetworkList+=("$net")
+    done < <(docker network ls --format '{{.Name}}' -q --filter "label=dev.roll.environment.name")
+fi
 IFS="$OLDIFS"
 
 messageList=()
