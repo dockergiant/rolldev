@@ -493,9 +493,16 @@ function restoreVolume() {
     
     if [[ $is_encrypted == true ]]; then
         # Decrypt and decompress pipeline - use ubuntu and original tar approach with strip components
-        local restore_cmd="gpg --batch --yes --quiet --passphrase \"$RESTORE_DECRYPT\" --decrypt \"$backup_file\" | docker run --rm --name \"$temp_container\" --mount source=\"$volume_name\",target=/data -i ubuntu bash -c \"cd /data && tar -xf - --strip-components=1\""
+        # Use passphrase-fd to avoid shell escaping issues with passwords
+        # Determine the correct tar command based on the backup file format
+        local tar_cmd="tar -xf -"
+        case "$backup_file" in
+            *.tar.gz.gpg) tar_cmd="tar -xzf -" ;;
+            *.tar.xz.gpg) tar_cmd="tar -xJf -" ;;
+            *.tar.lz4.gpg) tar_cmd="lz4 -d - | tar -xf -" ;;
+        esac
         
-        if eval "$restore_cmd" 2>/dev/null; then
+        if echo "$RESTORE_DECRYPT" | gpg --batch --yes --quiet --passphrase-fd 0 --decrypt "$backup_file" | docker run --rm --name "$temp_container" --mount source="$volume_name",target=/data -i ubuntu bash -c "cd /data && $tar_cmd --strip-components=1" 2>/dev/null; then
             logMessage SUCCESS "Successfully restored and decrypted $service_name volume"
             return 0
         else
@@ -620,7 +627,7 @@ function restoreConfigurations() {
                         if [[ $is_encrypted == true ]]; then
                             # Decrypt the file directly to target location
                             if [[ -n "$RESTORE_DECRYPT" ]]; then
-                                if gpg --batch --yes --quiet --passphrase "$RESTORE_DECRYPT" --decrypt "$source_file" > "$target_path"; then
+                                if echo "$RESTORE_DECRYPT" | gpg --batch --yes --quiet --passphrase-fd 0 --decrypt "$source_file" > "$target_path"; then
                                     logMessage INFO "Decrypted and restored $file"
                                 else
                                     logMessage ERROR "Failed to decrypt $file"
@@ -681,7 +688,7 @@ function restoreConfigurations() {
             if [[ $is_encrypted == true ]]; then
                 # Decrypt the file
                 if [[ -n "$RESTORE_DECRYPT" ]]; then
-                    if gpg --batch --yes --quiet --passphrase "$RESTORE_DECRYPT" --decrypt "$config_file" > "$target_path"; then
+                    if echo "$RESTORE_DECRYPT" | gpg --batch --yes --quiet --passphrase-fd 0 --decrypt "$config_file" > "$target_path"; then
                         logMessage INFO "Decrypted and restored $relative_path"
                     else
                         logMessage ERROR "Failed to decrypt $relative_path"
