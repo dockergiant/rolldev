@@ -1,4 +1,14 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
 
-ROLL_USAGE="Provides listing of projects that are currently running that RollDev has been used to start"
+ROLL_USAGE=$(cat <<'USAGE'
+\033[33mUsage:\033[0m
+  status                Display list of all running RollDev project environments
+
+The command shows each project's name, directory, primary URL and other
+details such as the Docker network and the number of running containers.
+When RollDev core services are running, a summary table of enabled services
+is also displayed similar to the output of \`docker ps\`.
+USAGE
+)
+
