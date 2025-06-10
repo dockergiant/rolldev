@@ -140,6 +140,11 @@ function initConfigSchema() {
     ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_ENV_SHELL_COMMAND); ROLL_CONFIG_SCHEMA_VALUES+=("string:bash")
     ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_ENV_SHELL_DEBUG_CONTAINER); ROLL_CONFIG_SCHEMA_VALUES+=("string:php-debug")
     
+    # Global service configuration
+    ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_SERVICE_STARTPAGE); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:1")
+    ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_SERVICE_PORTAINER); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:1")
+    ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_SERVICE_DOMAIN); ROLL_CONFIG_SCHEMA_VALUES+=("string:optional")
+    
     # XDebug configuration
     ROLL_CONFIG_SCHEMA_KEYS+=(XDEBUG_CONNECT_BACK_HOST); ROLL_CONFIG_SCHEMA_VALUES+=("string:optional")
     ROLL_CONFIG_SCHEMA_KEYS+=(XDEBUG_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:debug")
@@ -312,7 +317,28 @@ function loadRollConfig() {
     # Initialize schema if not done
     initConfigSchema
     
-    # Load configuration from file
+    # Load global configuration first from ROLL_HOME_DIR
+    local global_config_loaded=0
+    
+    # Check for new-style global config file
+    if [[ -f "${ROLL_HOME_DIR}/.env.roll" ]]; then
+        if loadConfigFromFile "${ROLL_HOME_DIR}/.env.roll"; then
+            global_config_loaded=1
+        else
+            warning "Failed to load global configuration from ${ROLL_HOME_DIR}/.env.roll"
+        fi
+    fi
+    
+    # Check for legacy global config file
+    if [[ -f "${ROLL_HOME_DIR}/.env" ]]; then
+        if loadConfigFromFile "${ROLL_HOME_DIR}/.env"; then
+            global_config_loaded=1
+        else
+            warning "Failed to load global configuration from ${ROLL_HOME_DIR}/.env"
+        fi
+    fi
+    
+    # Load project-specific configuration (this will override global settings)
     if ! loadConfigFromFile "$config_file"; then
         return 1
     fi
@@ -508,6 +534,21 @@ function showConfig() {
     echo -e "\033[33mRoll Configuration:\033[0m"
     echo "Environment: ${ROLL_ENV_NAME:-<not set>} (${ROLL_ENV_TYPE:-<not set>})"
     echo "Platform: ${ROLL_ENV_SUBT:-<not set>}"
+    
+    # Show loaded configuration files
+    if [[ ${#ROLL_CONFIG_LOADED_FILES[@]} -gt 0 ]]; then
+        echo ""
+        echo -e "\033[33mLoaded configuration files:\033[0m"
+        local loaded_file
+        for loaded_file in "${ROLL_CONFIG_LOADED_FILES[@]}"; do
+            if [[ "$loaded_file" =~ ${ROLL_HOME_DIR} ]]; then
+                echo "  ${loaded_file} (global)"
+            else
+                echo "  ${loaded_file} (project)"
+            fi
+        done
+    fi
+    
     echo ""
     
     local i=0

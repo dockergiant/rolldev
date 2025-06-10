@@ -163,35 +163,7 @@ case "${ROLL_PARAMS[0]}" in
         
     paths)
         # Show command search paths and their priorities
-        echo -e "\033[33mCommand Search Paths (by priority):\033[0m"
-        echo ""
-        
-        echo -e "\033[36mGlobal Command Paths:\033[0m"
-        for search_path in "${ROLL_COMMAND_SEARCH_PATHS[@]}"; do
-            priority="${search_path%%:*}"
-            directory="${search_path##*:}"
-            status="❌"
-            [[ -d "$directory" ]] && status="✅"
-            
-            printf "  %s Priority %s: %s\n" "$status" "$priority" "$directory"
-        done
-        
-        if [[ -n "${ROLL_ENV_TYPE}" ]]; then
-            echo ""
-            echo -e "\033[36mEnvironment-Specific Paths (${ROLL_ENV_TYPE}):\033[0m"
-            while IFS= read -r env_path; do
-                [[ -z "$env_path" ]] && continue
-                priority="${env_path%%:*}"
-                directory="${env_path##*:}"
-                status="❌"
-                [[ -d "$directory" ]] && status="✅"
-                
-                printf "  %s Priority %s: %s\n" "$status" "$priority" "$directory"
-            done < <(getEnvCommandPaths)
-        else
-            echo ""
-            info "No environment loaded - environment-specific paths not shown"
-        fi
+        showRegistryPaths
         ;;
         
     *)

@@ -15,11 +15,18 @@ ROLL_REGISTRY_PRIORITIES=()
 ROLL_REGISTRY_INITIALIZED=0
 
 # Command search paths with priorities (lower number = higher priority)
-ROLL_COMMAND_SEARCH_PATHS=(
-    "2:${ROLL_HOME_DIR}/commands" 
-    "3:${ROLL_HOME_DIR}/reclu"
-    "4:${ROLL_DIR}/commands"
-)
+# Note: ROLL_HOME_DIR may not be available when this script is sourced, so we define this dynamically
+ROLL_COMMAND_SEARCH_PATHS=()
+
+# Function to get command search paths (called when registry is initialized)
+function getCommandSearchPaths() {
+    local search_paths=(
+        "2:${ROLL_HOME_DIR:-$HOME/.roll}/commands" 
+        "3:${ROLL_HOME_DIR:-$HOME/.roll}/reclu"
+        "4:${ROLL_DIR}/commands"
+    )
+    printf '%s\n' "${search_paths[@]}"
+}
 
 # Environment-specific command paths (added dynamically if env is available)
 function getEnvCommandPaths() {
@@ -32,7 +39,11 @@ function getEnvCommandPaths() {
     
     # Add environment-specific commands if ROLL_ENV_TYPE is available
     if [[ -n "${ROLL_ENV_TYPE}" ]]; then
-        [[ -d "${ROLL_HOME_DIR}/reclu/${ROLL_ENV_TYPE}" ]] && env_paths+=("1:${ROLL_HOME_DIR}/reclu/${ROLL_ENV_TYPE}")
+        # Check for commands in ${ROLL_HOME_DIR}/commands/${ROLL_ENV_TYPE} (new structure)
+        [[ -d "${ROLL_HOME_DIR:-$HOME/.roll}/commands/${ROLL_ENV_TYPE}" ]] && env_paths+=("1:${ROLL_HOME_DIR:-$HOME/.roll}/commands/${ROLL_ENV_TYPE}")
+        # Check for commands in ${ROLL_HOME_DIR}/reclu/${ROLL_ENV_TYPE} (legacy structure)
+        [[ -d "${ROLL_HOME_DIR:-$HOME/.roll}/reclu/${ROLL_ENV_TYPE}" ]] && env_paths+=("1:${ROLL_HOME_DIR:-$HOME/.roll}/reclu/${ROLL_ENV_TYPE}")
+        # System environment-specific commands
         [[ -d "${ROLL_DIR}/commands/${ROLL_ENV_TYPE}" ]] && env_paths+=("2:${ROLL_DIR}/commands/${ROLL_ENV_TYPE}")
     fi
     
@@ -164,11 +175,10 @@ function initializeRegistry() {
         [[ -n "$env_path" ]] && scanCommandDirectory "$env_path" "environment"
     done < <(getEnvCommandPaths)
     
-    # Scan global command directories
-    local search_path
-    for search_path in "${ROLL_COMMAND_SEARCH_PATHS[@]}"; do
-        scanCommandDirectory "$search_path" "global"
-    done
+    # Scan global command directories using dynamic search paths
+    while IFS= read -r search_path; do
+        [[ -n "$search_path" ]] && scanCommandDirectory "$search_path" "global"
+    done < <(getCommandSearchPaths)
     
     ROLL_REGISTRY_INITIALIZED=1
 }
@@ -353,6 +363,42 @@ function showRegistryStats() {
         printf "  %-15s: %d commands\n" "${categories[$i]^}" "${category_counts[$i]}"
         i=$((i + 1))
     done
+}
+
+## Display command search paths
+function showRegistryPaths() {
+    echo "Command Search Paths (by priority):"
+    echo ""
+    
+    # Show environment-specific paths first
+    local env_paths
+    env_paths=($(getEnvCommandPaths))
+    if [[ ${#env_paths[@]} -gt 0 ]]; then
+        echo "Environment-Specific Paths (${ROLL_ENV_TYPE:-unknown}):"
+        local env_path
+        for env_path in "${env_paths[@]}"; do
+            local priority="${env_path%%:*}"
+            local directory="${env_path##*:}"
+            if [[ -d "$directory" ]]; then
+                echo "  ✅ Priority $priority: $directory"
+            else
+                echo "  ❌ Priority $priority: $directory"
+            fi
+        done
+        echo ""
+    fi
+    
+    # Show global command paths
+    echo "Global Command Paths:"
+    while IFS= read -r search_path; do
+        local priority="${search_path%%:*}"
+        local directory="${search_path##*:}"
+        if [[ -d "$directory" ]]; then
+            echo "  ✅ Priority $priority: $directory"
+        else
+            echo "  ❌ Priority $priority: $directory"
+        fi
+    done < <(getCommandSearchPaths)
 }
 
 ## Export command list for external tools

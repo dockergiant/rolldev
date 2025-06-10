@@ -48,6 +48,7 @@ RollDev version $(cat ${ROLL_DIR}/version)
 \033[33mCommands:\033[0m
   svc               	Orchestrates global services such as traefik, portainer and dnsmasq via docker-compose
   env-init          	Configure environment by adding \033[31m'.env.roll'\033[0m file to the current working directory
+  magento2-init     	Scaffold a complete Magento 2 project from scratch
   env               	Controls an environment from any point within the root project directory
   config            	Manage and validate Roll configuration (see \033[31m'roll config -h'\033[0m for details)
   registry          	Manage and inspect command registry (see \033[31m'roll registry -h'\033[0m for details)
