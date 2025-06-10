@@ -475,9 +475,7 @@ function backupSourceCode() {
     showProgress $step $total "Backing up source code"
     
     local exclude_patterns=(
-        "--exclude=.git"
         "--exclude=node_modules"
-        "--exclude=vendor"
         "--exclude=var/cache"
         "--exclude=var/log"
         "--exclude=var/session"
