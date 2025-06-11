@@ -1,5 +1,81 @@
 # Installing Magento 2
 
+## Quick Start with `magento2-init` (Recommended)
+
+RollDev 3.2+ provides an automated `magento2-init` command that handles the complete Magento 2 setup process in a single command. This is the recommended approach for new projects.
+
+### Basic Usage
+
+```bash
+roll magento2-init <project_name> [magento_version]
+```
+
+### Examples
+
+```bash
+# Create project with latest Magento version
+roll magento2-init mystore
+
+# Create project with specific version  
+roll magento2-init mystore 2.4.7
+
+# Create project with patch version
+roll magento2-init mystore 2.4.7-p3
+
+# Create project with OpenSearch (Magento 2.4.8+)
+roll magento2-init mystore 2.4.8
+```
+
+### What it Does
+
+The `magento2-init` command automates all the manual steps listed below:
+
+1. **Environment Setup**: Creates `.env.roll` with optimized configuration for the specified Magento version
+2. **Version Compatibility**: Automatically configures compatible PHP, MariaDB, Elasticsearch/OpenSearch, Redis, RabbitMQ, and Composer versions
+3. **SSL Certificate**: Generates and signs SSL certificate for local development  
+4. **Service Startup**: Starts all required Docker services (database, search, cache, etc.)
+5. **Magento Installation**: Downloads and installs Magento via Composer
+6. **Database Configuration**: Sets up database, Redis, and search engine connections
+7. **Admin User**: Creates admin user with 2FA setup (for Magento 2.4.x)
+8. **Developer Mode**: Configures development-optimized settings
+
+### Software Version Matrix
+
+The command automatically selects compatible software versions:
+
+| Magento Version | PHP | MariaDB | Search Engine | Redis | RabbitMQ | Varnish |
+|-----------------|-----|---------|---------------|-------|----------|---------|
+| 2.4.8+ | 8.3 | 11.4 | OpenSearch 2.19 | Valkey 8 | 4.1 | 7.7 |
+| 2.4.7 | 8.3 | 10.6+ | Elasticsearch 7.17 | Redis 7.2 | 3.13 | 7.5+ |
+| 2.4.6 | 8.2 | 10.6 | Elasticsearch 7.17 | Redis 7.0+ | 3.9 | 7.1+ |
+
+### Prerequisites
+
+- RollDev services running: `roll svc up`
+- Magento Marketplace credentials configured globally:
+  ```bash
+  composer global config http-basic.repo.magento.com <username> <password>
+  ```
+
+### Post-Installation Access
+
+After successful installation:
+
+- **Frontend**: `https://app.<project_name>.test/`
+- **Admin Panel**: `https://app.<project_name>.test/shopmanager/`  
+- **Admin Credentials**: Check `admin-credentials.txt` in project root
+- **2FA QR Code**: Available via web interface for easy mobile setup
+
+### OpenSearch vs Elasticsearch
+
+For Magento 2.4.8+, the command automatically configures OpenSearch. If OpenSearch setup fails, it automatically falls back to Elasticsearch 7.17 with instructions for manual OpenSearch configuration.
+
+---
+
+## Manual Installation (Alternative)
+
+If you prefer manual setup or need custom configuration, follow the detailed steps below.
+
 The below example demonstrates the from-scratch setup of the Magento 2 application for local development. A similar process can easily be used to configure an environment of any other type. This assumes that RollDev has been previously started via `roll svc up` as part of the installation procedure.
 
 1.  Create a new directory on your host machine at the location of your choice and then jump into the new directory to get started:

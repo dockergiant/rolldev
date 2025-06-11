@@ -28,6 +28,8 @@ caption: Getting Started
 
 installing
 services
+magento2-init
+magento2-init-quick-reference
 usage
 duplicate
 backup-restore

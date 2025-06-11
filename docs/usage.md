@@ -2,6 +2,12 @@
 
 ## Common Commands
 
+### Project Initialization
+
+Create a new Magento 2 project (automated setup):
+
+    roll magento2-init myproject 2.4.7
+
 Launch a shell session within the project environment's `php-fpm` container:
 
     roll shell
