@@ -89,7 +89,7 @@ get_software_versions() {
             PHP_VERSION="8.4"
             DB_DISTRIBUTION_VERSION="11.4"
             ELASTICSEARCH_VERSION="2.19"  # OpenSearch
-            REDIS_VERSION="8"  # Valkey
+            REDIS_VERSION="8.0"
             RABBITMQ_VERSION="4.1"
             VARNISH_VERSION="7.7"
             COMPOSER_VERSION="2"
@@ -98,7 +98,7 @@ get_software_versions() {
             PHP_VERSION="8.3"
             DB_DISTRIBUTION_VERSION="11.4"
             ELASTICSEARCH_VERSION="2.19"  # OpenSearch
-            REDIS_VERSION="8"  # Valkey
+            REDIS_VERSION="8.0"
             RABBITMQ_VERSION="4.1"
             VARNISH_VERSION="7.7"
             COMPOSER_VERSION="2"
@@ -216,16 +216,10 @@ if [[ "${ELASTICSEARCH_VERSION}" == "2."* ]]; then
     OPENSEARCH_VERSION="${ELASTICSEARCH_VERSION}"
     sed -i.bak "s/^ROLL_ELASTICSEARCH=.*/ROLL_ELASTICSEARCH=0/" "${ENV_FILE}"
     sed -i.bak "s/^ROLL_OPENSEARCH=.*/ROLL_OPENSEARCH=1/" "${ENV_FILE}"
-    # Set OpenSearch version
-    if ! grep -q "^OPENSEARCH_VERSION=" "${ENV_FILE}"; then
-        echo "OPENSEARCH_VERSION=${OPENSEARCH_VERSION}" >> "${ENV_FILE}"
-    else
-        sed -i.bak "s/^OPENSEARCH_VERSION=.*/OPENSEARCH_VERSION=${OPENSEARCH_VERSION}/" "${ENV_FILE}"
-    fi
-    # Keep Elasticsearch version for compatibility, but disabled
-    sed -i.bak "s/^ELASTICSEARCH_VERSION=.*/ELASTICSEARCH_VERSION=7.17/" "${ENV_FILE}"
+    # Replace ELASTICSEARCH_VERSION with OPENSEARCH_VERSION
+    sed -i.bak "s/^ELASTICSEARCH_VERSION=.*/OPENSEARCH_VERSION=${OPENSEARCH_VERSION}/" "${ENV_FILE}"
     # Set actual search engine version for configuration
-    ELASTICSEARCH_VERSION="7.17"  # Fallback version
+    ELASTICSEARCH_VERSION="7.17"  # Fallback version for installation compatibility
     echo -e "  OpenSearch: ${OPENSEARCH_VERSION} (primary)"
     echo -e "  Elasticsearch: ${ELASTICSEARCH_VERSION} (fallback)"
 else
@@ -233,28 +227,20 @@ else
     sed -i.bak "s/^ROLL_ELASTICSEARCH=.*/ROLL_ELASTICSEARCH=1/" "${ENV_FILE}"
     sed -i.bak "s/^ROLL_OPENSEARCH=.*/ROLL_OPENSEARCH=0/" "${ENV_FILE}"
     sed -i.bak "s/^ELASTICSEARCH_VERSION=.*/ELASTICSEARCH_VERSION=${ELASTICSEARCH_VERSION}/" "${ENV_FILE}"
-    # Ensure OpenSearch is disabled
+    # Ensure OpenSearch version is not present
     if grep -q "^OPENSEARCH_VERSION=" "${ENV_FILE}"; then
         sed -i.bak "/^OPENSEARCH_VERSION=/d" "${ENV_FILE}"
     fi
 fi
 
-# Handle Redis vs Valkey (Valkey for version 8+)
-if [[ "${REDIS_VERSION}" == "8" ]]; then
-    # Use Valkey (Redis fork) for version 8
-    sed -i.bak "s/^ROLL_REDIS=.*/ROLL_REDIS=0/" "${ENV_FILE}"
-    sed -i.bak "s/^ROLL_DRAGONFLY=.*/ROLL_DRAGONFLY=1/" "${ENV_FILE}"
-    # Add Dragonfly/Valkey version if not present
-    if ! grep -q "^DRAGONFLY_VERSION=" "${ENV_FILE}"; then
-        echo "DRAGONFLY_VERSION=${REDIS_VERSION}" >> "${ENV_FILE}"
-    else
-        sed -i.bak "s/^DRAGONFLY_VERSION=.*/DRAGONFLY_VERSION=${REDIS_VERSION}/" "${ENV_FILE}"
-    fi
-else
-    # Use Redis for traditional versions
+# Handle Redis configuration (always use Redis for Magento 2)
+# Magento 2 works best with traditional Redis, so we always use Redis regardless of version
     sed -i.bak "s/^ROLL_REDIS=.*/ROLL_REDIS=1/" "${ENV_FILE}"
     sed -i.bak "s/^ROLL_DRAGONFLY=.*/ROLL_DRAGONFLY=0/" "${ENV_FILE}"
     sed -i.bak "s/^REDIS_VERSION=.*/REDIS_VERSION=${REDIS_VERSION}/" "${ENV_FILE}"
+# Ensure Dragonfly version is not present
+if grep -q "^DRAGONFLY_VERSION=" "${ENV_FILE}"; then
+    sed -i.bak "/^DRAGONFLY_VERSION=/d" "${ENV_FILE}"
 fi
 
 # Clean up backup file

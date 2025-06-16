@@ -1,0 +1,20 @@
+services:
+  redisinsight:
+    hostname: "${ROLL_ENV_NAME}-redisinsight"
+    image: redis/redisinsight:latest
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-redisinsight.tls=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-redisinsight.rule=Host(`redisinsight.${TRAEFIK_DOMAIN}`)
+      - traefik.http.services.${ROLL_ENV_NAME}-redisinsight.loadbalancer.server.port=5540
+      - traefik.docker.network=${ROLL_ENV_NAME}_default
+    environment:
+      - RI_REDIS_HOST=${ROLL_ENV_NAME}-redis
+      - RI_REDIS_PORT=6379
+      - RI_REDIS_ALIAS=${ROLL_ENV_NAME} Redis
+      - RI_DATABASE_MANAGEMENT=false
+    volumes:
+      - redisinsight:/data
+
+volumes:
+  redisinsight: 

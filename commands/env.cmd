@@ -150,6 +150,9 @@ fi
 [[ ${ROLL_REDIS} -eq 1 ]] \
     && appendEnvPartialIfExists "redis"
 
+[[ ${ROLL_REDISINSIGHT} -eq 1 ]] \
+    && appendEnvPartialIfExists "redisinsight"
+
 [[ ${ROLL_DRAGONFLY} -eq 1 ]] \
     && appendEnvPartialIfExists "dragonfly"
 
