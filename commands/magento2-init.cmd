@@ -594,46 +594,145 @@ echo -e "\033[36m[11/12] Running initial indexing...\033[0m"
 
 echo -e "\033[36m[11/12] Creating admin user and configuring 2FA...\033[0m"
 
+# Function to check if version is 2.4.8 or higher
+is_magento_248_or_higher() {
+    local version="$1"
+    local base_version
+    
+    # Extract base version (remove patch info)
+    if [[ "${version}" =~ ^([0-9]+\.[0-9]+\.[0-9x]+) ]]; then
+        base_version="${BASH_REMATCH[1]}"
+    else
+        base_version="${version}"
+    fi
+    
+    # Check if version is 2.4.8+ or 2.4.x (which defaults to latest)
+    case "${base_version}" in
+        "2.4.x"|"2.4.9"*|"2.4.8"*)
+            return 0  # true
+            ;;
+        *)
+            return 1  # false
+            ;;
+    esac
+}
+
 # Generate admin user and 2FA setup for Magento 2.4.6+ (all supported versions require 2FA)
-"${ROLL_DIR}/bin/roll" cli bash -c "
-    set -e
+if is_magento_248_or_higher "${MAGENTO_VERSION}"; then
+    echo -e "\033[33m🔧 Detected Magento 2.4.8+ - Using workaround for 2FA configuration issue\033[0m"
+    echo -e "\033[33m   (Adobe Commerce core issue #39836 - DuoSecurity provider array handling)\033[0m"
     
-    # Generate admin credentials
-    ADMIN_PASS=\"\$(pwgen -n1 16)\"
-    ADMIN_USER=admin
-    
-    echo 'Creating admin user...'
-    bin/magento admin:user:create \\
-        --admin-password=\"\${ADMIN_PASS}\" \\
-        --admin-user=\"\${ADMIN_USER}\" \\
-        --admin-firstname=\"Local\" \\
-        --admin-lastname=\"Admin\" \\
-        --admin-email=\"\${ADMIN_USER}@example.com\"
-    
-    echo \"Admin Username: \${ADMIN_USER}\"
-    echo \"Admin Password: \${ADMIN_PASS}\"
-    
-    # Configure 2FA
-    echo 'Configuring 2FA...'
-    TFA_SECRET=\$(python3 -c \"import base64; print(base64.b32encode('\$(pwgen -A1 128)'.encode()).decode().strip('='))\")
-    OTPAUTH_URL=\$(printf \"otpauth://totp/%s%%3Alocaladmin%%40example.com?issuer=%s&secret=%s\" \\
-        \"app.${PROJECT_NAME}.test\" \"app.${PROJECT_NAME}.test\" \"\${TFA_SECRET}\"
-    )
-    
-    bin/magento config:set --lock-env twofactorauth/general/force_providers google
-    bin/magento security:tfa:google:set-secret \"\${ADMIN_USER}\" \"\${TFA_SECRET}\"
-    
-    echo \"2FA Setup URL: \${OTPAUTH_URL}\"
-    echo \"2FA Backup Codes:\"
-    oathtool -s 30 -w 10 --totp --base32 \"\${TFA_SECRET}\"
-    
-    # Generate QR code
-    segno \"\${OTPAUTH_URL}\" -s 4 -o \"pub/media/\${ADMIN_USER}-totp-qr.png\"
-    QR_URL=\"https://app.${PROJECT_NAME}.test/media/\${ADMIN_USER}-totp-qr.png?t=\$(date +%s)\"
-    echo \"QR Code URL: \${QR_URL}\"
-    
-    # Save credentials to file for user reference
-    cat > /var/www/html/admin-credentials.txt << EOL
+    # Magento 2.4.8+ workaround for 2FA configuration bug
+    "${ROLL_DIR}/bin/roll" cli bash -c "
+        set -e
+        
+        # Generate admin credentials
+        ADMIN_PASS=\"\$(pwgen -n1 16)\"
+        ADMIN_USER=admin
+        
+        echo 'Creating admin user...'
+        bin/magento admin:user:create \\
+            --admin-password=\"\${ADMIN_PASS}\" \\
+            --admin-user=\"\${ADMIN_USER}\" \\
+            --admin-firstname=\"Local\" \\
+            --admin-lastname=\"Admin\" \\
+            --admin-email=\"\${ADMIN_USER}@example.com\"
+        
+        echo \"Admin Username: \${ADMIN_USER}\"
+        echo \"Admin Password: \${ADMIN_PASS}\"
+        
+        # Configure 2FA - using workaround for 2.4.8+ core bug
+        echo 'Configuring 2FA (using 2.4.8+ workaround)...'
+        TFA_SECRET=\$(python3 -c \"import base64; print(base64.b32encode('\$(pwgen -A1 128)'.encode()).decode().strip('='))\")
+        OTPAUTH_URL=\$(printf \"otpauth://totp/%s%%3Alocaladmin%%40example.com?issuer=%s&secret=%s\" \\
+            \"app.${PROJECT_NAME}.test\" \"app.${PROJECT_NAME}.test\" \"\${TFA_SECRET}\"
+        )
+        
+        # Step 1: Set 2FA provider without --lock-env to avoid array storage bug
+        echo 'Setting 2FA provider (step 1/4)...'
+        bin/magento config:set twofactorauth/general/force_providers google
+        
+        # Step 2: Run DI compile to ensure TFA commands are available
+        echo 'Compiling DI container (step 2/4)...'
+        bin/magento setup:di:compile --quiet
+        
+        # Step 3: Set the TFA secret
+        echo 'Setting 2FA secret (step 3/4)...'
+        bin/magento security:tfa:google:set-secret \"\${ADMIN_USER}\" \"\${TFA_SECRET}\"
+        
+        # Step 4: Run setup:upgrade to ensure all configs are applied
+        echo 'Running setup upgrade (step 4/4)...'
+        bin/magento setup:upgrade --keep-generated
+        
+        echo \"2FA Setup URL: \${OTPAUTH_URL}\"
+        echo \"2FA Backup Codes:\"
+        oathtool -s 30 -w 10 --totp --base32 \"\${TFA_SECRET}\"
+        
+        # Generate QR code
+        segno \"\${OTPAUTH_URL}\" -s 4 -o \"pub/media/\${ADMIN_USER}-totp-qr.png\"
+        QR_URL=\"https://app.${PROJECT_NAME}.test/media/\${ADMIN_USER}-totp-qr.png?t=\$(date +%s)\"
+        echo \"QR Code URL: \${QR_URL}\"
+        
+        # Save credentials to file for user reference
+        cat > /var/www/html/admin-credentials.txt << EOL
+Magento Admin Credentials
+========================
+Username: \${ADMIN_USER}
+Password: \${ADMIN_PASS}
+2FA Setup URL: \${OTPAUTH_URL}
+QR Code URL: \${QR_URL}
+
+Admin Panel: https://app.${PROJECT_NAME}.test/shopmanager/
+Frontend: https://app.${PROJECT_NAME}.test/
+
+Generated on: \$(date)
+
+Note: This installation used the 2.4.8+ workaround for Adobe Commerce core issue #39836
+EOL
+        
+        echo 'Admin credentials saved to admin-credentials.txt'
+    "
+else
+    # Standard 2FA setup for Magento 2.4.6-2.4.7
+    "${ROLL_DIR}/bin/roll" cli bash -c "
+        set -e
+        
+        # Generate admin credentials
+        ADMIN_PASS=\"\$(pwgen -n1 16)\"
+        ADMIN_USER=admin
+        
+        echo 'Creating admin user...'
+        bin/magento admin:user:create \\
+            --admin-password=\"\${ADMIN_PASS}\" \\
+            --admin-user=\"\${ADMIN_USER}\" \\
+            --admin-firstname=\"Local\" \\
+            --admin-lastname=\"Admin\" \\
+            --admin-email=\"\${ADMIN_USER}@example.com\"
+        
+        echo \"Admin Username: \${ADMIN_USER}\"
+        echo \"Admin Password: \${ADMIN_PASS}\"
+        
+        # Configure 2FA - standard method for 2.4.6-2.4.7
+        echo 'Configuring 2FA...'
+        TFA_SECRET=\$(python3 -c \"import base64; print(base64.b32encode('\$(pwgen -A1 128)'.encode()).decode().strip('='))\")
+        OTPAUTH_URL=\$(printf \"otpauth://totp/%s%%3Alocaladmin%%40example.com?issuer=%s&secret=%s\" \\
+            \"app.${PROJECT_NAME}.test\" \"app.${PROJECT_NAME}.test\" \"\${TFA_SECRET}\"
+        )
+        
+        bin/magento config:set --lock-env twofactorauth/general/force_providers google
+        bin/magento security:tfa:google:set-secret \"\${ADMIN_USER}\" \"\${TFA_SECRET}\"
+        
+        echo \"2FA Setup URL: \${OTPAUTH_URL}\"
+        echo \"2FA Backup Codes:\"
+        oathtool -s 30 -w 10 --totp --base32 \"\${TFA_SECRET}\"
+        
+        # Generate QR code
+        segno \"\${OTPAUTH_URL}\" -s 4 -o \"pub/media/\${ADMIN_USER}-totp-qr.png\"
+        QR_URL=\"https://app.${PROJECT_NAME}.test/media/\${ADMIN_USER}-totp-qr.png?t=\$(date +%s)\"
+        echo \"QR Code URL: \${QR_URL}\"
+        
+        # Save credentials to file for user reference
+        cat > /var/www/html/admin-credentials.txt << EOL
 Magento Admin Credentials
 ========================
 Username: \${ADMIN_USER}
@@ -646,9 +745,10 @@ Frontend: https://app.${PROJECT_NAME}.test/
 
 Generated on: \$(date)
 EOL
-    
-    echo 'Admin credentials saved to admin-credentials.txt'
-"
+        
+        echo 'Admin credentials saved to admin-credentials.txt'
+    "
+fi
 
 echo -e "\033[36m[12/12] Finalizing setup...\033[0m"
 
