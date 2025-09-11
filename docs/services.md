@@ -7,6 +7,9 @@ After running `roll svc up` for the first time following installation, the follo
 * [https://dnsmasq.roll.test/](https://dnsmasq.roll.test/)
 * [https://mailhog.roll.test/](https://mailhog.roll.test/)
 
+Additional services available include:
+* New Relic Infrastructure monitoring (when enabled with `--profile newrelic`)
+
 ## Customizable Settings
 
 When spinning up global services via `docker-compose` RollDev uses `~/.roll` as the project directory allowing a `.env.roll` placed at `~/.roll/.env.roll` to function for overriding variables in the `docker-compose` configuration used to deploy these services.
