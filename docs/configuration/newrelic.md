@@ -125,21 +125,21 @@ roll exec php-fpm tail -f /var/log/newrelic/newrelic-daemon.log
 
 ## PHP Versions Supported
 
-New Relic PHP agent is installed using the reliable `install-php-extensions` tool:
+New Relic PHP agent is installed in RollDev containers:
 
-| PHP Version | Status |
-|-------------|---------|
-| 8.4+ | ✅ Supported |
-| 8.3+ | ✅ Supported |
-| 8.2 | ✅ Supported |
-| 8.1 | ✅ Supported |
-| 8.0 | ✅ Supported |
-| 7.4 | ✅ Supported |
-| 7.3 | ✅ Supported |
-| 7.2 | ✅ Supported |
-| 7.1 | ✅ Supported |
-| 7.0 | ✅ Supported |
-| < 7.0 | ❌ Not Supported |
+| PHP Version | amd64 (x86_64) | arm64 (Apple Silicon) |
+|-------------|----------------|----------------------|
+| 8.4+ | ✅ Supported | ✅ Supported |
+| 8.3+ | ✅ Supported | ✅ Supported |
+| 8.2 | ✅ Supported | ✅ Supported |
+| 8.1 | ✅ Supported | ✅ Supported |
+| 8.0 | ✅ Supported | ✅ Supported |
+| 7.4 | ✅ Supported | ❌ Not Available |
+| < 7.4 | ❌ Not Available | ❌ Not Available |
+
+**Note:** 
+- New Relic is only installed in PHP 7.4+ containers
+- On arm64 architecture (Apple Silicon), New Relic PHP agent is only available for PHP 8.0 and higher
 
 ## Architecture
 

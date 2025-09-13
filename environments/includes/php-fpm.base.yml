@@ -32,6 +32,10 @@ services:
       - GROUP_ID=${GROUP_ID:-33}
       - OSTYPE=${OSTYPE:-linux}
       - ADD_PHP_EXT=${ADD_PHP_EXT:-}
+      - ROLL_ENV_NAME=${ROLL_ENV_NAME:-}
+      - ROLL_NEWRELIC=${ROLL_NEWRELIC:-0}
+      - NEWRELIC_LICENSE_KEY=${NEWRELIC_LICENSE_KEY:-}
+      - NEWRELIC_APP_NAME=${NEWRELIC_APP_NAME:-}
     volumes: *volumes
     extra_hosts: *extra_hosts
 
@@ -52,6 +56,10 @@ services:
       - GROUP_ID=${GROUP_ID:-33}
       - OSTYPE=${OSTYPE:-linux}
       - ADD_PHP_EXT=${ADD_PHP_EXT:-}
+      - ROLL_ENV_NAME=${ROLL_ENV_NAME:-}
+      - ROLL_NEWRELIC=${ROLL_NEWRELIC:-0}
+      - NEWRELIC_LICENSE_KEY=${NEWRELIC_LICENSE_KEY:-}
+      - NEWRELIC_APP_NAME=${NEWRELIC_APP_NAME:-}
     volumes: *volumes
     extra_hosts: *extra_hosts
     depends_on:

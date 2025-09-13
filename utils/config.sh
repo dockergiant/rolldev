@@ -136,6 +136,11 @@ function initConfigSchema() {
     # Extensions and customizations
     ROLL_CONFIG_SCHEMA_KEYS+=(ADD_PHP_EXT); ROLL_CONFIG_SCHEMA_VALUES+=("string:optional")
     
+    # New Relic configuration
+    ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_NEWRELIC); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:0")
+    ROLL_CONFIG_SCHEMA_KEYS+=(NEWRELIC_LICENSE_KEY); ROLL_CONFIG_SCHEMA_VALUES+=("string:optional")
+    ROLL_CONFIG_SCHEMA_KEYS+=(NEWRELIC_APP_NAME); ROLL_CONFIG_SCHEMA_VALUES+=("string:optional")
+    
     # Container configuration
     ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_ENV_SHELL_CONTAINER); ROLL_CONFIG_SCHEMA_VALUES+=("string:php-fpm")
     ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_ENV_SHELL_COMMAND); ROLL_CONFIG_SCHEMA_VALUES+=("string:bash")
