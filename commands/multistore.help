@@ -1,0 +1,55 @@
+Manage Magento multi-store configuration with automatic config generation.
+
+Usage:
+  roll multistore <command>
+
+Commands:
+  init      Generate configs from .roll/stores.json and sign SSL certificates
+  refresh   Regenerate configs from .roll/stores.json (without re-signing SSL)
+  list      Show current store configuration and status
+  help      Show this help message
+
+Configuration:
+  Create .roll/stores.json in your project root with hostname to store code mapping:
+
+  {
+    "stores": {
+      "store-nl.test": "store_nl",
+      "store-be.test": "store_be",
+      "main.test": ""
+    },
+    "run_type": "store"
+  }
+
+  - "stores": Object mapping hostnames to Magento store codes
+  - Empty string ("") means use the default store code
+  - "run_type": Either "store" or "website" (default: "store")
+
+Generated Files:
+  .roll/roll-env.yml       Docker Compose override with:
+                           - Traefik routing rules for all hostnames
+                           - Nginx volume mount for store mapping
+                           - extra_hosts for PHP containers
+
+  .roll/nginx/stores.map   Nginx configuration with:
+                           - $mage_run_code variable mapping
+                           - $mage_run_type variable
+
+Workflow:
+  1. Create .roll/stores.json with your store configuration
+  2. Run: roll multistore init
+  3. Run: roll env up
+
+  To add/modify stores later:
+  1. Edit .roll/stores.json
+  2. Run: roll multistore refresh
+  3. Run: roll env restart nginx
+
+Prerequisites:
+  - jq must be installed (brew install jq)
+  - Project must have .env.roll configured
+
+Examples:
+  roll multistore init      # First time setup
+  roll multistore refresh   # After editing stores.json
+  roll multistore list      # Check current configuration
