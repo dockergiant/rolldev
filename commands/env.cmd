@@ -186,6 +186,12 @@ else
     export ROLL_SELENIUM_DEBUG=
 fi
 
+## handle describe subcommand
+if [[ "${ROLL_PARAMS[0]}" == "describe" ]]; then
+    source "${ROLL_DIR}/commands/describe.cmd"
+    exit $?
+fi
+
 ## disconnect peered service containers from environment network
 if [[ "${ROLL_PARAMS[0]}" == "down" ]]; then
     disconnectPeeredServices "$(renderEnvNetworkName)"

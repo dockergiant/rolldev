@@ -117,7 +117,7 @@ function generate_roll_env_yml() {
         else
             traefik_rules+=" || "
         fi
-        traefik_rules+="HostRegexp(\\\`{subdomain:.+}.${hostname}\\\`) || Host(\\\`${hostname}\\\`)"
+        traefik_rules+="HostRegexp(\`{subdomain:.+}.${hostname}\`) || Host(\`${hostname}\`)"
     done < <(get_all_hostnames)
 
     # Build extra_hosts entries
