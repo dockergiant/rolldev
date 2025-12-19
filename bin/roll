@@ -69,6 +69,8 @@ fi
 while (( "$#" )); do
   case "$1" in
     -h|--help)
+      ## pass --help to command if it accepts any args, otherwise show roll help
+      containsElement "${ROLL_CMD_VERB}" "${ROLL_CMD_ANYARGS[@]}" && break
       ROLL_HELP=1
       break
       ;;
