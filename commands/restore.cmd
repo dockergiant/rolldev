@@ -182,7 +182,7 @@ function logMessage() {
 }
 
 function logVerbose() {
-    [[ $RESTORE_VERBOSE -eq 1 ]] && logMessage INFO "$@"
+    [[ $RESTORE_VERBOSE -eq 1 ]] && logMessage INFO "$@" || true
 }
 
 function performLegacyMigration() {
@@ -857,12 +857,14 @@ function performRestore() {
     # Restore volumes
     for service in "${services_to_restore[@]}"; do
         current_step=$((current_step + 1))
+        logMessage INFO "Restoring ${service} volume..."
         restoreVolume "$service" "$backup_path" $current_step $total_steps
     done
 
     # Restore configurations
     if [[ $RESTORE_CONFIG -eq 1 ]]; then
         current_step=$((current_step + 1))
+        logMessage INFO "Restoring configuration files..."
         restoreConfigurations "$backup_path" $current_step $total_steps
     fi
     

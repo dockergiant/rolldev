@@ -197,7 +197,7 @@ function logMessage() {
 }
 
 function logVerbose() {
-    [[ $RESTORE_VERBOSE -eq 1 ]] && logMessage INFO "$@"
+    [[ $RESTORE_VERBOSE -eq 1 ]] && logMessage INFO "$@" || true
 }
 
 function performLegacyMigration() {
@@ -891,8 +891,8 @@ function restoreSourceCode() {
 }
 
 function performRestore() {
+    logMessage INFO "Starting full restore from $(basename "$RESTORE_BACKUP_FILE")..."
 
-    logVerbose "Starting full restore process"
     logVerbose "Backup file: $RESTORE_BACKUP_FILE"
     logVerbose "Output directory: $RESTORE_OUTPUT_DIR"
     logVerbose "Environment path: $ROLL_ENV_PATH"
@@ -911,8 +911,10 @@ function performRestore() {
 
     logVerbose "Checking backup file type..."
     if [[ -f "$RESTORE_BACKUP_FILE" ]]; then
+        logMessage INFO "Extracting backup archive..."
         logVerbose "Backup is a file, extracting..."
         backup_path=$(extractBackupArchiveFile "$RESTORE_BACKUP_FILE")
+        logMessage SUCCESS "Archive extracted"
     elif [[ -d "$RESTORE_BACKUP_FILE" ]]; then
         logVerbose "Backup is a directory"
         backup_path="$RESTORE_BACKUP_FILE"
@@ -1015,12 +1017,14 @@ function performRestore() {
     # Restore source code if available
     if [[ $source_exists -eq 1 ]]; then
         current_step=$((current_step + 1))
+        logMessage INFO "Restoring source code..."
         restoreSourceCode "$backup_path" "$ROLL_ENV_PATH" $current_step $total_steps
     fi
 
     # Restore configurations
     if [[ $RESTORE_CONFIG -eq 1 ]]; then
         current_step=$((current_step + 1))
+        logMessage INFO "Restoring configuration files..."
         restoreConfigurations "$backup_path" $current_step $total_steps
         if [[ $ROLL_ENV_LOADED -eq 0 ]]; then
             loadEnvConfig "$ROLL_ENV_PATH" || exit 1
@@ -1031,6 +1035,7 @@ function performRestore() {
     # Restore volumes
     for service in "${services_to_restore[@]}"; do
         current_step=$((current_step + 1))
+        logMessage INFO "Restoring ${service} volume..."
         restoreVolume "$service" "$backup_path" $current_step $total_steps
     done
     
