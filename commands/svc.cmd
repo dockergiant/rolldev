@@ -70,9 +70,9 @@ if [[ "${ROLL_PARAMS[0]}" == "up" ]]; then
 		tls:
 		  stores:
 		    default:
-		    defaultCertificate:
-		      certFile: /etc/ssl/certs/${ROLL_SERVICE_DOMAIN}.crt.pem
-		      keyFile: /etc/ssl/certs/${ROLL_SERVICE_DOMAIN}.key.pem
+		      defaultCertificate:
+		        certFile: /etc/ssl/certs/${ROLL_SERVICE_DOMAIN}.crt.pem
+		        keyFile: /etc/ssl/certs/${ROLL_SERVICE_DOMAIN}.key.pem
 		  certificates:
 	EOT
 
