@@ -15,6 +15,6 @@ services:
       - traefik.http.routers.${ROLL_ENV_NAME}-varnish.tls=true
       - traefik.http.routers.${ROLL_ENV_NAME}-varnish.priority=1
       - traefik.http.routers.${ROLL_ENV_NAME}-varnish.rule=
-          HostRegexp(`{subdomain:.+}.${TRAEFIK_DOMAIN}`) || Host(`${TRAEFIK_DOMAIN}`)
+          HostRegexp(`^.+\.${TRAEFIK_DOMAIN}$$`) || Host(`${TRAEFIK_DOMAIN}`)
       - traefik.http.services.${ROLL_ENV_NAME}-varnish.loadbalancer.server.port=80
       - traefik.docker.network=${ROLL_ENV_NAME}_default

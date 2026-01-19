@@ -11,7 +11,7 @@ services:
       - traefik.http.routers.${ROLL_ENV_NAME}-livereload.tls=true
       - traefik.http.routers.${ROLL_ENV_NAME}-livereload.priority=3
       - traefik.http.routers.${ROLL_ENV_NAME}-livereload.rule=
-          (HostRegexp(`{subdomain:.+}.${TRAEFIK_DOMAIN}`) || Host(`${TRAEFIK_DOMAIN}`))
+          (HostRegexp(`^.+\.${TRAEFIK_DOMAIN}$$`) || Host(`${TRAEFIK_DOMAIN}`))
             && (Path(`/livereload.js`) || Path(`/livereload`))
       - traefik.http.routers.${ROLL_ENV_NAME}-livereload.service=${ROLL_ENV_NAME}-livereload
       - traefik.http.services.${ROLL_ENV_NAME}-livereload.loadbalancer.server.port=35729

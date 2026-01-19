@@ -930,6 +930,18 @@ function signEnvironmentCertificate() {
         }
     fi
 
+    # Regenerate traefik dynamic config and restart to pick up new certificates
+    logVerbose "Regenerating traefik configuration..."
+    if [[ $RESTORE_VERBOSE -eq 1 ]]; then
+        "${ROLL_DIR}/bin/roll" svc up traefik || {
+            logMessage WARNING "Failed to restart traefik"
+        }
+    else
+        "${ROLL_DIR}/bin/roll" svc up traefik >/dev/null 2>&1 || {
+            logMessage WARNING "Failed to restart traefik"
+        }
+    fi
+
     logMessage SUCCESS "SSL certificates signed for ${domain}"
 }
 
