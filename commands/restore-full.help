@@ -10,6 +10,7 @@ ROLL_USAGE=$(cat <<EOF
 
 \033[33mOptions:\033[0m
   -h, --help              Display this help menu
+  -v, --verbose           Show detailed output for debugging
   -q, --quiet             Suppress output messages
   -f, --force             Force restore (overwrite existing volumes)
   --dry-run               Show what would be restored without doing it
@@ -34,6 +35,7 @@ ROLL_USAGE=$(cat <<EOF
   restore-full --services=db,redis backup.tar.gz /tmp/newenv
   restore-full --decrypt=mypassword backup.tar.gz /tmp/newenv
   restore-full --quiet --force backup.tar.gz /tmp/newenv
+  restore-full --verbose backup.tar.gz /tmp/newenv  # Show detailed debug output
 
 \033[33mService Names:\033[0m
   db, database           Database volumes (MySQL/MariaDB/PostgreSQL)

@@ -11,6 +11,7 @@ RESTORE_VERIFY=1
 RESTORE_FORCE=0
 RESTORE_DRY_RUN=0
 RESTORE_QUIET=0
+RESTORE_VERBOSE=0
 RESTORE_DECRYPT=""
 RESTORE_BACKUP_FILE=""
 RESTORE_OUTPUT_DIR=""
@@ -55,6 +56,10 @@ while [[ $# -gt 0 ]]; do
         --quiet|-q)
             RESTORE_QUIET=1
             PROGRESS=0
+            shift
+            ;;
+        --verbose|-v)
+            RESTORE_VERBOSE=1
             shift
             ;;
         --decrypt=*)
@@ -187,7 +192,12 @@ function logMessage() {
         SUCCESS) success "$@" ;;
         WARNING) warning "$@" ;;
         ERROR) error "$@" ;;
+        VERBOSE) [[ $RESTORE_VERBOSE -eq 1 ]] && info "[VERBOSE] $@" ;;
     esac
+}
+
+function logVerbose() {
+    [[ $RESTORE_VERBOSE -eq 1 ]] && logMessage INFO "$@"
 }
 
 function performLegacyMigration() {
@@ -304,7 +314,7 @@ function extractBackupArchive() {
         *.tar.lz4) decompress_cmd="lz4 -d" ;;
     esac
     
-    if $decompress_cmd < "$archive_file" | tar -xf - -C "$extract_dir" --strip-components=1; then
+    if $decompress_cmd < "$archive_file" | tar -xf - -C "$extract_dir" --strip-components=1 2>/dev/null; then
         echo "$extract_dir"
         return 0
     else
@@ -321,7 +331,13 @@ function extractBackupArchiveFile() {
     base_name="${base_name%%.tar*}"
     local extract_dir="$backup_dir/${base_name}_extracted"
 
+    logVerbose "Extracting backup archive file"
+    logVerbose "Archive file: $archive_file"
+    logVerbose "Backup directory: $backup_dir"
+    logVerbose "Extract directory: $extract_dir"
+
     if [[ -d "$extract_dir" ]]; then
+        logVerbose "Found already extracted backup at: $extract_dir"
         echo "$extract_dir"
         return 0
     fi
@@ -335,7 +351,10 @@ function extractBackupArchiveFile() {
         *.tar.lz4) decompress_cmd="lz4 -d" ;;
     esac
 
-    if $decompress_cmd < "$archive_file" | tar -xf - -C "$extract_dir" --strip-components=1; then
+    logVerbose "Using decompression command: $decompress_cmd"
+
+    if $decompress_cmd < "$archive_file" | tar -xf - -C "$extract_dir" --strip-components=1 2>/dev/null; then
+        logVerbose "Successfully extracted to: $extract_dir"
         echo "$extract_dir"
         return 0
     else
@@ -420,12 +439,45 @@ function stopEnvironment() {
         logMessage INFO "[DRY RUN] Would stop environment"
         return 0
     fi
-    
+
     logMessage INFO "Stopping environment for consistent restore..."
-    
-    local running_containers=$(roll env ps --services --filter "status=running" 2>/dev/null | grep 'php-fpm' | sed 's/ *$//g')
-    if [[ -n "$running_containers" ]]; then
-        "${ROLL_DIR}/bin/roll" env down >/dev/null 2>&1
+    logVerbose "Environment path: ${ROLL_ENV_PATH}"
+
+    # Check if environment is configured before trying to stop it
+    # The env commands require .env.roll to exist, which may not be the case
+    # during a full restore (config comes from backup)
+    if [[ ! -f "${ROLL_ENV_PATH}/.env.roll" ]]; then
+        logMessage INFO "No environment configuration found yet, skipping stop"
+        logVerbose "Missing file: ${ROLL_ENV_PATH}/.env.roll"
+        return 0
+    fi
+
+    # Use docker compose directly instead of roll env to avoid exit on error
+    # when environment is not fully configured
+    local project_name="${ROLL_ENV_NAME:-}"
+    if [[ -z "$project_name" ]]; then
+        # Try to extract from .env.roll if available
+        logVerbose "ROLL_ENV_NAME not set, extracting from .env.roll"
+        project_name=$(grep -E "^ROLL_ENV_NAME=" "${ROLL_ENV_PATH}/.env.roll" 2>/dev/null | cut -d'=' -f2 | tr -d '"'"'" || true)
+    fi
+
+    logVerbose "Project name: ${project_name:-<not set>}"
+
+    if [[ -n "$project_name" ]]; then
+        # Check if any containers are running for this project
+        logVerbose "Checking for running containers with label: com.docker.compose.project=${project_name}"
+        local running_containers=$(docker ps --filter "label=com.docker.compose.project=${project_name}" --format '{{.Names}}' 2>/dev/null || true)
+        if [[ -n "$running_containers" ]]; then
+            logVerbose "Found running containers: $running_containers"
+            logMessage INFO "Stopping running containers..."
+            logVerbose "Executing: docker compose -p ${project_name} down"
+            docker compose -p "${project_name}" down >/dev/null 2>&1 || true
+            logVerbose "Containers stopped"
+        else
+            logVerbose "No running containers found"
+        fi
+    else
+        logVerbose "No project name available, skipping container stop"
     fi
 }
 
@@ -456,16 +508,20 @@ function restoreVolume() {
     local backup_path="$2"
     local step="$3"
     local total="$4"
-    
+
     showProgress $step $total "Restoring $service_name volume"
-    
+
     local volume_mapping=$(getVolumeMapping "$service_name")
     IFS=':' read -r volume_name service_type <<< "$volume_mapping"
-    
+
+    logVerbose "Restoring service: $service_name"
+    logVerbose "Volume mapping: $volume_mapping"
+    logVerbose "Volume name: $volume_name, Service type: $service_type"
+
     # Determine backup file location (check for both encrypted and unencrypted)
     local backup_file=""
     local is_encrypted=false
-    
+
     # Check for encrypted files first (.gpg extension)
     if [[ -f "$backup_path/volumes/${service_name}.tar.gz.gpg" ]]; then
         backup_file="$backup_path/volumes/${service_name}.tar.gz.gpg"
@@ -493,8 +549,12 @@ function restoreVolume() {
         backup_file="$backup_path/${service_name}.tar.gz"
     else
         logMessage WARNING "Backup file not found for service: $service_name"
+        logVerbose "Searched in: $backup_path/volumes/ and $backup_path/"
         return 0
     fi
+
+    logVerbose "Found backup file: $backup_file"
+    logVerbose "Encrypted: $is_encrypted"
     
     if [[ $RESTORE_DRY_RUN -eq 1 ]]; then
         if [[ $is_encrypted == true ]]; then
@@ -516,26 +576,37 @@ function restoreVolume() {
     # Get Docker Compose version for proper labeling
     local docker_compose_version=$(docker compose version 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
     local volume_base_name=$(echo "$volume_name" | sed "s/${ROLL_ENV_NAME}_//")
-    
+
+    logVerbose "Docker Compose version: $docker_compose_version"
+    logVerbose "Volume base name: $volume_base_name"
+
     # Remove existing volume if it exists
     if docker volume inspect "$volume_name" >/dev/null 2>&1; then
         if [[ $RESTORE_FORCE -eq 1 ]]; then
             logMessage INFO "Removing existing volume: $volume_name"
+            logVerbose "Executing: docker volume rm $volume_name"
             docker volume rm "$volume_name" >/dev/null 2>&1
         else
             logMessage ERROR "Volume $volume_name already exists. Use --force to overwrite."
             return 1
         fi
+    else
+        logVerbose "Volume $volume_name does not exist yet"
     fi
-    
+
     # Create new volume with proper labels
+    logVerbose "Creating volume: $volume_name with labels"
+    logVerbose "  - com.docker.compose.project=$ROLL_ENV_NAME"
+    logVerbose "  - com.docker.compose.version=$docker_compose_version"
+    logVerbose "  - com.docker.compose.volume=$volume_base_name"
     docker volume create "$volume_name" \
         --label com.docker.compose.project="$ROLL_ENV_NAME" \
         --label com.docker.compose.version="$docker_compose_version" \
         --label com.docker.compose.volume="$volume_base_name" >/dev/null 2>&1
-    
+
     # Restore the volume data with decryption if needed
     local temp_container="${ROLL_ENV_NAME}_restore_${service_name}_$$"
+    logVerbose "Temp container name: $temp_container"
     
     if [[ $is_encrypted == true ]]; then
         # Decrypt and decompress pipeline - use ubuntu and original tar approach with strip components
@@ -801,7 +872,7 @@ function restoreSourceCode() {
             logMessage ERROR "Encrypted source archive found but no decryption password provided"
             return 1
         fi
-        if echo "$RESTORE_DECRYPT" | gpg --batch --yes --quiet --passphrase-fd 0 --decrypt "$src_file" | $decompress_cmd | tar -xf - -C "$target_dir"; then
+        if echo "$RESTORE_DECRYPT" | gpg --batch --yes --quiet --passphrase-fd 0 --decrypt "$src_file" | $decompress_cmd | tar -xf - -C "$target_dir" 2>/dev/null; then
             logMessage SUCCESS "Source code restored"
             return 0
         else
@@ -809,7 +880,7 @@ function restoreSourceCode() {
             return 1
         fi
     else
-        if $decompress_cmd "$src_file" | tar -xf - -C "$target_dir"; then
+        if $decompress_cmd "$src_file" | tar -xf - -C "$target_dir" 2>/dev/null; then
             logMessage SUCCESS "Source code restored"
             return 0
         else
@@ -820,27 +891,37 @@ function restoreSourceCode() {
 }
 
 function performRestore() {
-    
+
+    logVerbose "Starting full restore process"
+    logVerbose "Backup file: $RESTORE_BACKUP_FILE"
+    logVerbose "Output directory: $RESTORE_OUTPUT_DIR"
+    logVerbose "Environment path: $ROLL_ENV_PATH"
+
     # Perform legacy migration if needed
     performLegacyMigration
-    
+
     # Validate database environment
     if [[ ${ROLL_DB:-1} -eq 0 ]]; then
         logMessage ERROR "Database environment is not enabled (ROLL_DB=0)"
         exit 1
     fi
-    
+
     # Determine backup path from archive argument
     local backup_path=""
 
+    logVerbose "Checking backup file type..."
     if [[ -f "$RESTORE_BACKUP_FILE" ]]; then
+        logVerbose "Backup is a file, extracting..."
         backup_path=$(extractBackupArchiveFile "$RESTORE_BACKUP_FILE")
     elif [[ -d "$RESTORE_BACKUP_FILE" ]]; then
+        logVerbose "Backup is a directory"
         backup_path="$RESTORE_BACKUP_FILE"
     else
         logMessage ERROR "Backup file not found: $RESTORE_BACKUP_FILE"
         exit 1
     fi
+
+    logVerbose "Backup path resolved to: $backup_path"
     
     # Detect if backup is encrypted and handle password prompting
     if detectEncryptedBackup "$backup_path"; then
@@ -866,17 +947,21 @@ function performRestore() {
     # Get backup metadata
     local metadata=$(getBackupMetadata "$backup_path")
     logMessage INFO "Restoring backup from: $(basename \"$RESTORE_BACKUP_FILE\")"
+    logVerbose "Backup metadata: $metadata"
 
     local source_exists=0
     for ext in ".tar.gz" ".tar.xz" ".tar.lz4" ".tar"; do
         if [[ -f "$backup_path/source${ext}" ]] || [[ -f "$backup_path/source${ext}.gpg" ]]; then
+            logVerbose "Found source archive: source${ext}"
             source_exists=1
             break
         fi
     done
+    logVerbose "Source code exists in backup: $source_exists"
 
     if [[ $ROLL_ENV_LOADED -eq 0 ]]; then
         ROLL_ENV_NAME=$(echo "$metadata" | grep -o '"environment"[^"]*"' | head -1 | sed 's/.*"environment"[ ]*:[ ]*"\([^"]*\)".*/\1/')
+        logVerbose "Extracted ROLL_ENV_NAME from metadata: ${ROLL_ENV_NAME:-<empty>}"
     fi
     
     # Detect available services in backup
@@ -887,10 +972,11 @@ function performRestore() {
     fi
     
     logMessage INFO "Available services in backup: ${available_services[*]}"
-    
+
     # Determine which services to restore
     local services_to_restore=()
     if [[ ${#RESTORE_SERVICES[@]} -gt 0 ]]; then
+        logVerbose "User specified services to restore: ${RESTORE_SERVICES[*]}"
         # Use specified services
         for service in "${RESTORE_SERVICES[@]}"; do
             if containsElement "$service" "${available_services[@]}"; then
@@ -900,6 +986,7 @@ function performRestore() {
             fi
         done
     else
+        logVerbose "No specific services requested, restoring all available"
         # Restore all available services
         services_to_restore=("${available_services[@]}")
     fi
@@ -917,23 +1004,23 @@ function performRestore() {
     # Calculate total steps
     local total_steps=${#services_to_restore[@]}
     if [[ $RESTORE_CONFIG -eq 1 ]]; then
-        ((total_steps++))
+        total_steps=$((total_steps + 1))
     fi
     if [[ $source_exists -eq 1 ]]; then
-        ((total_steps++))
+        total_steps=$((total_steps + 1))
     fi
-    
+
     local current_step=0
-    
+
     # Restore source code if available
     if [[ $source_exists -eq 1 ]]; then
-        ((current_step++))
+        current_step=$((current_step + 1))
         restoreSourceCode "$backup_path" "$ROLL_ENV_PATH" $current_step $total_steps
     fi
 
     # Restore configurations
     if [[ $RESTORE_CONFIG -eq 1 ]]; then
-        ((current_step++))
+        current_step=$((current_step + 1))
         restoreConfigurations "$backup_path" $current_step $total_steps
         if [[ $ROLL_ENV_LOADED -eq 0 ]]; then
             loadEnvConfig "$ROLL_ENV_PATH" || exit 1
@@ -943,7 +1030,7 @@ function performRestore() {
 
     # Restore volumes
     for service in "${services_to_restore[@]}"; do
-        ((current_step++))
+        current_step=$((current_step + 1))
         restoreVolume "$service" "$backup_path" $current_step $total_steps
     done
     
