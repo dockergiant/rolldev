@@ -875,8 +875,62 @@ function performRestore() {
         logMessage SUCCESS "Dry run completed successfully!"
     else
         logMessage SUCCESS "Restore completed successfully!"
+
+        # Auto-sign SSL certificate for the environment domain
+        signEnvironmentCertificate
+
         logMessage INFO "You can now start your environment with: roll env up"
     fi
+}
+
+function signEnvironmentCertificate() {
+    # Determine the domain to sign certificate for
+    local domain="${TRAEFIK_DOMAIN:-}"
+
+    # If TRAEFIK_DOMAIN not set, try to construct from env name
+    if [[ -z "$domain" ]]; then
+        domain="${ROLL_ENV_NAME}.test"
+    fi
+
+    if [[ -z "$domain" ]]; then
+        logVerbose "No domain found for certificate signing, skipping"
+        return 0
+    fi
+
+    # Check if root CA exists
+    if [[ ! -f "${ROLL_SSL_DIR}/rootca/certs/ca.cert.pem" ]]; then
+        logMessage WARNING "Root CA not found. Run 'roll install' first to enable SSL certificates."
+        return 0
+    fi
+
+    logMessage INFO "Signing SSL certificates for ${domain}..."
+
+    # Sign certificate for the main domain (includes domain and *.domain)
+    logVerbose "Signing certificate for: ${domain}"
+    if [[ $RESTORE_VERBOSE -eq 1 ]]; then
+        "${ROLL_DIR}/bin/roll" sign-certificate "$domain" || {
+            logMessage WARNING "Failed to sign certificate for ${domain}"
+        }
+    else
+        "${ROLL_DIR}/bin/roll" sign-certificate "$domain" >/dev/null 2>&1 || {
+            logMessage WARNING "Failed to sign certificate for ${domain}"
+        }
+    fi
+
+    # Sign separate certificate for wildcard domain
+    local wildcard_domain="*.${domain}"
+    logVerbose "Signing certificate for: ${wildcard_domain}"
+    if [[ $RESTORE_VERBOSE -eq 1 ]]; then
+        "${ROLL_DIR}/bin/roll" sign-certificate "$wildcard_domain" || {
+            logMessage WARNING "Failed to sign certificate for ${wildcard_domain}"
+        }
+    else
+        "${ROLL_DIR}/bin/roll" sign-certificate "$wildcard_domain" >/dev/null 2>&1 || {
+            logMessage WARNING "Failed to sign certificate for ${wildcard_domain}"
+        }
+    fi
+
+    logMessage SUCCESS "SSL certificates signed for ${domain}"
 }
 
 # Main execution
