@@ -291,3 +291,114 @@ The below example demonstrates the from-scratch setup of the Magento 2 applicati
 :::{note}
 To completely destroy the ``exampleproject`` environment we just created, run ``roll env down -v`` to tear down the project's Docker containers, volumes, etc.
 :::
+
+---
+
+## Multi-Store Configuration
+
+RollDev provides the `multistore` command to easily manage Magento multi-store setups with multiple domains.
+
+### Quick Setup
+
+1. Create a configuration file at `.roll/stores.json`:
+
+    ```json
+    {
+      "stores": {
+        "store-nl.test": "store_nl",
+        "store-be.test": "store_be",
+        "store-de.test": "store_de"
+      },
+      "run_type": "store"
+    }
+    ```
+
+2. Initialize the multi-store configuration:
+
+    ```bash
+    roll multistore init
+    ```
+
+3. Restart the environment:
+
+    ```bash
+    roll env up
+    ```
+
+### Configuration Options
+
+The `.roll/stores.json` file supports the following options:
+
+| Option | Description |
+|--------|-------------|
+| `stores` | Object mapping hostnames to Magento store/website codes |
+| `run_type` | Either `"store"` or `"website"` (default: `"store"`) |
+
+Use an empty string `""` for the store code to use the default store:
+
+```json
+{
+  "stores": {
+    "main-store.test": "",
+    "secondary.test": "secondary_store"
+  },
+  "run_type": "store"
+}
+```
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `roll multistore init` | Generate configs and sign SSL certificates for all domains |
+| `roll multistore refresh` | Regenerate configs without re-signing certificates |
+| `roll multistore list` | Show current store configuration and status |
+
+### Generated Files
+
+The `multistore` command automatically generates:
+
+- `.roll/roll-env.yml` - Traefik routing rules, nginx volume mounts, and extra_hosts
+- `.roll/nginx/stores.map` - Nginx hostname-to-store-code mapping
+
+### Updating Stores
+
+When you need to add or modify stores:
+
+1. Edit `.roll/stores.json`
+2. Run `roll multistore refresh`
+3. Restart nginx: `roll env restart nginx`
+
+### Example: Complete Multi-Store Setup
+
+```bash
+# Create stores.json
+cat > .roll/stores.json << 'EOF'
+{
+  "stores": {
+    "mystore-nl.test": "nl_store",
+    "mystore-be.test": "be_store",
+    "mystore-de.test": "de_store"
+  },
+  "run_type": "store"
+}
+EOF
+
+# Initialize (signs certificates and generates config)
+roll multistore init
+
+# Start environment
+roll env up
+
+# Verify configuration
+roll multistore list
+```
+
+### Troubleshooting
+
+If you encounter routing issues after adding new domains:
+
+1. Verify certificates exist: `ls ~/.roll/ssl/certs/`
+2. Check traefik config: `roll env config | grep -A5 traefik`
+3. Restart traefik to reload certificates: `roll svc up traefik`
+4. Restart the environment: `roll env down && roll env up`
