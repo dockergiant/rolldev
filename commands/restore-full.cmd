@@ -860,27 +860,40 @@ function restoreSourceCode() {
 
     mkdir -p "$target_dir"
 
-    local decompress_cmd="cat"
-    case "$src_file" in
-        *.tar.gz*) decompress_cmd="gzip -dc" ;;
-        *.tar.xz*) decompress_cmd="xz -dc" ;;
-        *.tar.lz4*) decompress_cmd="lz4 -dc" ;;
-    esac
-
+    # Use direct file reading instead of piping for cross-platform compatibility
+    # BSD tar (macOS) doesn't reliably handle piped stdin with -C flag
+    # Both BSD and GNU tar auto-detect compression format with -xf
     if [[ $is_encrypted == true ]]; then
         if [[ -z "$RESTORE_DECRYPT" ]]; then
             logMessage ERROR "Encrypted source archive found but no decryption password provided"
             return 1
         fi
-        if echo "$RESTORE_DECRYPT" | gpg --batch --yes --quiet --passphrase-fd 0 --decrypt "$src_file" | $decompress_cmd | tar -xf - -C "$target_dir" 2>/dev/null; then
-            logMessage SUCCESS "Source code restored"
-            return 0
+        # Decrypt to temp file first, then extract directly
+        local temp_file="$backup_path/source_decrypted.tar"
+        case "$src_file" in
+            *.tar.gz.gpg) temp_file="$backup_path/source_decrypted.tar.gz" ;;
+            *.tar.xz.gpg) temp_file="$backup_path/source_decrypted.tar.xz" ;;
+            *.tar.lz4.gpg) temp_file="$backup_path/source_decrypted.tar.lz4" ;;
+        esac
+
+        if echo "$RESTORE_DECRYPT" | gpg --batch --yes --quiet --passphrase-fd 0 --decrypt "$src_file" > "$temp_file"; then
+            if tar -xf "$temp_file" -C "$target_dir"; then
+                rm -f "$temp_file"
+                logMessage SUCCESS "Source code restored"
+                return 0
+            else
+                rm -f "$temp_file"
+                logMessage ERROR "Failed to extract source code"
+                return 1
+            fi
         else
-            logMessage ERROR "Failed to restore source code"
+            rm -f "$temp_file" 2>/dev/null
+            logMessage ERROR "Failed to decrypt source archive"
             return 1
         fi
     else
-        if $decompress_cmd "$src_file" | tar -xf - -C "$target_dir" 2>/dev/null; then
+        # Direct extraction - works on both BSD tar (macOS) and GNU tar (Linux)
+        if tar -xf "$src_file" -C "$target_dir"; then
             logMessage SUCCESS "Source code restored"
             return 0
         else

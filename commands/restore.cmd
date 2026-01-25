@@ -299,16 +299,12 @@ function extractBackupArchive() {
 
     mkdir -p "$extract_dir"
 
-    # Determine decompression command based on file extension
-    local decompress_cmd="cat"
-    case "$archive_file" in
-        *.tar.gz) decompress_cmd="gzip -d" ;;
-        *.tar.xz) decompress_cmd="xz -d" ;;
-        *.tar.lz4) decompress_cmd="lz4 -d" ;;
-    esac
-    logVerbose "Using decompression command: $decompress_cmd"
+    # Use direct file reading for cross-platform compatibility
+    # BSD tar (macOS) doesn't reliably handle piped stdin with -C flag
+    # Both BSD and GNU tar auto-detect compression format with -xf
+    logVerbose "Extracting archive using direct file reading"
 
-    if $decompress_cmd < "$archive_file" | tar -xf - -C "$extract_dir" --strip-components=1 2>/dev/null; then
+    if tar -xf "$archive_file" -C "$extract_dir" --strip-components=1; then
         logVerbose "Successfully extracted archive to: $extract_dir"
         echo "$extract_dir"
         return 0
