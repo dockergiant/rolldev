@@ -5,7 +5,7 @@
 
 * [Docker Desktop for Mac](https://hub.docker.com/editions/community/docker-ce-desktop-mac) 2.2.0.0 or later or [Docker for Linux](https://docs.docker.com/install/) or [Docker for Windows](https://docs.docker.com/desktop/windows/install/)
 * `docker-compose` version 2.0 or later is required (this can be installed via `brew`, `apt`, `dnf`, or `pip3` as needed)
-* [Mutagen](https://mutagen.io/) 0.11.4 or later is required for environments leveraging sync sessions on Mac OS. RollDev will attempt to install this via `brew` if not present.
+* [Mutagen](https://mutagen.io/) 0.11.4 or later is required for environments leveraging sync sessions on Mac OS. RollDev will attempt to install this via `brew install mutagen-io/mutagen/mutagen` if not present. Recent Homebrew versions refuse formulae from untrusted third-party taps; if the install is blocked, run `brew trust mutagen-io/mutagen` first.
 
 :::{warning}
 **By default Docker Desktop for Mac allocates 2GB memory.**
