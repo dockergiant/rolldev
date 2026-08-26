@@ -4,6 +4,7 @@ x-volumes: &volumes
   - ${ROLL_HOME_DIR}/ssl/certs:/home/certs
   - ${ROLL_COMPOSER_DIR}:/home/www-data/.composer:cached
   - .${ROLL_WEB_ROOT:-}/:/var/www/html:cached
+  - /var/www/html/.roll/backups
   - bashhistory:/bash_history
   - sshdirectory:/home/www-data/.ssh
 

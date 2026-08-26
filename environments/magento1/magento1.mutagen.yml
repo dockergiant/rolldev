@@ -15,6 +15,9 @@ sync:
         - "*~"
         - "*.sw[a-p]"
 
+        # Roll backup files
+        - "/.roll/backups"
+
         # Magento files
         - "/media"
         - "/var/**"
