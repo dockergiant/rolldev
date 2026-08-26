@@ -6,7 +6,7 @@ loadEnvConfig "${ROLL_ENV_PATH}" || exit $?
 assertDockerRunning
 
 if (( ${#ROLL_PARAMS[@]} == 0 )) || [[ "${ROLL_PARAMS[0]}" == "help" ]]; then
-  roll env --help || exit $? && exit $?
+  source "${ROLL_DIR}/commands/usage.cmd"
 fi
 
 if [[ ${ROLL_REDIS} -eq 1 && ${ROLL_DRAGONFLY} -eq 1 ]]; then

@@ -25,8 +25,7 @@ RESTORE_LEGACY_MIGRATION=1
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h)
-            roll restore --help
-            exit 0
+            source "${ROLL_DIR}/commands/usage.cmd"
             ;;
         --backup-id=*|--backup=*)
             RESTORE_BACKUP_ID="${1#*=}"

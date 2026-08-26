@@ -10,7 +10,7 @@ if [[ ${ROLL_DB:-1} -eq 0 ]]; then
 fi
 
 if (( ${#ROLL_PARAMS[@]} == 0 )) || [[ "${ROLL_PARAMS[0]}" == "help" ]]; then
-  roll db --help || exit $? && exit $?
+  source "${ROLL_DIR}/commands/usage.cmd"
 fi
 
 ## load connection information for the mysql service

@@ -2,7 +2,7 @@
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
 
 if (( ${#ROLL_PARAMS[@]} == 0 )) || [[ "${ROLL_PARAMS[0]}" == "help" ]]; then
-  roll config --help || exit $? && exit $?
+  source "${ROLL_DIR}/commands/usage.cmd"
 fi
 
 ## Sub-command execution

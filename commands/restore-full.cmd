@@ -30,8 +30,7 @@ fi
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h)
-            roll restore-full --help
-            exit 0
+            source "${ROLL_DIR}/commands/usage.cmd"
             ;;
         --services=*)
             IFS=',' read -ra RESTORE_SERVICES <<< "${1#*=}"

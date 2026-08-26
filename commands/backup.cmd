@@ -32,8 +32,7 @@ fi
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h)
-            roll backup --help
-            exit 0
+            source "${ROLL_DIR}/commands/usage.cmd"
             ;;
         --compression=*)
             BACKUP_COMPRESSION="${1#*=}"

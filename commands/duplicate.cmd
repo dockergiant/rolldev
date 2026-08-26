@@ -28,8 +28,7 @@ fi
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h)
-            roll duplicate --help
-            exit 0
+            source "${ROLL_DIR}/commands/usage.cmd"
             ;;
         --encrypt=*)
             DUPLICATE_ENCRYPT="${1#*=}"

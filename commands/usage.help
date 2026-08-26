@@ -57,6 +57,8 @@ RollDev version $(cat ${ROLL_DIR}/version)
   backup                Create archive backups of an environment (see \033[31m'roll backup -h'\033[0m for details)
   restore               Restore data and configuration from a backup (see \033[31m'roll restore -h'\033[0m for details)
   restore-full          Restore an entire environment including source code (see \033[31m'roll restore-full -h'\033[0m for details)
+  duplicate             Duplicate the current environment under a new name (see \033[31m'roll duplicate -h'\033[0m for details)
+  describe              Describe the assembled docker-compose stack of the current environment
   install           	Initializes or updates roll configuration on host machine
   shell             	Launches into a shell within the current project environment
   status                Display list of all running RollDev project environments
@@ -71,12 +73,16 @@ RollDev version $(cat ${ROLL_DIR}/version)
   bash         		Allocate TTY with shell (simulair to \033[31m'roll shell'\033[0m)
   cli \033[32m%command%\033[0m     	Run command inside container with TTY allocation
   clinotty \033[32m%command%\033[0m    Run command inside container without TTY allocation
+  cliq \033[32m%command%\033[0m        Run command inside container silently (no TTY, output discarded)
   root \033[32m%command%\033[0m        Run command inside container with TTY allocation as root user
   rootnotty \033[32m%command%\033[0m   Run command inside container without TTY allocation as root user
   rootshell          	Allocate TTY with shell as root user
   composer \033[32m%command%\033[0m    run composer inside php-fpm container with params
   add-php-ext \033[32m%ext%\033[0m 	add custom php extensions to the container
+  node \033[32m%command%\033[0m        run node inside php-fpm container with params
+  npm \033[32m%command%\033[0m         run npm inside php-fpm container with params
   browsersync  	      See browsersync domain and port values
+  vnc          	      Open a VNC session to the selenium container (requires ROLL_SELENIUM_DEBUG)
 ${ENV_TYPE_USAGE:1}
 ${ROLL_DARWIN:1}
 EOF

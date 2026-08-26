@@ -15,15 +15,20 @@ ROLL_USAGE=$(cat <<EOF
   -h, --help              Display this help menu
   -q, --quiet             Suppress output messages
   -f, --force             Overwrite existing target directory
-  --dry-run              Show what would be done without executing
-  --encrypt              Encrypt backup with interactive password prompt
-  --no-source            Don't include source code in duplication
-  --no-start             Don't start the new environment automatically
+  --verbose               Show detailed progress of each sub-command
+  --dry-run               Show what would be done without executing
+  --encrypt               Encrypt backup with interactive password prompt
+  --encrypt=%password%    Encrypt backup with the given password
+  --no-source             Don't include source code in duplication
+  --no-start              Don't start the new environment automatically
+  --no-urls               Skip updating base URLs in the database
+  --no-magento-commands   Skip the post-duplication Magento commands
 
 \033[33mExamples:\033[0m
   duplicate moduleshop-upgrade              # Basic duplication
-  duplicate moduleshop-staging --encrypt    # With encryption 
+  duplicate moduleshop-staging --encrypt    # With encryption
   duplicate moduleshop-upgrade --dry-run    # Preview what would happen
+  duplicate moduleshop-upgrade --verbose    # Show output of each sub-command
 
 \033[33mNotes:\033[0m
   • Creates new environment in ../new-environment-name/

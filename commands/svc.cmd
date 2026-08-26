@@ -6,7 +6,7 @@ assertRollDevInstall
 assertDockerRunning
 
 if (( ${#ROLL_PARAMS[@]} == 0 )) || [[ "${ROLL_PARAMS[0]}" == "help" ]]; then
-  roll svc --help || exit $? && exit $?
+  source "${ROLL_DIR}/commands/usage.cmd"
 fi
 
 ## allow return codes from sub-process to bubble up normally
