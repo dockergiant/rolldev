@@ -31,6 +31,9 @@ This release adds `roll env doctor`, JSON output for scripts, container healthch
 - Help files carry a description and category, shown by `roll registry categories` and `roll registry list --format json`.
 - `roll mageos-init` scaffolds Mage-OS 1.1.0 and newer.
 - `REDIS_DISTRIBUTION=valkey` runs Valkey as the redis service, and the container is named after the distribution.
+- `roll env-init <name> magento2` writes the Magento 2.4.9 stack: PHP 8.5, MariaDB 12.3, OpenSearch 3.5, Valkey 9.0, RabbitMQ 4.3, Varnish 8.0 and Node 24. `magento2-init` sets up 2.4.8 (PHP 8.4, MariaDB 11.4, Valkey 8.1) and 2.4.9, and no longer configures OpenSearch 3 as Elasticsearch.
+- On macOS, Mutagen skips `.roll/backups` and the containers no longer see that directory. `var/log`, and `var/report` for magento2, are bind-mounted so you can read the logs on the host.
+- `roll` lists `duplicate`, `describe`, `cliq`, `node`, `npm` and `vnc`, and `roll duplicate --help` documents `--verbose`, `--encrypt`, `--no-urls` and `--no-magento-commands`.
 
 ## Fixes
 
@@ -60,6 +63,9 @@ This release adds `roll env doctor`, JSON output for scripts, container healthch
 - `roll backup` and `roll restore` work on macOS 13 and older, which ship `shasum` but no `sha256sum`.
 - `roll backup --encrypt` and restoring an encrypted backup stop at once when `gpg` is missing and name the package to install. The backup used to run through every volume and fail at the encryption step, and the restore failed halfway.
 - `brew install` failed on Linux with the Docker Compose package from Ubuntu, whose version string (`2.40.3+ds1-0ubuntu1~24.04.1`) the formula could not parse, and on macOS with Colima or Rancher Desktop. The formula now finds `docker` on your PATH.
+- `roll env --help`, `roll svc --help` and `roll restore --help` started the same command again and never finished.
+- `roll sync` could not install Mutagen, because the `havoc-io/mutagen` tap is gone. It now uses `mutagen-io/mutagen`, and when Homebrew refuses the third-party tap it tells you to run `brew trust mutagen-io/mutagen`.
+- On macOS with GNU sed first on PATH (Homebrew `gnu-sed`), `roll config set` and `magento2-init` left `.env.roll` unchanged.
 
 ## Security
 
@@ -72,6 +78,7 @@ This release adds `roll env doctor`, JSON output for scripts, container healthch
 - New shared libraries: `utils/backup.sh` for backup, restore and duplicate, `utils/interact.sh` for prompts (plain bash, no gum), and `utils/table.sh` for tables.
 - ShellCheck runs on Ubuntu and macOS with a `.shellcheckrc`, plus a Docker-free smoke suite under bash 3.2 (`.github/scripts/`).
 - New `init.env` pins `NGINX_VERSION=1.30` for every environment type.
+- The Tag Release workflow no longer fails when `version` already holds the version being tagged.
 
 ---
 
