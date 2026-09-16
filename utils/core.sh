@@ -133,13 +133,9 @@ function sed_inplace() {
     local file="$2"
     local backup_ext="${3:-.bak}"
     
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS (BSD sed) - requires backup extension
-        sed -i "$backup_ext" "$pattern" "$file"
-    else
-        # Linux (GNU sed) - backup extension is optional
-        sed -i"$backup_ext" "$pattern" "$file"
-    fi
+    # Only the attached suffix form works in both BSD and GNU sed; $OSTYPE does not tell which sed is on
+    # PATH (macOS users often have GNU sed from Homebrew), and GNU sed reads a separate suffix as the script
+    sed -i"$backup_ext" "$pattern" "$file"
     
     # Remove backup file if it exists and we used .bak extension
     if [[ "$backup_ext" == ".bak" && -f "${file}${backup_ext}" ]]; then
