@@ -146,7 +146,7 @@ case "${ROLL_PARAMS[0]}" in
         while [[ $i -lt ${#ROLL_CONFIG_SCHEMA_KEYS[@]} ]]; do
             key="${ROLL_CONFIG_SCHEMA_KEYS[$i]}"
             value="${ROLL_CONFIG_SCHEMA_VALUES[$i]}"
-            if [[ "$key" =~ _VERSION$ ]] && [[ ! "$key" =~ ^(PHP_|DB_|MYSQL_|MARIADB_|NODE_|XDEBUG_|COMPOSER_) ]]; then
+            if [[ "$key" =~ _(VERSION|DISTRIBUTION)$ ]] && [[ ! "$key" =~ ^(PHP_|DB_|MYSQL_|MARIADB_|NODE_|XDEBUG_|COMPOSER_) ]]; then
                 printf "  %-30s %s\n" "$key" "$value"
             fi
             i=$((i + 1))

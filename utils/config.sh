@@ -100,7 +100,7 @@ function initConfigSchema() {
     ROLL_CONFIG_SCHEMA_KEYS+=(COMPOSER_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:optional")
     
     # Database configuration
-    ROLL_CONFIG_SCHEMA_KEYS+=(DB_DISTRIBUTION); ROLL_CONFIG_SCHEMA_VALUES+=("string:mariadb")
+    ROLL_CONFIG_SCHEMA_KEYS+=(DB_DISTRIBUTION); ROLL_CONFIG_SCHEMA_VALUES+=("enum:mariadb|mysql:mariadb")
     ROLL_CONFIG_SCHEMA_KEYS+=(DB_DISTRIBUTION_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:10.4")
     ROLL_CONFIG_SCHEMA_KEYS+=(MYSQL_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:8.0")
     ROLL_CONFIG_SCHEMA_KEYS+=(MARIADB_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:10.4")
@@ -108,6 +108,7 @@ function initConfigSchema() {
     # Service version configurations
     ROLL_CONFIG_SCHEMA_KEYS+=(ELASTICSEARCH_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:7.17")
     ROLL_CONFIG_SCHEMA_KEYS+=(RABBITMQ_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:3.11")
+    ROLL_CONFIG_SCHEMA_KEYS+=(REDIS_DISTRIBUTION); ROLL_CONFIG_SCHEMA_VALUES+=("enum:redis|valkey:redis")
     ROLL_CONFIG_SCHEMA_KEYS+=(REDIS_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:7.0")
     ROLL_CONFIG_SCHEMA_KEYS+=(DRAGONFLY_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:latest")
     ROLL_CONFIG_SCHEMA_KEYS+=(VARNISH_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:7.0")
@@ -194,6 +195,15 @@ function validateConfigValue() {
         string)
             if [[ "$constraint" == "required" && -z "$value" ]]; then
                 error "Configuration $key is required but empty"
+                return 1
+            fi
+            ;;
+        enum)
+            # Schema format is enum:<value|value>:<default>; an empty value falls back to the default
+            local allowed="${schema#*:}"
+            allowed="${allowed%:*}"
+            if [[ -n "$value" && "|$allowed|" != *"|$value|"* ]]; then
+                error "Configuration $key must be one of: ${allowed//|/, }, got: $value"
                 return 1
             fi
             ;;
@@ -595,7 +605,15 @@ function checkConfigConflicts() {
         error "DB_DISTRIBUTION must be either 'mysql' or 'mariadb', got: $db_dist"
         errors=$((errors + 1))
     fi
-    
+
+    # Valkey images are only published from 8.0
+    local redis_version
+    redis_version="$(getConfig REDIS_VERSION 7.0)"
+    if [[ "$(getConfig REDIS_DISTRIBUTION redis)" == "valkey" && $(version "$redis_version") -lt $(version "8.0") ]]; then
+        error "REDIS_DISTRIBUTION=valkey needs REDIS_VERSION 8.0 or newer, got: $redis_version"
+        errors=$((errors + 1))
+    fi
+
     return $errors
 }
 

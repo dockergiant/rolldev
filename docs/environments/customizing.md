@@ -11,11 +11,18 @@ The versions of MariaDB/Mysql, Elasticsearch, Varnish, Redis, NodeJS and Compose
   * `DB_DISTRIBUTION_VERSION` (Available distributions: `DB_DISTRIBUTION=mysql` or `DB_DISTRIBUTION=mariadb`)
   * `ELASTICSEARCH_VERSION`
   * `OPENSEARCH_VERSION`
-  * `REDIS_VERSION`
+  * `REDIS_VERSION` (Available distributions: `REDIS_DISTRIBUTION=redis` or `REDIS_DISTRIBUTION=valkey`)
   * `VARNISH_VERSION`
   * `RABBITMQ_VERSION`
   * `NODE_VERSION`
   * `COMPOSER_VERSION`
+
+`REDIS_DISTRIBUTION=valkey` runs Valkey under the same `redis` service name, so `roll redis`, backups and the `redis` host in your application config keep working. Both distributions store their data in the same `redis` volume, and a server cannot load a dump in a newer format:
+
+  * Valkey loads a dump from Redis 7.2 or older, but exits with `Can't handle RDB format version 12` on a dump from Redis 7.4 or newer.
+  * Valkey 8.x and Redis exit with `Can't handle RDB format version 80` on a dump from Valkey 9.
+
+When you switch distribution, or move to an older version, run `roll env down`, remove the volume with `docker volume rm <ROLL_ENV_NAME>_redis`, then run `roll env up`.
 
 Start of some environments could be skipped by using variables in `.env.roll` file:
 

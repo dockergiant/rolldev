@@ -90,7 +90,7 @@ Config is loaded from (later overrides earlier):
 2. `${ROLL_HOME_DIR}/.env` (global, legacy)
 3. `<project>/.env.roll` (per-project — **required**; located by walking up from `pwd` looking for a file containing `ROLL_ENV_NAME` + `ROLL_ENV_TYPE`)
 
-`initConfigSchema()` defines a typed schema (`boolean:<default>`, `string:<default|required|optional>`). Values are validated on load (`validateConfigValue`), defaults applied, then `postProcessConfig()` derives computed values (PHP image variant, Node variant, nginx template selection, xdebug version, WSL/Linux SSH handling, env-type service defaults).
+`initConfigSchema()` defines a typed schema (`boolean:<default>`, `string:<default|required|optional>`, `enum:<a|b>:<default>`). Values are validated on load (`validateConfigValue`), defaults applied, then `postProcessConfig()` derives computed values (PHP image variant, Node variant, nginx template selection, xdebug version, WSL/Linux SSH handling, env-type service defaults).
 
 `ROLL_HOME_DIR` defaults to `$HOME/.roll`. SSL lives at `${ROLL_HOME_DIR}/ssl`, composer cache at `${ROLL_COMPOSER_DIR:-$HOME/.composer}`.
 
@@ -108,6 +108,7 @@ Config is loaded from (later overrides earlier):
 | `NODE_VERSION` | `18` | `0` disables the node variant |
 | `DB_DISTRIBUTION` | `mariadb` | `mariadb` or `mysql` |
 | `DB_DISTRIBUTION_VERSION` | `10.4` | |
+| `REDIS_DISTRIBUTION` | `redis` | `redis` or `valkey`; picks the image for the `redis` service |
 | `ROLL_NGINX` / `ROLL_DB` / `ROLL_REDIS` | `1` | core service toggles |
 | `ROLL_VARNISH` / `ROLL_ELASTICSEARCH` / `ROLL_RABBITMQ` | `0` | default on **only** for magento2 (via `postProcessConfig`) |
 | `ROLL_OPENSEARCH` / `ROLL_DRAGONFLY` / `ROLL_MONGODB` | `0` | |
@@ -121,7 +122,7 @@ Config is loaded from (later overrides earlier):
 | `ROLL_RESTART_POLICY` | `always` | |
 | `TRAEFIK_DOMAIN` / `TRAEFIK_SUBDOMAIN` / `TRAEFIK_LISTEN` | / / `127.0.0.1` | routing |
 
-**Conflict rules:** `ROLL_REDIS` and `ROLL_DRAGONFLY` cannot both be `1` (fatal in `env.cmd` / `checkConfigConflicts`).
+**Conflict rules:** `ROLL_REDIS` and `ROLL_DRAGONFLY` cannot both be `1`, and `REDIS_DISTRIBUTION=valkey` needs `REDIS_VERSION` 8.0 or newer (both fatal in `env.cmd`, reported by `checkConfigConflicts`).
 
 ## Common Commands
 

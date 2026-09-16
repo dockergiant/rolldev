@@ -130,7 +130,7 @@ if [[ "${ROLL_DB:-1}" == "1" ]]; then
 fi
 
 if [[ "${ROLL_REDIS:-0}" == "1" ]]; then
-    data_row "redis" "$(get_status_text redis)" "InDocker: redis:6379" "Redis ${REDIS_VERSION:-7.2}"
+    data_row "redis" "$(get_status_text redis)" "InDocker: redis:6379" "${REDIS_DISTRIBUTION:-redis}:${REDIS_VERSION:-7.2}"
 fi
 
 if [[ "${ROLL_REDISINSIGHT:-0}" == "1" ]]; then
