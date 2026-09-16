@@ -100,15 +100,25 @@ The command performs 12 automated steps:
 
 The command automatically configures compatible software versions based on the Magento version:
 
-### Magento 2.4.8+
-- **PHP**: 8.3
-- **Database**: MariaDB 11.4
-- **Search**: OpenSearch 2.19 (with Elasticsearch 7.17 fallback)
-- **Cache**: Valkey 8 (Redis fork)
-- **Queue**: RabbitMQ 4.1
-- **HTTP Cache**: Varnish 7.7
+### Magento 2.4.9+ (and the default `2.4.x`)
+- **PHP**: 8.5
+- **Database**: MariaDB 12.3
+- **Search**: OpenSearch 3.5
+- **Cache and sessions**: Valkey 9.0 (`REDIS_DISTRIBUTION=valkey`), installed with the `valkey` setup flags
+- **Queue**: RabbitMQ 4.3
+- **HTTP Cache**: Varnish 8.0
 - **Package Manager**: Composer 2
-- **JavaScript**: Node.js 19
+- **JavaScript**: Node.js 24
+
+### Magento 2.4.8
+- **PHP**: 8.4
+- **Database**: MariaDB 11.4
+- **Search**: OpenSearch 3.5
+- **Cache and sessions**: Valkey 8.1 (`REDIS_DISTRIBUTION=valkey`), installed with the `redis` setup flags because 2.4.8 has no `valkey` flags
+- **Queue**: RabbitMQ 4.3
+- **HTTP Cache**: Varnish 8.0
+- **Package Manager**: Composer 2
+- **JavaScript**: Node.js 24
 
 ### Magento 2.4.7
 - **PHP**: 8.3
@@ -136,14 +146,11 @@ For Magento 2.4.8 and later versions, the command automatically configures OpenS
 
 ### Automatic Configuration
 - Sets `ROLL_OPENSEARCH=1` in environment
-- Configures OpenSearch version 2.19
+- Configures OpenSearch version 3.5
 - Uses `opensearch` hostname for connections
 
-### Fallback Mechanism
-If OpenSearch installation fails:
-- Automatically falls back to Elasticsearch 7.17
-- Provides manual configuration instructions
-- Maintains full functionality with fallback
+### No Elasticsearch Fallback
+If `setup:install` fails, the command stops and shows the error. It does not retry with Elasticsearch: Magento 2.4.8 and newer have no `elasticsearch7` engine, and an OpenSearch project runs no Elasticsearch service.
 
 ### Manual OpenSearch Configuration
 To manually switch to OpenSearch after installation:
@@ -257,9 +264,14 @@ roll env logs
 roll env restart
 ```
 
-#### Search Engine Fallback
-**Warning**: `Installation used Elasticsearch fallback`
-**Info**: This is normal for OpenSearch configurations that fail. The project will work with Elasticsearch. You can manually configure OpenSearch later using the provided commands.
+#### Installation Failed
+**Error**: `Magento installation failed. Check the setup:install output above.`
+**Solution**: The `setup:install` output above that line names the cause. Check that the search engine and cache are running:
+```bash
+roll env ps
+roll env logs opensearch
+roll redis ping
+```
 
 ### Debug Commands
 

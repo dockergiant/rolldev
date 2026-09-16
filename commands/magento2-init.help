@@ -61,7 +61,8 @@ ROLL_USAGE=$(cat <<EOF
 \033[33mAutomatic Version Configuration:\033[0m
   The command automatically configures compatible software versions based on
   the Magento version you specify:
-  • Magento 2.4.8+: PHP 8.3+, MariaDB 11.4, OpenSearch 2.19, Valkey 8
+  • Magento 2.4.9+: PHP 8.5, MariaDB 12.3, OpenSearch 3.5, Valkey 9.0, Varnish 8.0
+  • Magento 2.4.8: PHP 8.4, MariaDB 11.4, OpenSearch 3.5, Valkey 8.1, Varnish 8.0
   • Magento 2.4.7: PHP 8.3, MariaDB 10.6+, Elasticsearch 7.17, Redis 7.2
   • Magento 2.4.6: PHP 8.2, MariaDB 10.6, Elasticsearch 7.17, Redis 7.0+
   • Magento 2.4.5: PHP 8.1, MariaDB 10.4, Elasticsearch 7.17, Redis 6.2+

@@ -45,7 +45,8 @@ The command automatically selects compatible software versions:
 
 | Magento Version | PHP | MariaDB | Search Engine | Redis | RabbitMQ | Varnish |
 |-----------------|-----|---------|---------------|-------|----------|---------|
-| 2.4.8+ | 8.3 | 11.4 | OpenSearch 2.19 | Valkey 8 | 4.1 | 7.7 |
+| 2.4.9+ | 8.5 | 12.3 | OpenSearch 3.5 | Valkey 9.0 | 4.3 | 8.0 |
+| 2.4.8 | 8.4 | 11.4 | OpenSearch 3.5 | Valkey 8.1 | 4.3 | 8.0 |
 | 2.4.7 | 8.3 | 10.6+ | Elasticsearch 7.17 | Redis 7.2 | 3.13 | 7.5+ |
 | 2.4.6 | 8.2 | 10.6 | Elasticsearch 7.17 | Redis 7.0+ | 3.9 | 7.1+ |
 
@@ -68,7 +69,7 @@ After successful installation:
 
 ### OpenSearch vs Elasticsearch
 
-For Magento 2.4.8+, the command automatically configures OpenSearch. If OpenSearch setup fails, it automatically falls back to Elasticsearch 7.17 with instructions for manual OpenSearch configuration.
+For Magento 2.4.8+, the command automatically configures OpenSearch. If the installation fails, the command stops and shows the `setup:install` error; there is no fallback to Elasticsearch.
 
 ---
 
@@ -97,38 +98,46 @@ The below example demonstrates the from-scratch setup of the Magento 2 applicati
         TRAEFIK_SUBDOMAIN=app
 
         ROLL_DB=1
-        ROLL_ELASTICSEARCH=1
-        ROLL_ELASTICHQ=0
+        ROLL_ELASTICSEARCH=0
+        ROLL_OPENSEARCH=1
+        ROLL_ELASTICVUE=0
         ROLL_VARNISH=1
         ROLL_RABBITMQ=1
         ROLL_REDIS=1
+        ROLL_REDISINSIGHT=1
+        ROLL_DRAGONFLY=0
+
+        DB_DISTRIBUTION=mariadb
+        DB_DISTRIBUTION_VERSION=12.3
+        NGINX_VERSION=1.30
+        NODE_VERSION=24
+        COMPOSER_VERSION=2
+        OPENSEARCH_VERSION=3.5
+        PHP_VERSION=8.5
+        PHP_XDEBUG_3=1
+        RABBITMQ_VERSION=4.3
+        REDIS_DISTRIBUTION=valkey
+        REDIS_VERSION=9.0
+        DRAGONFLY_VERSION=1.3
+        VARNISH_VERSION=8.0
 
         ROLL_SYNC_IGNORE=
+        ROLL_BROWSERSYNC=0
+        ROLL_INCLUDE_GIT=1
 
-        ELASTICSEARCH_VERSION=7.6
-        DB_DISTRIBUTION=mariadb
-        DB_DISTRIBUTION_VERSION=10.3
-        NODE_VERSION=12
-        COMPOSER_VERSION=2.2
-        PHP_VERSION=7.3
-        PHP_XDEBUG_3=1
-        RABBITMQ_VERSION=3.8
-        REDIS_VERSION=5.0
-        VARNISH_VERSION=6.0
 
-        ROLL_ALLURE=0
-        ROLL_SELENIUM=0
-        ROLL_SELENIUM_DEBUG=0
-        ROLL_BLACKFIRE=0
-        ROLL_SPLIT_SALES=0
-        ROLL_SPLIT_CHECKOUT=0
-        ROLL_TEST_DB=0
-        ROLL_MAGEPACK=0
+        # Set to 1 for enable static content browser caching
+        ROLL_MAGENTO_STATIC_CACHING=1
 
-        BLACKFIRE_CLIENT_ID=
-        BLACKFIRE_CLIENT_TOKEN=
-        BLACKFIRE_SERVER_ID=
-        BLACKFIRE_SERVER_TOKEN=
+        # Auto login prefilling fields when accessing admin url on /shopmanager or /backend
+        # Only works when you did run the auto login setup script > roll setup-autologin (only available for Magento 2 projects)
+        ROLL_ADMIN_AUTOLOGIN=0
+
+        # New Relic license key (can be set globally in $HOME/.roll/.env)
+        # NEWRELIC_LICENSE_KEY=your_license_key_here
+
+        # New Relic monitoring (set to 1 to enable)
+        ROLL_NEWRELIC=0
 
 3.  Sign an SSL certificate for use with the project (the input here should match the value of `TRAEFIK_DOMAIN` in the above `.env.roll` example file):
 
@@ -171,7 +180,11 @@ The below example demonstrates the from-scratch setup of the Magento 2 applicati
 8.  Install the application and you should be all set:
 
     :::{note}
-    If you are using OpenSearch instead of ElasticSearch, use `--elasticsearch-host=opensearch` instead of `--elasticsearch-host=elasticsearch`.
+    This example matches the `.env.roll` above: OpenSearch and Valkey on Magento 2.4.9. On a project with `ROLL_ELASTICSEARCH=1`, use `--search-engine=elasticsearch7` with `--elasticsearch-host=elasticsearch` and the other `--elasticsearch-*` flags instead.
+    :::
+
+    :::{note}
+    The `valkey` flags exist from Magento 2.4.9. On older versions, replace `valkey` with `redis` in the flag names: `--session-save=redis`, `--session-save-redis-host=redis`, `--cache-backend=redis` and so on. Those flags also work against Valkey. The host stays `redis` either way, because that is the service name.
     :::
 
         ## Install Application
@@ -185,26 +198,26 @@ The below example demonstrates the from-scratch setup of the Magento 2 applicati
             --db-name=magento \
             --db-user=magento \
             --db-password=magento \
-            --search-engine=elasticsearch7 \
-            --elasticsearch-host=elasticsearch \
-            --elasticsearch-port=9200 \
-            --elasticsearch-index-prefix=magento2 \
-            --elasticsearch-enable-auth=0 \
-            --elasticsearch-timeout=15 \
+            --search-engine=opensearch \
+            --opensearch-host=opensearch \
+            --opensearch-port=9200 \
+            --opensearch-index-prefix=magento2 \
+            --opensearch-enable-auth=0 \
+            --opensearch-timeout=15 \
             --http-cache-hosts=varnish:80 \
-            --session-save=redis \
-            --session-save-redis-host=redis \
-            --session-save-redis-port=6379 \
-            --session-save-redis-db=2 \
-            --session-save-redis-max-concurrency=20 \
-            --cache-backend=redis \
-            --cache-backend-redis-server=redis \
-            --cache-backend-redis-db=0 \
-            --cache-backend-redis-port=6379 \
-            --page-cache=redis \
-            --page-cache-redis-server=redis \
-            --page-cache-redis-db=1 \
-            --page-cache-redis-port=6379
+            --session-save=valkey \
+            --session-save-valkey-host=redis \
+            --session-save-valkey-port=6379 \
+            --session-save-valkey-db=2 \
+            --session-save-valkey-max-concurrency=20 \
+            --cache-backend=valkey \
+            --cache-backend-valkey-server=redis \
+            --cache-backend-valkey-db=0 \
+            --cache-backend-valkey-port=6379 \
+            --page-cache=valkey \
+            --page-cache-valkey-server=redis \
+            --page-cache-valkey-db=1 \
+            --page-cache-valkey-port=6379
 
         ## Configure Application
         bin/magento config:set --lock-env web/unsecure/base_url \

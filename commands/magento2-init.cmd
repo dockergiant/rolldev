@@ -77,7 +77,9 @@ get_software_versions() {
     PHP_VERSION="8.2"
     DB_DISTRIBUTION_VERSION="10.6"
     ELASTICSEARCH_VERSION="7.17"
+    REDIS_DISTRIBUTION="redis"
     REDIS_VERSION="7.0"
+    MAGENTO_CACHE_ADAPTER="redis"
     RABBITMQ_VERSION="3.9"
     VARNISH_VERSION="7.1"
     COMPOSER_VERSION="2"
@@ -86,22 +88,28 @@ get_software_versions() {
     # Version mapping based on Magento compatibility matrix (2.4.6+ only)
     case "${base_version}" in
         "2.4.9"*)
-            PHP_VERSION="8.4"
-            DB_DISTRIBUTION_VERSION="11.4"
-            ELASTICSEARCH_VERSION="2.19"  # OpenSearch
-            REDIS_VERSION="8.0"
-            RABBITMQ_VERSION="4.1"
-            VARNISH_VERSION="7.7"
+            PHP_VERSION="8.5"
+            DB_DISTRIBUTION_VERSION="12.3"
+            ELASTICSEARCH_VERSION="3.5"  # OpenSearch
+            REDIS_DISTRIBUTION="valkey"
+            REDIS_VERSION="9.0"
+            MAGENTO_CACHE_ADAPTER="valkey"
+            RABBITMQ_VERSION="4.3"
+            VARNISH_VERSION="8.0"
             COMPOSER_VERSION="2"
+            NODE_VERSION="24"
             ;;
         "2.4.8"*)
-            PHP_VERSION="8.3"
+            PHP_VERSION="8.4"
             DB_DISTRIBUTION_VERSION="11.4"
-            ELASTICSEARCH_VERSION="2.19"  # OpenSearch
-            REDIS_VERSION="8.0"
-            RABBITMQ_VERSION="4.1"
-            VARNISH_VERSION="7.7"
+            ELASTICSEARCH_VERSION="3.5"  # OpenSearch
+            # 2.4.8 has no valkey setup:install flags; its redis flags work against Valkey
+            REDIS_DISTRIBUTION="valkey"
+            REDIS_VERSION="8.1"
+            RABBITMQ_VERSION="4.3"
+            VARNISH_VERSION="8.0"
             COMPOSER_VERSION="2"
+            NODE_VERSION="24"
             ;;
         "2.4.7"*)
             PHP_VERSION="8.3"
@@ -139,25 +147,28 @@ get_software_versions() {
             ;;
         "2.4.x"|"2.4"*)
             # Default to latest stable versions for 2.4.x
-            PHP_VERSION="8.3"
-            DB_DISTRIBUTION_VERSION="10.6"
-            ELASTICSEARCH_VERSION="7.17"
-            REDIS_VERSION="7.2"
-            RABBITMQ_VERSION="3.13"
-            VARNISH_VERSION="7.5"
+            PHP_VERSION="8.5"
+            DB_DISTRIBUTION_VERSION="12.3"
+            ELASTICSEARCH_VERSION="3.5"  # OpenSearch
+            REDIS_DISTRIBUTION="valkey"
+            REDIS_VERSION="9.0"
+            MAGENTO_CACHE_ADAPTER="valkey"
+            RABBITMQ_VERSION="4.3"
+            VARNISH_VERSION="8.0"
             COMPOSER_VERSION="2"
+            NODE_VERSION="24"
             ;;
     esac
     
     echo -e "\033[33mConfigured software versions for Magento ${magento_version}:\033[0m"
     echo -e "  PHP: ${PHP_VERSION}"
     echo -e "  MariaDB: ${DB_DISTRIBUTION_VERSION}"
-    if [[ "${ELASTICSEARCH_VERSION}" == "2."* ]]; then
+    if [[ "${ELASTICSEARCH_VERSION}" == "2."* || "${ELASTICSEARCH_VERSION}" == "3."* ]]; then
         echo -e "  Search Engine: OpenSearch ${ELASTICSEARCH_VERSION}"
     else
         echo -e "  Search Engine: Elasticsearch ${ELASTICSEARCH_VERSION}"
     fi
-    echo -e "  Redis: ${REDIS_VERSION}"
+    echo -e "  Cache: ${REDIS_DISTRIBUTION} ${REDIS_VERSION}"
     echo -e "  RabbitMQ: ${RABBITMQ_VERSION}"
     echo -e "  Varnish: ${VARNISH_VERSION}"
     echo -e "  Composer: ${COMPOSER_VERSION}"
@@ -202,49 +213,60 @@ echo -e "\033[36m[3/10] Initializing environment configuration...\033[0m"
 echo -e "\033[36m[4/10] Updating environment with compatible software versions...\033[0m"
 ENV_FILE="${TARGET_DIR}/.env.roll"
 
+# Sets KEY=VALUE in .env.roll. A custom init.env may lack the key or still use OLD_KEY, so the key is
+# renamed from OLD_KEY or appended instead of relying on an existing line.
+set_env_value() {
+    local key="$1"
+    local value="$2"
+    local old_key="${3:-}"
+
+    if grep -q "^${key}=" "${ENV_FILE}"; then
+        sed_inplace "s/^${key}=.*/${key}=${value}/" "${ENV_FILE}"
+        if [[ -n "${old_key}" ]]; then
+            sed_inplace "/^${old_key}=/d" "${ENV_FILE}"
+        fi
+    elif [[ -n "${old_key}" ]] && grep -q "^${old_key}=" "${ENV_FILE}"; then
+        sed_inplace "s/^${old_key}=.*/${key}=${value}/" "${ENV_FILE}"
+    else
+        if [[ -n "$(tail -c 1 "${ENV_FILE}")" ]]; then
+            echo >> "${ENV_FILE}"
+        fi
+        echo "${key}=${value}" >> "${ENV_FILE}"
+    fi
+}
+
 # Update software versions in .env.roll file
-sed -i.bak "s/^PHP_VERSION=.*/PHP_VERSION=${PHP_VERSION}/" "${ENV_FILE}"
-sed -i.bak "s/^DB_DISTRIBUTION_VERSION=.*/DB_DISTRIBUTION_VERSION=${DB_DISTRIBUTION_VERSION}/" "${ENV_FILE}"
-sed -i.bak "s/^COMPOSER_VERSION=.*/COMPOSER_VERSION=${COMPOSER_VERSION}/" "${ENV_FILE}"
-sed -i.bak "s/^NODE_VERSION=.*/NODE_VERSION=${NODE_VERSION}/" "${ENV_FILE}"
-sed -i.bak "s/^RABBITMQ_VERSION=.*/RABBITMQ_VERSION=${RABBITMQ_VERSION}/" "${ENV_FILE}"
-sed -i.bak "s/^VARNISH_VERSION=.*/VARNISH_VERSION=${VARNISH_VERSION}/" "${ENV_FILE}"
+set_env_value PHP_VERSION "${PHP_VERSION}"
+set_env_value DB_DISTRIBUTION_VERSION "${DB_DISTRIBUTION_VERSION}"
+set_env_value COMPOSER_VERSION "${COMPOSER_VERSION}"
+set_env_value NODE_VERSION "${NODE_VERSION}"
+set_env_value RABBITMQ_VERSION "${RABBITMQ_VERSION}"
+set_env_value VARNISH_VERSION "${VARNISH_VERSION}"
 
 # Handle search engine configuration (OpenSearch vs Elasticsearch)
-if [[ "${ELASTICSEARCH_VERSION}" == "2."* ]]; then
+if [[ "${ELASTICSEARCH_VERSION}" == "2."* || "${ELASTICSEARCH_VERSION}" == "3."* ]]; then
     # Use OpenSearch for newer Magento versions (2.4.8+)
     OPENSEARCH_VERSION="${ELASTICSEARCH_VERSION}"
-    sed -i.bak "s/^ROLL_ELASTICSEARCH=.*/ROLL_ELASTICSEARCH=0/" "${ENV_FILE}"
-    sed -i.bak "s/^ROLL_OPENSEARCH=.*/ROLL_OPENSEARCH=1/" "${ENV_FILE}"
-    # Replace ELASTICSEARCH_VERSION with OPENSEARCH_VERSION
-    sed -i.bak "s/^ELASTICSEARCH_VERSION=.*/OPENSEARCH_VERSION=${OPENSEARCH_VERSION}/" "${ENV_FILE}"
-    # Set actual search engine version for configuration
-    ELASTICSEARCH_VERSION="7.17"  # Fallback version for installation compatibility
-    echo -e "  OpenSearch: ${OPENSEARCH_VERSION} (primary)"
-    echo -e "  Elasticsearch: ${ELASTICSEARCH_VERSION} (fallback)"
+    set_env_value ROLL_ELASTICSEARCH 0
+    set_env_value ROLL_OPENSEARCH 1
+    set_env_value OPENSEARCH_VERSION "${OPENSEARCH_VERSION}" ELASTICSEARCH_VERSION
+    echo -e "  OpenSearch: ${OPENSEARCH_VERSION}"
 else
     # Use Elasticsearch for older versions
-    sed -i.bak "s/^ROLL_ELASTICSEARCH=.*/ROLL_ELASTICSEARCH=1/" "${ENV_FILE}"
-    sed -i.bak "s/^ROLL_OPENSEARCH=.*/ROLL_OPENSEARCH=0/" "${ENV_FILE}"
-    sed -i.bak "s/^ELASTICSEARCH_VERSION=.*/ELASTICSEARCH_VERSION=${ELASTICSEARCH_VERSION}/" "${ENV_FILE}"
-    # Ensure OpenSearch version is not present
-    if grep -q "^OPENSEARCH_VERSION=" "${ENV_FILE}"; then
-        sed -i.bak "/^OPENSEARCH_VERSION=/d" "${ENV_FILE}"
-    fi
+    set_env_value ROLL_ELASTICSEARCH 1
+    set_env_value ROLL_OPENSEARCH 0
+    set_env_value ELASTICSEARCH_VERSION "${ELASTICSEARCH_VERSION}" OPENSEARCH_VERSION
 fi
 
-# Handle Redis configuration (always use Redis for Magento 2)
-# Magento 2 works best with traditional Redis, so we always use Redis regardless of version
-    sed -i.bak "s/^ROLL_REDIS=.*/ROLL_REDIS=1/" "${ENV_FILE}"
-    sed -i.bak "s/^ROLL_DRAGONFLY=.*/ROLL_DRAGONFLY=0/" "${ENV_FILE}"
-    sed -i.bak "s/^REDIS_VERSION=.*/REDIS_VERSION=${REDIS_VERSION}/" "${ENV_FILE}"
+# Handle Redis configuration (Redis or Valkey, depending on the Magento version)
+set_env_value ROLL_REDIS 1
+set_env_value ROLL_DRAGONFLY 0
+set_env_value REDIS_DISTRIBUTION "${REDIS_DISTRIBUTION}"
+set_env_value REDIS_VERSION "${REDIS_VERSION}"
 # Ensure Dragonfly version is not present
 if grep -q "^DRAGONFLY_VERSION=" "${ENV_FILE}"; then
-    sed -i.bak "/^DRAGONFLY_VERSION=/d" "${ENV_FILE}"
+    sed_inplace "/^DRAGONFLY_VERSION=/d" "${ENV_FILE}"
 fi
-
-# Clean up backup file
-rm -f "${ENV_FILE}.bak"
 
 # Sign SSL certificate
 echo -e "\033[36m[5/10] Signing SSL certificate...\033[0m"
@@ -391,76 +413,41 @@ fi
 
 echo -e "\033[36m[9/12] Installing Magento application...\033[0m"
 
-# Determine search engine parameters based on version (2.4.6+ only)
-echo -e "\033[33mConfiguring search engine parameters...\033[0m"
-
-# Determine search engine type based on environment configuration
+# No Elasticsearch fallback: OpenSearch projects run no elasticsearch service and Magento 2.4.8+ has no
+# elasticsearch7 engine, so a retry could only hide the real setup:install error.
 if grep -q "^ROLL_OPENSEARCH=1" "${ENV_FILE}" 2>/dev/null; then
-    # OpenSearch configuration for Magento 2.4.8+
-    OPENSEARCH_VER=$(grep "^OPENSEARCH_VERSION=" "${ENV_FILE}" | cut -d'=' -f2 || echo "2.19")
-    SEARCH_ENGINE_PARAMS="
-        --search-engine=opensearch \\
-        --opensearch-host=opensearch \\
-        --opensearch-port=9200 \\
-        --opensearch-index-prefix=magento2 \\
-        --opensearch-enable-auth=0 \\
-        --opensearch-timeout=15"
-    echo -e "\033[33mUsing OpenSearch ${OPENSEARCH_VER} for Magento 2.4.8+\033[0m"
-else
-    # Elasticsearch configuration for Magento 2.4.6-2.4.7
-    SEARCH_ENGINE_PARAMS="
-        --search-engine=elasticsearch7 \\
-        --elasticsearch-host=elasticsearch \\
-        --elasticsearch-port=9200 \\
-        --elasticsearch-index-prefix=magento2 \\
-        --elasticsearch-enable-auth=0 \\
-        --elasticsearch-timeout=15"
-    echo -e "\033[33mUsing Elasticsearch ${ELASTICSEARCH_VERSION}\033[0m"
-fi
-
-# Debug: Show search engine parameters
-echo -e "\033[33mSearch engine parameters:\033[0m"
-echo "${SEARCH_ENGINE_PARAMS}"
-
-# Install Magento with fallback mechanism
-echo -e "\033[33mAttempting Magento installation with configured search engine...\033[0m"
-
-# Build the installation command based on search engine type
-if grep -q "^ROLL_OPENSEARCH=1" "${ENV_FILE}" 2>/dev/null; then
-    # OpenSearch installation command
-    INSTALL_COMMAND="bin/magento setup:install \\
-            --backend-frontname=shopmanager \\
-            --amqp-host=rabbitmq \\
-            --amqp-port=5672 \\
-            --amqp-user=guest \\
-            --amqp-password=guest \\
-            --db-host=db \\
-            --db-name=magento \\
-            --db-user=magento \\
-            --db-password=magento \\
-            --search-engine=opensearch \\
+    SEARCH_ENGINE_PARAMS="--search-engine=opensearch \\
             --opensearch-host=opensearch \\
             --opensearch-port=9200 \\
             --opensearch-index-prefix=magento2 \\
             --opensearch-enable-auth=0 \\
-            --opensearch-timeout=15 \\
-            --http-cache-hosts=varnish:80 \\
-            --session-save=redis \\
-            --session-save-redis-host=redis \\
-            --session-save-redis-port=6379 \\
-            --session-save-redis-db=2 \\
-            --session-save-redis-max-concurrency=20 \\
-            --cache-backend=redis \\
-            --cache-backend-redis-server=redis \\
-            --cache-backend-redis-db=0 \\
-            --cache-backend-redis-port=6379 \\
-            --page-cache=redis \\
-            --page-cache-redis-server=redis \\
-            --page-cache-redis-db=1 \\
-            --page-cache-redis-port=6379"
+            --opensearch-timeout=15"
+    echo -e "\033[33mUsing OpenSearch ${OPENSEARCH_VERSION}\033[0m"
 else
-    # Elasticsearch installation command  
-    INSTALL_COMMAND="bin/magento setup:install \\
+    SEARCH_ENGINE_PARAMS="--search-engine=elasticsearch7 \\
+            --elasticsearch-host=elasticsearch \\
+            --elasticsearch-port=9200 \\
+            --elasticsearch-index-prefix=magento2 \\
+            --elasticsearch-enable-auth=0 \\
+            --elasticsearch-timeout=15"
+    echo -e "\033[33mUsing Elasticsearch ${ELASTICSEARCH_VERSION}\033[0m"
+fi
+
+CACHE_PARAMS="--session-save=${MAGENTO_CACHE_ADAPTER} \\
+            --session-save-${MAGENTO_CACHE_ADAPTER}-host=redis \\
+            --session-save-${MAGENTO_CACHE_ADAPTER}-port=6379 \\
+            --session-save-${MAGENTO_CACHE_ADAPTER}-db=2 \\
+            --session-save-${MAGENTO_CACHE_ADAPTER}-max-concurrency=20 \\
+            --cache-backend=${MAGENTO_CACHE_ADAPTER} \\
+            --cache-backend-${MAGENTO_CACHE_ADAPTER}-server=redis \\
+            --cache-backend-${MAGENTO_CACHE_ADAPTER}-db=0 \\
+            --cache-backend-${MAGENTO_CACHE_ADAPTER}-port=6379 \\
+            --page-cache=${MAGENTO_CACHE_ADAPTER} \\
+            --page-cache-${MAGENTO_CACHE_ADAPTER}-server=redis \\
+            --page-cache-${MAGENTO_CACHE_ADAPTER}-db=1 \\
+            --page-cache-${MAGENTO_CACHE_ADAPTER}-port=6379"
+
+INSTALL_COMMAND="bin/magento setup:install \\
             --backend-frontname=shopmanager \\
             --amqp-host=rabbitmq \\
             --amqp-port=5672 \\
@@ -470,83 +457,20 @@ else
             --db-name=magento \\
             --db-user=magento \\
             --db-password=magento \\
-            --search-engine=elasticsearch7 \\
-            --elasticsearch-host=elasticsearch \\
-            --elasticsearch-port=9200 \\
-            --elasticsearch-index-prefix=magento2 \\
-            --elasticsearch-enable-auth=0 \\
-            --elasticsearch-timeout=15 \\
+            ${SEARCH_ENGINE_PARAMS} \\
             --http-cache-hosts=varnish:80 \\
-            --session-save=redis \\
-            --session-save-redis-host=redis \\
-            --session-save-redis-port=6379 \\
-            --session-save-redis-db=2 \\
-            --session-save-redis-max-concurrency=20 \\
-            --cache-backend=redis \\
-            --cache-backend-redis-server=redis \\
-            --cache-backend-redis-db=0 \\
-            --cache-backend-redis-port=6379 \\
-            --page-cache=redis \\
-            --page-cache-redis-server=redis \\
-            --page-cache-redis-db=1 \\
-            --page-cache-redis-port=6379"
-fi
+            ${CACHE_PARAMS}"
 
 if ! "${ROLL_DIR}/bin/roll" cli bash -c "
     set -e
-    
+
     echo 'Installing Magento application...'
-    echo 'Search engine parameters:'
-    echo '${SEARCH_ENGINE_PARAMS}'
     ${INSTALL_COMMAND}
 "; then
-    echo -e "\033[33m⚠️  Primary search engine installation failed, trying fallback to Elasticsearch...\033[0m"
-    
-    # Fallback to Elasticsearch 7
-    FALLBACK_COMMAND="bin/magento setup:install \\
-            --backend-frontname=shopmanager \\
-            --amqp-host=rabbitmq \\
-            --amqp-port=5672 \\
-            --amqp-user=guest \\
-            --amqp-password=guest \\
-            --db-host=db \\
-            --db-name=magento \\
-            --db-user=magento \\
-            --db-password=magento \\
-            --search-engine=elasticsearch7 \\
-            --elasticsearch-host=elasticsearch \\
-            --elasticsearch-port=9200 \\
-            --elasticsearch-index-prefix=magento2 \\
-            --elasticsearch-enable-auth=0 \\
-            --elasticsearch-timeout=15 \\
-            --http-cache-hosts=varnish:80 \\
-            --session-save=redis \\
-            --session-save-redis-host=redis \\
-            --session-save-redis-port=6379 \\
-            --session-save-redis-db=2 \\
-            --session-save-redis-max-concurrency=20 \\
-            --cache-backend=redis \\
-            --cache-backend-redis-server=redis \\
-            --cache-backend-redis-db=0 \\
-            --cache-backend-redis-port=6379 \\
-            --page-cache=redis \\
-            --page-cache-redis-server=redis \\
-            --page-cache-redis-db=1 \\
-            --page-cache-redis-port=6379"
-    
-    "${ROLL_DIR}/bin/roll" cli bash -c "
-        set -e
-        
-        echo 'Retrying with Elasticsearch 7 fallback...'
-        ${FALLBACK_COMMAND}
-    "
-    
-    echo -e "\033[32m✅ Installation completed with Elasticsearch fallback\033[0m"
-    USED_FALLBACK=1
-else
-    echo -e "\033[32m✅ Installation completed with configured search engine\033[0m"
-    USED_FALLBACK=0
+    echo -e "\033[31m❌ Magento installation failed. Check the setup:install output above.\033[0m"
+    exit 1
 fi
+echo -e "\033[32m✅ Installation completed\033[0m"
 
 echo -e "\033[36m[10/12] Configuring Magento application...\033[0m"
 
@@ -576,15 +500,6 @@ echo -e "\033[36m[10/12] Configuring Magento application...\033[0m"
     bin/magento deploy:mode:set -s developer
     bin/magento cache:disable block_html full_page
 "
-
-# Configure search engine post-installation for OpenSearch fallback scenarios
-if [[ "${USED_FALLBACK}" == "1" ]] && grep -q "^ROLL_OPENSEARCH=1" "${ENV_FILE}" 2>/dev/null; then
-    echo -e "\033[36mInstallation used Elasticsearch fallback, but OpenSearch is configured for runtime...\033[0m"
-    echo -e "\033[33m📝 Note: You can manually configure OpenSearch later using:\033[0m"
-    echo -e "\033[33m  bin/magento config:set catalog/search/engine opensearch\033[0m"
-    echo -e "\033[33m  bin/magento config:set catalog/search/opensearch_server_hostname opensearch\033[0m"
-    echo -e "\033[33m  bin/magento config:set catalog/search/opensearch_server_port 9200\033[0m"
-fi
 
 echo -e "\033[36m[11/12] Running initial indexing...\033[0m"
 "${ROLL_DIR}/bin/roll" cli bash -c "
@@ -758,7 +673,7 @@ echo -e "\033[33m🔗 Access URLs:\033[0m"
 echo -e "   Frontend: https://app.${PROJECT_NAME}.test/"
 echo -e "   Admin:    https://app.${PROJECT_NAME}.test/shopmanager/"
 echo -e "   RabbitMQ: https://rabbitmq.${PROJECT_NAME}.test/"
-echo -e "   Elasticsearch: https://elasticsearch.${PROJECT_NAME}.test/"
+echo -e "   Search:   https://${SEARCH_HOST}.${PROJECT_NAME}.test/"
 echo ""
 echo -e "\033[33m📁 Project Location:\033[0m"
 echo -e "   ${TARGET_DIR}"
@@ -770,14 +685,6 @@ echo -e "\033[33m💡 Next Steps:\033[0m"
 echo -e "   1. Navigate to your project: cd ${TARGET_DIR}"
 echo -e "   2. Access the shell: roll shell"
 echo -e "   3. Open your browser to: https://app.${PROJECT_NAME}.test/"
-
-if [[ "${USED_FALLBACK}" == "1" ]]; then
-    echo ""
-    echo -e "\033[33m⚠️  Installation Note:\033[0m"
-    echo -e "   Installation used Elasticsearch fallback due to OpenSearch connectivity issues"
-    echo -e "   OpenSearch is configured in your environment for future use"
-    echo -e "   Check the manual configuration commands shown above to switch to OpenSearch"
-fi
 
 echo ""
 echo -e "\033[33m🛑 To destroy this environment:\033[0m"

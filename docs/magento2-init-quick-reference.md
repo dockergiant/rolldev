@@ -40,7 +40,8 @@ roll magento2-init mystore 2.4.7 ~/Sites/
 
 | Magento | PHP | MariaDB | Search | Redis | RabbitMQ |
 |---------|-----|---------|--------|-------|----------|
-| 2.4.8+ | 8.3 | 11.4 | OpenSearch 2.19 | Valkey 8 | 4.1 |
+| 2.4.9+ | 8.5 | 12.3 | OpenSearch 3.5 | Valkey 9.0 | 4.3 |
+| 2.4.8 | 8.4 | 11.4 | OpenSearch 3.5 | Valkey 8.1 | 4.3 |
 | 2.4.7 | 8.3 | 10.6+ | Elasticsearch 7.17 | Redis 7.2 | 3.13 |
 | 2.4.6 | 8.2 | 10.6 | Elasticsearch 7.17 | Redis 7.0+ | 3.9 |
 
