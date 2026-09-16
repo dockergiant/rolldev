@@ -256,20 +256,20 @@ if [ -d "${TARGET_DIR}" ]; then
 fi
 
 # Create project directory
-echo -e "\033[36m[1/10] Creating project directory...\033[0m"
+echo -e "\033[36m[1/13] Creating project directory...\033[0m"
 mkdir -p "${TARGET_DIR}"
 cd "${TARGET_DIR}"
 
 # Get compatible software versions for this Magento version
-echo -e "\033[36m[2/10] Determining compatible software versions...\033[0m"
+echo -e "\033[36m[2/13] Determining compatible software versions...\033[0m"
 get_software_versions "${MAGENTO_VERSION}"
 
 # Initialize environment
-echo -e "\033[36m[3/10] Initializing environment configuration...\033[0m"
+echo -e "\033[36m[3/13] Initializing environment configuration...\033[0m"
 "${ROLL_DIR}/bin/roll" env-init "${PROJECT_NAME}" magento2
 
 # Update .env.roll with version-specific software versions
-echo -e "\033[36m[4/10] Updating environment with compatible software versions...\033[0m"
+echo -e "\033[36m[4/13] Updating environment with compatible software versions...\033[0m"
 ENV_FILE="${TARGET_DIR}/.env.roll"
 
 # Sets KEY=VALUE in .env.roll. A custom init.env may lack the key or still use OLD_KEY, so the key is
@@ -328,15 +328,15 @@ if grep -q "^DRAGONFLY_VERSION=" "${ENV_FILE}"; then
 fi
 
 # Sign SSL certificate
-echo -e "\033[36m[5/10] Signing SSL certificate...\033[0m"
+echo -e "\033[36m[5/13] Signing SSL certificate...\033[0m"
 "${ROLL_DIR}/bin/roll" sign-certificate "${PROJECT_NAME}.test"
 
 # Start environment
-echo -e "\033[36m[6/10] Starting project environment...\033[0m"
+echo -e "\033[36m[6/13] Starting project environment...\033[0m"
 "${ROLL_DIR}/bin/roll" env up
 
 # Wait for services to be ready
-echo -e "\033[36m[7/10] Waiting for services to be ready...\033[0m"
+echo -e "\033[36m[7/13] Waiting for services to be ready...\033[0m"
 echo -e "\033[33mChecking service status...\033[0m"
 
 # Wait for database to be ready
@@ -414,7 +414,7 @@ fi
 echo -e "\033[32m✅ All services are ready!\033[0m"
 
 # Drop into shell for setup
-echo -e "\033[36m[8/12] Setting up Magento project files...\033[0m"
+echo -e "\033[36m[8/13] Setting up Magento project files...\033[0m"
 
 # repo.mage-os.org is public; only repo.magento.com needs Marketplace credentials
 if [[ "${MAGENTO_DISTRIBUTION}" != "mageos" ]]; then
@@ -445,7 +445,7 @@ fi
 
 # Apply Magento 2.4.4 patch for ReflectionUnionType::getName() error
 if [[ "${MAGENTO_VERSION}" == "2.4.4"* ]]; then
-    echo -e "\033[36m[8.5/12] Applying Magento 2.4.4 patches...\033[0m"
+    echo -e "\033[36m[8.5/13] Applying Magento 2.4.4 patches...\033[0m"
     echo -e "\033[33m🔧 Detected Magento 2.4.4 - applying ACSD-59280 patch for ReflectionUnionType issue\033[0m"
     
     "${ROLL_DIR}/bin/roll" cli bash -c "
@@ -472,7 +472,7 @@ if [[ "${MAGENTO_VERSION}" == "2.4.4"* ]]; then
     echo -e "\033[32m✅ Magento 2.4.4 patches applied successfully\033[0m"
 fi
 
-echo -e "\033[36m[9/12] Installing Magento application...\033[0m"
+echo -e "\033[36m[9/13] Installing Magento application...\033[0m"
 
 # No Elasticsearch fallback: OpenSearch projects run no elasticsearch service and Magento 2.4.8+ has no
 # elasticsearch7 engine, so a retry could only hide the real setup:install error.
@@ -533,7 +533,7 @@ if ! "${ROLL_DIR}/bin/roll" cli bash -c "
 fi
 echo -e "\033[32m✅ Installation completed\033[0m"
 
-echo -e "\033[36m[10/12] Configuring Magento application...\033[0m"
+echo -e "\033[36m[10/13] Configuring Magento application...\033[0m"
 
 # Configure Magento
 "${ROLL_DIR}/bin/roll" cli bash -c "
@@ -562,13 +562,13 @@ echo -e "\033[36m[10/12] Configuring Magento application...\033[0m"
     bin/magento cache:disable block_html full_page
 "
 
-echo -e "\033[36m[11/12] Running initial indexing...\033[0m"
+echo -e "\033[36m[11/13] Running initial indexing...\033[0m"
 "${ROLL_DIR}/bin/roll" cli bash -c "
     bin/magento indexer:reindex
     bin/magento cache:flush
 "
 
-echo -e "\033[36m[11/12] Creating admin user and configuring 2FA...\033[0m"
+echo -e "\033[36m[12/13] Creating admin user and configuring 2FA...\033[0m"
 
 # Function to check if version is 2.4.8 or higher
 is_magento_248_or_higher() {
@@ -726,7 +726,7 @@ EOL
     "
 fi
 
-echo -e "\033[36m[12/12] Finalizing setup...\033[0m"
+echo -e "\033[36m[13/13] Finalizing setup...\033[0m"
 
 echo -e "\033[32m✅ ${DISTRIBUTION_LABEL} project '${PROJECT_NAME}' has been successfully created!\033[0m"
 echo ""
