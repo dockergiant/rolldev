@@ -1,6 +1,5 @@
 x-volumes: &volumes
   - .${ROLL_WEB_ROOT:-}/:/var/www/html
-  - /var/www/html/.roll/backups
 
 services:
   magepack: { volumes: *volumes }

@@ -12,7 +12,6 @@ services:
       - traefik.docker.network=${ROLL_ENV_NAME}_default
     volumes:
       - .${ROLL_WEB_ROOT:-}/:/var/www/html:cached
-      - /var/www/html/.roll/backups
     environment:
       - XDEBUG_CONNECT_BACK_HOST=${XDEBUG_CONNECT_BACK_HOST:-''}
       - NGINX_PUBLIC=${NGINX_PUBLIC:-/}
