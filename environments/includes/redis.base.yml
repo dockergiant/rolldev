@@ -1,6 +1,8 @@
 services:
   redis:
     hostname: "${ROLL_ENV_NAME}-redis"
+    # The service stays "redis" for roll commands and application config; the container shows what runs
+    container_name: "${ROLL_ENV_NAME}-${REDIS_DISTRIBUTION:-redis}-1"
     image: ${ROLL_IMAGE_REPOSITORY}/${REDIS_DISTRIBUTION:-redis}:${REDIS_VERSION:-5.0}
     volumes:
       - redis:/data
