@@ -20,7 +20,8 @@ function installSshConfig () {
 
   if [[ -f "${HOME}/.ssh/config" ]]; then
     if grep 'Host \*' "$HOME/.ssh/config" >/dev/null; then
-      if ! grep '## ROLL START ##' "$HOME/.ssh/config" >/dev/null; then
+      ## look for the host itself: SSH config editors rewrite the marker comment, e.g. to "# # ROLL START ##"
+      if ! grep -Eiq '^[[:space:]]*Host[[:space:]]+(.*[[:space:]])?tunnel\.roll\.test([[:space:]]|$)' "$HOME/.ssh/config"; then
         echo ""
         echo "==> Conflicting configuration found in your $HOME/.ssh/config file"
         echo "    You need to add the following configuration to your $HOME/.ssh/config file"

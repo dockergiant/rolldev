@@ -51,7 +51,8 @@ openssl x509 -req -days 365 -sha256 -extensions v3_req            \
   -in "${ROLL_SSL_DIR}/certs/${CERTIFICATE_NAME}.csr.pem"       \
   -out "${ROLL_SSL_DIR}/certs/${CERTIFICATE_NAME}.crt.pem"
 
-if [[ "$(cd "${ROLL_HOME_DIR}" && docker compose -p roll -f "${ROLL_DIR}/docker/docker-compose.yml" ps -q traefik)" ]]
+## the compose file names ${ROLL_IMAGE_REPOSITORY}, which only svc and env set, and this runs without either
+if [[ "$(cd "${ROLL_HOME_DIR}" && ROLL_IMAGE_REPOSITORY="${ROLL_IMAGE_REPOSITORY:-"ghcr.io/dockergiant"}" docker compose -p roll -f "${ROLL_DIR}/docker/docker-compose.yml" ps -q traefik)" ]]
 then
   echo "==> Updating traefik"
   "${ROLL_DIR}/bin/roll" svc up traefik
