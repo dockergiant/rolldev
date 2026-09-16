@@ -163,6 +163,28 @@ bin/magento config:set catalog/search/opensearch_server_port 9200
 bin/magento indexer:reindex catalogsearch_fulltext
 ```
 
+## Mage-OS Projects
+
+`roll mageos-init` installs [Mage-OS](https://mage-os.org) with the same steps and software stack as `magento2-init`:
+
+```bash
+# Latest Mage-OS 3.x
+roll mageos-init mystore
+
+# Specific version
+roll mageos-init mystore 3.5.0
+```
+
+Each Mage-OS release is built on a Magento release, and `mageos-init` picks the software stack of that Magento version:
+
+| Mage-OS | Built on Magento | Software stack |
+|---------|------------------|----------------|
+| 3.x | 2.4.9 | Same as Magento 2.4.9 |
+| 1.1.0 - 2.x | 2.4.8 | Same as Magento 2.4.8 |
+| 1.0.x | 2.4.6 / 2.4.7 | Not supported |
+
+The only difference from `magento2-init`: packages come from `https://repo.mage-os.org/`, so no Magento Marketplace credentials are needed. Mage-OS includes the two-factor authentication module, so the admin user gets the same 2FA setup, with the QR code URL and backup codes in `admin-credentials.txt`.
+
 ## Prerequisites
 
 ### Required Setup

@@ -1,32 +1,59 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
 
-# Default Magento version (minimum supported: 2.4.6)
-DEFAULT_MAGENTO_VERSION="2.4.x"
+# mageos-init sets MAGENTO_DISTRIBUTION=mageos before sourcing this script
+MAGENTO_DISTRIBUTION="${MAGENTO_DISTRIBUTION:-magento}"
+if [[ "${MAGENTO_DISTRIBUTION}" == "mageos" ]]; then
+    DISTRIBUTION_LABEL="Mage-OS"
+    META_PACKAGE="mage-os/project-community-edition"
+    COMPOSER_REPOSITORY="https://repo.mage-os.org/"
+    DEFAULT_PACKAGE_VERSION="3.x"
+else
+    DISTRIBUTION_LABEL="Magento 2"
+    META_PACKAGE="magento/project-community-edition"
+    COMPOSER_REPOSITORY="https://repo.magento.com/"
+    # Default Magento version (minimum supported: 2.4.6)
+    DEFAULT_PACKAGE_VERSION="2.4.x"
+fi
 
 # Extract parameters
 PROJECT_NAME="${ROLL_PARAMS[0]:-}"
-MAGENTO_VERSION="${ROLL_PARAMS[1]:-$DEFAULT_MAGENTO_VERSION}"
+PACKAGE_VERSION="${ROLL_PARAMS[1]:-$DEFAULT_PACKAGE_VERSION}"
 TARGET_DIR="${ROLL_PARAMS[2]:-}"
 
 # Function to display usage information
 show_usage() {
     echo -e "\033[33mUsage:\033[0m"
-    echo "  roll magento2-init <project_name> [magento_version] [target_directory]"
-    echo ""
-    echo -e "\033[33mArguments:\033[0m"
-    echo "  project_name       Name of the Magento 2 project"
-    echo "  magento_version    Magento version to install (default: 2.4.x)"
-    echo "                     Supports: 2.4.6+, 2.4.7, 2.4.7-p3, 2.4.8, etc."
-    echo "                     Minimum supported version: 2.4.6"
-    echo "  target_directory   Directory to create project in (default: current directory)"
-    echo ""
-    echo -e "\033[33mExamples:\033[0m"
-    echo "  roll magento2-init myproject"
-    echo "  roll magento2-init myproject 2.4.7"
-    echo "  roll magento2-init myproject 2.4.7-p3"
-    echo "  roll magento2-init myproject 2.4.8"
-    echo "  roll magento2-init myproject 2.4.x ~/Sites/myproject"
+    if [[ "${MAGENTO_DISTRIBUTION}" == "mageos" ]]; then
+        echo "  roll mageos-init <project_name> [mageos_version] [target_directory]"
+        echo ""
+        echo -e "\033[33mArguments:\033[0m"
+        echo "  project_name       Name of the Mage-OS project"
+        echo "  mageos_version     Mage-OS version to install (default: 3.x)"
+        echo "                     Supports: 1.1.0 and newer, e.g. 3.5.0, 3.x, 2.3.0"
+        echo "  target_directory   Directory to create project in (default: current directory)"
+        echo ""
+        echo -e "\033[33mExamples:\033[0m"
+        echo "  roll mageos-init myproject"
+        echo "  roll mageos-init myproject 3.5.0"
+        echo "  roll mageos-init myproject 2.3.0 ~/Sites/myproject"
+    else
+        echo "  roll magento2-init <project_name> [magento_version] [target_directory]"
+        echo ""
+        echo -e "\033[33mArguments:\033[0m"
+        echo "  project_name       Name of the Magento 2 project"
+        echo "  magento_version    Magento version to install (default: 2.4.x)"
+        echo "                     Supports: 2.4.6+, 2.4.7, 2.4.7-p3, 2.4.8, etc."
+        echo "                     Minimum supported version: 2.4.6"
+        echo "  target_directory   Directory to create project in (default: current directory)"
+        echo ""
+        echo -e "\033[33mExamples:\033[0m"
+        echo "  roll magento2-init myproject"
+        echo "  roll magento2-init myproject 2.4.7"
+        echo "  roll magento2-init myproject 2.4.7-p3"
+        echo "  roll magento2-init myproject 2.4.8"
+        echo "  roll magento2-init myproject 2.4.x ~/Sites/myproject"
+    fi
     exit 1
 }
 
@@ -41,6 +68,34 @@ if [[ ! "${PROJECT_NAME}" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$ ]]; then
     echo -e "\033[31mError: Project name should contain only lowercase letters, numbers, and hyphens.\033[0m"
     echo -e "\033[31mIt should start and end with a letter or number.\033[0m"
     exit 1
+fi
+
+MAGENTO_VERSION="${PACKAGE_VERSION}"
+
+if [[ "${MAGENTO_DISTRIBUTION}" == "mageos" ]]; then
+    if [[ ! "${PACKAGE_VERSION}" =~ ^[1-9][0-9]*\.([0-9]+|x)(\.([0-9]+|x))?$ ]]; then
+        echo -e "\033[31mError: Invalid Mage-OS version format.\033[0m"
+        show_usage
+    fi
+
+    # Each Mage-OS release is built on a Magento release (extra.magento_version in its Composer
+    # metadata); the software stack is picked for that Magento version
+    case "${PACKAGE_VERSION}" in
+        "1.0"|"1.0."*)
+            echo -e "\033[31mError: Mage-OS 1.0.x is built on Magento 2.4.6/2.4.7 and is not supported; use 1.1.0 or newer.\033[0m"
+            exit 1
+            ;;
+        "1."*|"2."*)
+            MAGENTO_VERSION="2.4.8"
+            ;;
+        "3."*)
+            MAGENTO_VERSION="2.4.9"
+            ;;
+        *)
+            echo -e "\033[31mError: Mage-OS ${PACKAGE_VERSION%%.*}.x is not supported by this roll version yet.\033[0m"
+            exit 1
+            ;;
+    esac
 fi
 
 # Validate Magento version format and minimum version (2.4.6+)
@@ -186,8 +241,12 @@ else
     TARGET_DIR="${TARGET_DIR}/${PROJECT_NAME}"
 fi
 
-echo -e "\033[32mInitializing Magento 2 project: ${PROJECT_NAME}\033[0m"
-echo -e "\033[32mMagento version: ${MAGENTO_VERSION}\033[0m"
+echo -e "\033[32mInitializing ${DISTRIBUTION_LABEL} project: ${PROJECT_NAME}\033[0m"
+if [[ "${MAGENTO_DISTRIBUTION}" == "mageos" ]]; then
+    echo -e "\033[32mMage-OS version: ${PACKAGE_VERSION} (built on Magento ${MAGENTO_VERSION})\033[0m"
+else
+    echo -e "\033[32mMagento version: ${MAGENTO_VERSION}\033[0m"
+fi
 echo -e "\033[32mTarget directory: ${TARGET_DIR}\033[0m"
 
 # Check if target directory already exists
@@ -357,20 +416,19 @@ echo -e "\033[32m✅ All services are ready!\033[0m"
 # Drop into shell for setup
 echo -e "\033[36m[8/12] Setting up Magento project files...\033[0m"
 
-# Check if composer global auth is configured
-echo -e "\033[33mNote: This process requires Magento Marketplace credentials.\033[0m"
-echo -e "\033[33mIf you haven't configured them globally, you'll be prompted during composer install.\033[0m"
-
-# Meta package for Magento 2.4.6+
-META_PACKAGE="magento/project-community-edition"
+# repo.mage-os.org is public; only repo.magento.com needs Marketplace credentials
+if [[ "${MAGENTO_DISTRIBUTION}" != "mageos" ]]; then
+    echo -e "\033[33mNote: This process requires Magento Marketplace credentials.\033[0m"
+    echo -e "\033[33mIf you haven't configured them globally, you'll be prompted during composer install.\033[0m"
+fi
 
 # Create project using composer inside container
-"${ROLL_DIR}/bin/roll" cli bash -c "
+if ! "${ROLL_DIR}/bin/roll" cli bash -c "
     set -e
     
-    echo 'Creating Magento project with composer...'
-    composer create-project --repository-url=https://repo.magento.com/ \\
-        '${META_PACKAGE}' /tmp/${PROJECT_NAME} '${MAGENTO_VERSION}'
+    echo 'Creating ${DISTRIBUTION_LABEL} project with composer...'
+    composer create-project --repository-url=${COMPOSER_REPOSITORY} \\
+        '${META_PACKAGE}' /tmp/${PROJECT_NAME} '${PACKAGE_VERSION}'
     
     echo 'Moving files to web root...'
     rsync -a /tmp/${PROJECT_NAME}/ /var/www/html/
@@ -380,7 +438,10 @@ META_PACKAGE="magento/project-community-edition"
     find /var/www/html -type f -exec chmod 644 {} \\;
     find /var/www/html -type d -exec chmod 755 {} \\;
     chmod u+x /var/www/html/bin/magento
-"
+"; then
+    echo -e "\033[31m❌ Composer could not create the project. Check the output above.\033[0m"
+    exit 1
+fi
 
 # Apply Magento 2.4.4 patch for ReflectionUnionType::getName() error
 if [[ "${MAGENTO_VERSION}" == "2.4.4"* ]]; then
@@ -532,7 +593,7 @@ is_magento_248_or_higher() {
     esac
 }
 
-# Generate admin user and 2FA setup for Magento 2.4.6+ (all supported versions require 2FA)
+# Generate admin user and 2FA setup for Magento 2.4.6+ and Mage-OS (all supported versions require 2FA)
 if is_magento_248_or_higher "${MAGENTO_VERSION}"; then
     echo -e "\033[33m🔧 Detected Magento 2.4.8+ - Using workaround for 2FA configuration issue\033[0m"
     echo -e "\033[33m   (Adobe Commerce core issue #39836 - DuoSecurity provider array handling)\033[0m"
@@ -667,7 +728,7 @@ fi
 
 echo -e "\033[36m[12/12] Finalizing setup...\033[0m"
 
-echo -e "\033[32m✅ Magento 2 project '${PROJECT_NAME}' has been successfully created!\033[0m"
+echo -e "\033[32m✅ ${DISTRIBUTION_LABEL} project '${PROJECT_NAME}' has been successfully created!\033[0m"
 echo ""
 echo -e "\033[33m🔗 Access URLs:\033[0m"
 echo -e "   Frontend: https://app.${PROJECT_NAME}.test/"

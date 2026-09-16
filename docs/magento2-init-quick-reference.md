@@ -17,6 +17,9 @@ roll magento2-init mystore 2.4.8
 
 # Create in custom directory
 roll magento2-init mystore 2.4.7 ~/Sites/
+
+# Create a Mage-OS project (latest 3.x)
+roll mageos-init mystore
 ```
 
 ## Prerequisites Checklist

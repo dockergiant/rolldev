@@ -152,6 +152,7 @@ roll add-php-ext <ext>             # install extra PHP extension at runtime
 
 # Magento 2 project creation
 roll magento2-init <name> [version]
+roll mageos-init <name> [version]    # Mage-OS 1.1.0+, same flow as magento2-init
 
 # Database & backups
 roll db [connect|import|...]

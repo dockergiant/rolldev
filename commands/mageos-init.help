@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+
+ROLL_USAGE=$(cat <<EOF
+\033[33mUsage:\033[0m
+  mageos-init <project_name> [mageos_version] [target_directory]
+
+\033[33mArguments:\033[0m
+  project_name       Name of the Mage-OS project (required)
+                     Should contain only lowercase letters, numbers, and hyphens
+                     Must start and end with a letter or number
+
+  mageos_version     Mage-OS version to install (optional, default: 3.x)
+                     Examples: 3.x, 3.5.0, 2.3.0, 1.1.0
+
+  target_directory   Directory to create project in (optional)
+                     Default: current directory
+                     Project will be created in a subdirectory named after the project
+
+\033[33mDescription:\033[0m
+  Scaffolds a complete Mage-OS project with the same steps and software stack as
+  magento2-init, including the admin user with 2FA. Packages come from
+  https://repo.mage-os.org/, so no Magento Marketplace credentials are needed.
+
+\033[33mExamples:\033[0m
+  # Latest Mage-OS 3.x
+  roll mageos-init mystore
+
+  # Specific version
+  roll mageos-init mystore 3.5.0
+
+  # Mage-OS built on Magento 2.4.8, in a specific directory
+  roll mageos-init mystore 2.3.0 ~/Sites/
+
+\033[33mAutomatic Version Configuration:\033[0m
+  • Mage-OS 3.x (Magento 2.4.9): PHP 8.5, MariaDB 12.3, OpenSearch 3.5, Valkey 9.0, Varnish 8.0
+  • Mage-OS 1.1.0 - 2.x (Magento 2.4.8): PHP 8.4, MariaDB 11.4, OpenSearch 3.5, Valkey 8.1, Varnish 8.0
+  • Mage-OS 1.0.x (Magento 2.4.6/2.4.7) is not supported
+
+\033[33mPrerequisites:\033[0m
+  • RollDev services must be running (roll svc up)
+
+EOF
+)
+
+echo -e "${ROLL_USAGE}"
