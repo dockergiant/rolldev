@@ -583,8 +583,8 @@ if is_magento_248_or_higher "${MAGENTO_VERSION}"; then
         echo \"2FA Backup Codes:\"
         oathtool -s 30 -w 10 --totp --base32 \"\${TFA_SECRET}\"
         
-        # Generate QR code
-        segno \"\${OTPAUTH_URL}\" -s 4 -o \"pub/media/\${ADMIN_USER}-totp-qr.png\"
+        # Generate QR code; Debian's python3-segno ships only the Python module, not the segno command
+        python3 -c 'import sys, segno; segno.make(sys.argv[1]).save(sys.argv[2], scale=4)' \"\${OTPAUTH_URL}\" \"pub/media/\${ADMIN_USER}-totp-qr.png\"
         QR_URL=\"https://app.${PROJECT_NAME}.test/media/\${ADMIN_USER}-totp-qr.png?t=\$(date +%s)\"
         echo \"QR Code URL: \${QR_URL}\"
         
@@ -641,8 +641,8 @@ else
         echo \"2FA Backup Codes:\"
         oathtool -s 30 -w 10 --totp --base32 \"\${TFA_SECRET}\"
         
-        # Generate QR code
-        segno \"\${OTPAUTH_URL}\" -s 4 -o \"pub/media/\${ADMIN_USER}-totp-qr.png\"
+        # Generate QR code; Debian's python3-segno ships only the Python module, not the segno command
+        python3 -c 'import sys, segno; segno.make(sys.argv[1]).save(sys.argv[2], scale=4)' \"\${OTPAUTH_URL}\" \"pub/media/\${ADMIN_USER}-totp-qr.png\"
         QR_URL=\"https://app.${PROJECT_NAME}.test/media/\${ADMIN_USER}-totp-qr.png?t=\$(date +%s)\"
         echo \"QR Code URL: \${QR_URL}\"
         
