@@ -9,7 +9,19 @@ if [[ ${ROLL_SELENIUM} -ne 1 ]] || [[ ${ROLL_SELENIUM_DEBUG} -ne 1 ]]; then
 fi
 
 ROLL_SELENIUM_INDEX=${ROLL_PARAMS[0]:-1}
-ROLL_SELENIUM_VNC=${ROLL_ENV_NAME}_${ROLL_PARAMS[1]:-selenium}_${ROLL_SELENIUM_INDEX}
+ROLL_SELENIUM_SERVICE=${ROLL_PARAMS[1]:-selenium}
+
+## Compose v2 names containers <project>-<service>-<n>, v1 used underscores; ask Compose instead
+ROLL_SELENIUM_CONTAINER=$(roll env ps -q "${ROLL_SELENIUM_SERVICE}" 2>/dev/null | sed -n "${ROLL_SELENIUM_INDEX}p") || true
+if [[ -z "${ROLL_SELENIUM_CONTAINER}" ]]; then
+  fatal "No running container found for the \"${ROLL_SELENIUM_SERVICE}\" service (index ${ROLL_SELENIUM_INDEX})."
+fi
+
+ROLL_SELENIUM_VNC=$(docker container inspect --format '{{ .Name }}' "${ROLL_SELENIUM_CONTAINER}" 2>/dev/null) || true
+ROLL_SELENIUM_VNC="${ROLL_SELENIUM_VNC#/}"
+if [[ -z "${ROLL_SELENIUM_VNC}" ]]; then
+  fatal "Could not resolve the container name for the \"${ROLL_SELENIUM_SERVICE}\" service."
+fi
 
 if ! which remmina >/dev/null; then
   EXPOSE_PORT=$((5900 + ROLL_SELENIUM_INDEX))

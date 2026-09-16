@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Generate multi-store configuration and certificates from stores.json.
+## @category: magento2
 
 ROLL_USAGE=$(cat <<EOF
 \033[33mDescription:\033[0m

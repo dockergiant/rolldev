@@ -37,6 +37,7 @@ backup-restore-quick-reference
 registry
 environments
 configuration
+machine-interface
 ```
 
 ```{toctree}

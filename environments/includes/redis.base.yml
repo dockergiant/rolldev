@@ -6,6 +6,12 @@ services:
     image: ${ROLL_IMAGE_REPOSITORY}/${REDIS_DISTRIBUTION:-redis}:${REDIS_VERSION:-5.0}
     volumes:
       - redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping 2>/dev/null || redis-cli ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   redis:

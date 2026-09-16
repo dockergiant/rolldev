@@ -1,0 +1,43 @@
+# Only warning, info and style classes the codebase accepts on purpose. Fix error-level findings in
+# code instead of adding them here.
+
+# .cmd and .help files are sourced into bin/roll, so variables set in one file are read in another,
+# and config toggles such as ROLL_DB arrive as exports that look like typos of ROLL_DIR
+disable=SC2034
+disable=SC2153
+
+# docker/compose argument lists are built from unquoted variables that are meant to split
+disable=SC2086
+disable=SC2046
+
+# Accepted style across the codebase
+disable=SC2155
+disable=SC2162
+disable=SC2004
+disable=SC2059
+disable=SC2143
+disable=SC2010
+disable=SC2012
+disable=SC2164
+disable=SC2295
+disable=SC2207
+disable=SC2183
+disable=SC2091
+disable=SC2001
+disable=SC2003
+disable=SC2181
+disable=SC2126
+disable=SC2016
+disable=SC2233
+disable=SC2235
+disable=SC2005
+disable=SC2320
+disable=SC2178
+disable=SC1083
+
+# Sources resolved at runtime (config files, env fragments, command files)
+disable=SC1090
+disable=SC1091
+
+# magepack.cmd ends with unreachable debug output
+disable=SC2317

@@ -12,11 +12,18 @@ services:
       - indices.query.bool.max_clause_count=16384
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms64m -Xmx512m"
+      - "ES_JAVA_OPTS=${ELASTICSEARCH_JAVA_OPTS:--Xms64m -Xmx512m}"
       - http.cors.enabled=true
       - http.cors.allow-origin=/.*/
     volumes:
       - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      ## the port can stay open while the cluster behind it is dead, so ask the cluster itself
+      test: ["CMD", "curl", "-fs", "http://localhost:9200/_cluster/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
 volumes:
   esdata:

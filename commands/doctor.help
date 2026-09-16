@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Diagnose whether the current project environment is fit to run.
+## @category: environment
+
+ROLL_USAGE=$(cat <<EOF
+\033[33mUsage:\033[0m
+  roll doctor [--format json] [--ignore-services=<a,b>]
+  roll env doctor [--format json] [--ignore-services=<a,b>]
+
+\033[33mDescription:\033[0m
+  Checks whether the current project environment is fit to run and reports one line per check,
+  so a problem shows up here instead of as a Docker or application error later on.
+
+\033[33mChecks:\033[0m
+  env-config            .env.roll for this project loads
+  docker                the Docker daemon is reachable
+  container:<service>   each project container runs and its healthcheck, if any, reports healthy;
+                        a container without a healthcheck counts as running, not as a failure
+  port-80/443/53        the ports traefik and dnsmasq need are bound by them or still free
+  port-browsersync      with BrowserSync and published ports on, php-fpm is running
+  search-engine         OpenSearch or Elasticsearch answers /_cluster/health with a non-red status
+  search-engine-write   the search engine accepts a throwaway index write
+  disk                  the Docker data root has at least 5GB free
+
+\033[33mExit status:\033[0m
+  0  every check passed (skipped checks do not fail the run)
+  1  one or more checks failed
+
+\033[33mOptions:\033[0m
+  -h, --help                Display this help menu
+  --format human            Human-readable report (default)
+  --format json             One JSON object: a "checks" array of {check, ok, detail} and an
+                            overall "ok". A skipped check reports "ok": null
+  --ignore-services=<a,b>   Skip every check of these compose/roll services (nginx, opensearch,
+                            elasticsearch, traefik, dnsmasq, browsersync, ...). Skipped checks
+                            are listed as SKIP. Names that match nothing are allowed, so one
+                            invocation works across projects. Repeat the flag to add more.
+
+\033[33mExamples:\033[0m
+  roll env doctor
+  roll env doctor --format json
+  roll env doctor --ignore-services=opensearch         # build host without traefik
+EOF
+)

@@ -51,6 +51,15 @@ then
     -k /Library/Keychains/System.keychain "${ROLL_SSL_DIR}/rootca/certs/ca.cert.pem"
 fi
 
+if [[ "$OSTYPE" =~ ^linux ]] \
+  && [[ ! -d /etc/pki/ca-trust/source/anchors ]] \
+  && [[ ! -d /usr/local/share/ca-certificates ]]
+then
+  warning "No supported CA trust store found (Fedora/CentOS or Debian/Ubuntu). Trust the root certificate manually:" \
+    "${ROLL_SSL_DIR}/rootca/certs/ca.cert.pem" \
+    "See https://dockergiant.github.io/rolldev/configuration/dns-resolver.html for details."
+fi
+
 ## configure resolver for .test domains on Mac OS only as Linux lacks support
 ## for BSD like per-TLD configuration as is done at /etc/resolver/test on Mac
 if [[ "$OSTYPE" == "darwin"* ]]; then

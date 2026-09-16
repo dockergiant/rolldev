@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Show detailed information about the current RollDev environment.
+## @category: environment
 
 ROLL_USAGE=$(cat <<EOF
 \033[33mDescription:\033[0m
@@ -7,6 +9,7 @@ ROLL_USAGE=$(cat <<EOF
 
 \033[33mUsage:\033[0m
   roll env describe
+  roll env describe --format json
 
 \033[33mOutput includes:\033[0m
   - Project name and path
@@ -17,6 +20,10 @@ ROLL_USAGE=$(cat <<EOF
   - PHP, Node, Composer versions
 
 \033[33mExamples:\033[0m
-  roll env describe     Show environment details
+  roll env describe               Show environment details
+  roll env describe --format json Same information as a single JSON object,
+                                   no ANSI escapes and no credentials: name,
+                                   type, dir, url, network, containers, and a
+                                   services array (name, status, url, info)
 EOF
 )

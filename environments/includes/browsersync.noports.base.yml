@@ -1,0 +1,5 @@
+services:
+  php-fpm:
+    environment:
+      - BROWSERSYNC_PORT_WEB=${BROWSERSYNC_PORT_WEB:-3000}
+      - BROWSERSYNC_PORT_UI=${BROWSERSYNC_PORT_UI:-3001}

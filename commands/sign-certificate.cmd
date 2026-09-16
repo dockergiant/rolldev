@@ -9,7 +9,7 @@ fi
 
 if (( ${#ROLL_PARAMS[@]} == 0 )); then
   echo -e "\033[33mCommand '${ROLL_CMD_VERB}' requires a hostname as an argument, please use --help for details."
-  exit -1
+  exit 1
 fi
 
 CERTIFICATE_SAN_LIST=

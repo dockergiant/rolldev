@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Run Node.js inside the project php-fpm container.
+## @category: utility
 
 NODE_HELP=$("${ROLL_DIR}/bin/roll" cli "node --help")
 

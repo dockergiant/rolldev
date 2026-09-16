@@ -15,6 +15,14 @@ services:
     volumes:
       - dbdata:/var/lib/mysql
       - sqlhistory:/sql_history
+    healthcheck:
+      ## MariaDB 11 ships only mariadb-admin and MySQL only mysqladmin. ping answers without
+      ## credentials, so none are passed and none end up in argv.
+      test: ["CMD-SHELL", "mariadb-admin ping --silent 2>/dev/null || mysqladmin ping --silent 2>/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
 volumes:
   dbdata:

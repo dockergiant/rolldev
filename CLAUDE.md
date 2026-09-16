@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **RollDev** (`roll-docker-stack`) is a Docker-based local development environment framework, written almost entirely in **Bash**. It provides a single `roll` CLI that orchestrates `docker compose` to spin up consistent, per-project containerized stacks for PHP frameworks and CMS platforms (Magento 1/2, Laravel, Symfony, TYPO3, Shopware, WordPress, Akeneo, generic PHP).
 
-- **Current version:** `0.6.2` (see `version` file)
+- **Current version:** `0.7.0` (see `version` file)
 - **Language:** Bash (must stay **Bash 3.2+ compatible** — macOS default shell)
 - **Distribution:** Homebrew tap `dockergiant/roll/roll`
 - **Container images:** pulled from `ghcr.io/dockergiant/*` (built by the sibling `images/` repo)
@@ -20,11 +20,14 @@ This repo contains the **CLI + orchestration logic + compose definitions**. The 
 ```
 bin/roll                 # CLI entry point — resolves ROLL_DIR, sources utils, parses args, sources the command
 utils/                   # Core shell modules (sourced by bin/roll in order)
-  core.sh                #   messaging (success/info/warning/error/fatal), boxinfo, version(), helpers, peered services
-  config.sh              #   configuration schema + validation + .env.roll loading + postProcessConfig
-  registry.sh            #   command discovery/registry across multiple search paths with priorities
+  core.sh                #   messaging (success/info/warning/error/fatal), box/boxinfo, version(), capitalize, jsonEscape, sed_inplace, openInTablePlus, peered services
+  table.sh               #   buffered box tables (tableNew/Title/Header/Row/Span/Separator/Color/Render): auto width, wrapping, colors only on a TTY
+  interact.sh            #   prompts (promptInput/Choose/Confirm/Password): flag or env first, bash read/select on a TTY, else fail naming the flag. No gum.
+  config.sh              #   configuration schema + validation + .env.roll loading + applyEnvTypeDefaults + postProcessConfig
+  registry.sh            #   command discovery/registry across multiple search paths with priorities; lazy help-file metadata
   env.sh                 #   locateEnvPath, env type resolution, docker-compose partial assembly
-  install.sh             #   install/bootstrap helpers
+  backup.sh              #   shared backup/restore/duplicate primitives (logMessage, restoreVolume, stopEnvironment, ...)
+  install.sh             #   install/bootstrap helpers (sourced by install.cmd and svc.cmd only)
 commands/                # ~60 modular commands: <name>.cmd (logic) + <name>.help (usage text)
   magento1/  magento2/  wordpress/   # env-type-specific sub-command directories
 docker/                  # Global shared services (run once per machine, not per project)
@@ -41,9 +44,9 @@ docs/                    # Sphinx + myst-parser (Markdown) documentation source
 ### How a command runs
 
 1. `bin/roll` resolves `ROLL_DIR` (following symlinks — important for the Homebrew install), verifies Docker + `docker compose >= 2.2.3`.
-2. Sources `utils/core.sh`, `config.sh`, `registry.sh`, `env.sh`.
+2. Sources `utils/core.sh`, `table.sh`, `interact.sh`, `config.sh`, `registry.sh`, `env.sh`, `backup.sh`.
 3. Calls `findCommand "$1"` (in `registry.sh`) which lazily builds the command registry and returns `found:<cmd_path>:<help_path>`.
-4. Parses remaining args. Commands in the `ROLL_CMD_ANYARGS` array (`svc env db redis sync shell debug composer magento magerun ...`) pass **all** trailing args/flags straight through to the container; other commands reject unknown flags.
+4. Parses remaining args. Commands in the `ROLL_CMD_ANYARGS` array (`svc env db redis sync shell debug composer magento magerun backup restore status describe registry doctor ...`) stop parsing at the first dash: positionals before it land in `ROLL_PARAMS`, everything from the flag on stays in `"$@"`. Such a command must read its flags from `"$@"` and must handle `--help` by sourcing `commands/usage.cmd`; running `roll <itself> --help` again recurses forever (`.github/scripts/test-syntax.sh` checks this). Other commands reject unknown flags.
 5. `source "${ROLL_CMD_EXEC}"` — the `.cmd` file runs in the CLI's own shell context (it does **not** `exec`), so it has access to all sourced functions and exported config.
 
 ### Command registry & discovery (`utils/registry.sh`)
@@ -68,7 +71,7 @@ A command is any `<name>.cmd` file; its sibling `<name>.help` provides usage. Hi
 
 ```
 environments/includes/<name>.base.yml
-environments/includes/<name>.<SUBT>.yml          # SUBT = darwin | linux | wsl
+environments/includes/<name>.<SUBT>.yml          # SUBT = darwin | linux | wsl (wsl loads .linux.yml, then .wsl.yml)
 environments/<ENV_TYPE>/<name>.base.yml
 environments/<ENV_TYPE>/<name>.<SUBT>.yml
 ${ROLL_HOME_DIR}/environments/...                # user overrides, same shape
@@ -90,7 +93,7 @@ Config is loaded from (later overrides earlier):
 2. `${ROLL_HOME_DIR}/.env` (global, legacy)
 3. `<project>/.env.roll` (per-project — **required**; located by walking up from `pwd` looking for a file containing `ROLL_ENV_NAME` + `ROLL_ENV_TYPE`)
 
-`initConfigSchema()` defines a typed schema (`boolean:<default>`, `string:<default|required|optional>`, `enum:<a|b>:<default>`). Values are validated on load (`validateConfigValue`), defaults applied, then `postProcessConfig()` derives computed values (PHP image variant, Node variant, nginx template selection, xdebug version, WSL/Linux SSH handling, env-type service defaults).
+`initConfigSchema()` defines a typed schema (`boolean:<default>`, `string:<default|required|optional>`, `enum:<a|b>:<default>`). Values are validated on load (`validateConfigValue`, which also enforces the Compose project-name rule on `ROLL_ENV_NAME`). Then, in this order: `applyEnvTypeDefaults()` sets env-type service defaults (magento2 Varnish/Elasticsearch/RabbitMQ) and legacy key aliases (`MYSQL_VERSION`/`MARIADB_VERSION`, `MONGODB_VERSION`) without overriding config files, the schema literals fill whatever is still unset, and `postProcessConfig()` derives computed values (PHP image variant, Node variant, nginx template selection, xdebug version, WSL/Linux SSH handling). `commands/env.cmd` does not derive config itself.
 
 `ROLL_HOME_DIR` defaults to `$HOME/.roll`. SSL lives at `${ROLL_HOME_DIR}/ssl`, composer cache at `${ROLL_COMPOSER_DIR:-$HOME/.composer}`.
 
@@ -110,11 +113,14 @@ Config is loaded from (later overrides earlier):
 | `DB_DISTRIBUTION_VERSION` | `10.4` | |
 | `REDIS_DISTRIBUTION` | `redis` | `redis` or `valkey`; picks the image for the `redis` service |
 | `ROLL_NGINX` / `ROLL_DB` / `ROLL_REDIS` | `1` | core service toggles |
-| `ROLL_VARNISH` / `ROLL_ELASTICSEARCH` / `ROLL_RABBITMQ` | `0` | default on **only** for magento2 (via `postProcessConfig`) |
+| `ROLL_VARNISH` / `ROLL_ELASTICSEARCH` / `ROLL_RABBITMQ` | `0` | default on **only** for magento2 (via `applyEnvTypeDefaults`); Elasticsearch stays off when `ROLL_OPENSEARCH=1` |
 | `ROLL_OPENSEARCH` / `ROLL_DRAGONFLY` / `ROLL_MONGODB` | `0` | |
 | `ROLL_ELASTICVUE` / `ROLL_REDISINSIGHT` | `0` | GUI helper services |
 | `ROLL_SELENIUM` / `ROLL_ALLURE` / `ROLL_TEST_DB` | `0` | testing stack |
 | `ROLL_MAGEPACK` / `ROLL_BROWSERSYNC` | `0` | |
+| `ROLL_PUBLISH_PORTS` | `1` | `0` uses `browsersync.noports` so BrowserSync publishes no host ports |
+| `ELASTICSEARCH_JAVA_OPTS` / `OPENSEARCH_JAVA_OPTS` | optional | search engine heap; unset gives Elasticsearch `-Xms64m -Xmx512m` and OpenSearch its image default (1g) |
+| `MONGO_VERSION` | `7` | `MONGODB_VERSION` is read as an alias |
 | `ROLL_MAGENTO_STATIC_CACHING` | `0` | picks prod vs `-dev` nginx template |
 | `ROLL_ADMIN_AUTOLOGIN` | `0` | magento2 auto-login nginx template |
 | `ROLL_NEWRELIC` / `NEWRELIC_LICENSE_KEY` | `0` / optional | |
@@ -155,18 +161,27 @@ roll magento2-init <name> [version]
 roll mageos-init <name> [version]    # Mage-OS 1.1.0+, same flow as magento2-init
 
 # Database & backups
-roll db [connect|import|...]
+roll db [connect|import|dump]      # picks mariadb/mariadb-dump or mysql/mysqldump in the container
 roll redis
-roll backup [db|media]
-roll restore [db|media] / roll restore-full
-roll tableplus / roll tablePlus    # open DB GUI
+roll backup [all|db|redis|...] [--output-dir=PATH --archive-name=NAME --keep-dir]
+roll restore [backup-id] / roll restore --include-source <archive> <dir>   # restore-full is an alias
+roll tableplus                     # open DB GUI (macOS, password kept out of ps)
 roll duplicate                     # clone an environment
 roll multistore                    # magento multistore helpers
 
-# Introspection
+# Files
+roll copyfromcontainer <path> | --all | --cachegrind [file] | --traces [file] | --realpath <file>
+roll copytocontainer <path> | --all
+
+# Introspection and scripting
 roll config                        # show resolved config
-roll registry                      # show command registry / search paths
-roll describe                      # describe the assembled compose stack
+roll registry list [--format json] # command registry / search paths
+roll describe [--format json]      # describe the assembled compose stack (also roll env describe)
+roll status [--format json]
+roll env doctor [--format json] [--ignore-services=a,b]   # health report, exit 1 on failure
+roll env up --wait                 # waits for the compose healthchecks
+roll env sh <service> '<command>'  # sh -c inside the container
+roll has-command <name>            # exit 0/1, no output
 roll version
 ```
 
@@ -179,7 +194,9 @@ Valid env types are auto-discovered from any `environments/*/<type>.base.yml`:
 `akeneo`, `laravel`, `local`, `magento1`, `magento2`, `php`, `shopware`, `symfony`, `typo3`, `vuejs`, `wordpress`.
 
 Shared service fragments in `environments/includes/`:
-`php-fpm` (+ `.darwin`/`.linux`), `nginx` (+ `.darwin`), `db`, `redis`, `redisinsight`, `dragonfly`, `elasticsearch`, `elasticvue`, `opensearch`, `rabbitmq`, `mongodb`, `varnish`, `selenium`, `allure`, `browsersync`, `git`, `networks`.
+`php-fpm` (+ `.darwin`/`.linux`), `nginx` (+ `.darwin`), `db`, `redis`, `redisinsight`, `dragonfly`, `elasticsearch`, `elasticvue`, `opensearch`, `rabbitmq`, `mongodb`, `varnish`, `selenium`, `allure`, `browsersync` (+ `browsersync.noports`), `git`, `networks`.
+
+`db`, `redis`, `elasticsearch`, `opensearch` and `rabbitmq` define compose healthchecks, which `roll env up --wait` and `roll env doctor` rely on. Don't add one to `nginx` or `varnish`: Traefik skips containers whose health is starting or unhealthy, so the site would return a Traefik 404. Look containers up by the `com.docker.compose.service` label, not by building `<env>-<service>-1`: the redis container is named after `REDIS_DISTRIBUTION`.
 
 Each env-type dir provides `<type>.base.yml`, an `init.env` (default toggles), optional `.darwin.yml`/`.linux.yml` platform overrides, and (magento2) `.mutagen.yml`, `.magepack.*.yml`, `.tests.base.yml`.
 
@@ -199,8 +216,14 @@ All on the shared `roll` network. Routing uses `${ROLL_SERVICE_DOMAIN:-roll.test
 ## Development Guidelines
 
 **Shell scripts:**
-- Must pass **ShellCheck** (CI-enforced via `.github/workflows/shellcheck.yml`).
-- Maintain **Bash 3.2+ compatibility** — no associative arrays; the codebase uses *parallel indexed arrays* (see `registry.sh`/`config.sh`). Follow this pattern.
+- Must pass **ShellCheck** on Ubuntu (0.9.0) and macOS (current Homebrew), using `.shellcheckrc` (CI-enforced via `.github/workflows/shellcheck.yml`).
+- Maintain **Bash 3.2+ compatibility** — no associative arrays, no `${var^}` (use `capitalize`), no `mapfile` without a fallback; the codebase uses *parallel indexed arrays* (see `registry.sh`/`config.sh`). Follow this pattern.
+- `bin/roll` runs under `set -e`: increment counters with `x=$((x + 1))`, never `((x++))`; add `|| true` to `var=$(cmd)` when `cmd` may exit non-zero; end helper functions with `return 0`.
+- Help text heredocs inside `$( )` must not contain a lone apostrophe: bash 3.2 fails to parse it.
+- Every `.help` file starts with `## @description:` and `## @category:` on lines 3-4 (read by `roll registry`).
+- Prompts go through `utils/interact.sh`; never add gum or dialog.
+- Tabular human output goes through `utils/table.sh`; do not hand-draw box characters or fixed-width `printf` tables in new code.
+- Run `.github/scripts/smoke.sh bash32` locally before pushing (Docker-free: syntax check, `--help` recursion check, prompt contract).
 - Use the messaging helpers from `core.sh`: `success`, `info`, `warning`, `error`, `fatal`, `boxinfo`/`boxsuccess`/`boxerror`. Never raw `echo` for status.
 - Every `.cmd`/`.sh` (except `bin/roll`) must guard with `[[ ! ${ROLL_DIR} ]] && ... exit 1` at the top — they are meant to be sourced, not run directly.
 - Use `sed_inplace` from `core.sh` for cross-platform in-place edits (BSD vs GNU sed).
@@ -224,7 +247,7 @@ PHP image name is composed at runtime: base `php-fpm` + variant `-${ROLL_ENV_TYP
 
 | Workflow | Purpose |
 |----------|---------|
-| `shellcheck.yml` | Lint all shell scripts (enforced) |
+| `shellcheck.yml` | ShellCheck plus the Docker-free smoke suite (`.github/scripts/`) on Ubuntu and macOS bash 3.2 (enforced) |
 | `build-documentation.yml` | Build Sphinx docs |
 | `pages.yml` | Publish docs to GitHub Pages |
 | `tag-release.yml` | Semantic version tagging / release |
@@ -233,4 +256,4 @@ PHP image name is composed at runtime: base `php-fpm` + variant `-${ROLL_ENV_TYP
 ## Related Repos
 
 - **`../images`** — Dockerfiles + CI that build all `ghcr.io/dockergiant/*` images consumed here.
-- Homebrew formula / CLI distribution: `dockergiant/homebrew-roll`.
+- Homebrew formula / CLI distribution: `dockergiant/homebrew-roll` (`../homebrew-roll`). The release workflow renders `Formula/roll.rb.template`, which installs `jq` and, on macOS, `gettext`. A new host tool that a command cannot do without belongs there; an optional one gets a `command -v` check that names the package.

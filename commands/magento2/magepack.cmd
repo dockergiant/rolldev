@@ -13,9 +13,9 @@ if [ -z "${ROLL_PARAMS[*]}" ]; then
 	exit 0
 fi
 
-echo "Roll params: ${ROLL_PARAMS[@]}"
+echo "Roll params: ${ROLL_PARAMS[*]}"
 echo "================================================"
-echo "Other params: $@"
+echo "Other params: $*"
 
 exit 1
 

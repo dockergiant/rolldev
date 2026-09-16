@@ -9,12 +9,24 @@ services:
       - traefik.http.services.${ROLL_ENV_NAME}-opensearch.loadbalancer.server.port=9200
       - traefik.docker.network=${ROLL_ENV_NAME}_default
     environment:
-      - indices.query.bool.max_clause_count=16384
-      - DISABLE_SECURITY_PLUGIN=true
       - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms64m -Xmx512m"
+      - indices.query.bool.max_clause_count=16384
+      - indices.id_field_data.enabled=true
+      ## Empty keeps the image heap (1g), which is what ran while this said ES_JAVA_OPTS, a variable
+      ## OpenSearch ignores
+      - "OPENSEARCH_JAVA_OPTS=${OPENSEARCH_JAVA_OPTS:-}"
+      ## OpenSearch 2.12+ refuses to start without an admin password unless the demo config is skipped
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - DISABLE_SECURITY_PLUGIN=true
     volumes:
       - osdata:/usr/share/opensearch/data
+    healthcheck:
+      ## the port can stay open while the cluster behind it is dead, so ask the cluster itself
+      test: ["CMD", "curl", "-fs", "http://localhost:9200/_cluster/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
 volumes:
   osdata:

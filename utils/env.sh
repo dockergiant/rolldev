@@ -90,19 +90,28 @@ function assertValidEnvType () {
 function appendEnvPartialIfExists () {
     local PARTIAL_NAME="${1}"
     local PARTIAL_PATH=""
+    local PARTIAL_DIR=""
+    local SUFFIX=""
 
-    for PARTIAL_PATH in \
-        "${ROLL_DIR}/environments/includes/${PARTIAL_NAME}.base.yml" \
-        "${ROLL_DIR}/environments/includes/${PARTIAL_NAME}.${ROLL_ENV_SUBT}.yml" \
-        "${ROLL_DIR}/environments/${ROLL_ENV_TYPE}/${PARTIAL_NAME}.base.yml" \
-        "${ROLL_DIR}/environments/${ROLL_ENV_TYPE}/${PARTIAL_NAME}.${ROLL_ENV_SUBT}.yml" \
-        "${ROLL_HOME_DIR}/environments/includes/${PARTIAL_NAME}.base.yml" \
-        "${ROLL_HOME_DIR}/environments/includes/${PARTIAL_NAME}.${ROLL_ENV_SUBT}.yml" \
-        "${ROLL_HOME_DIR}/environments/${ROLL_ENV_TYPE}/${PARTIAL_NAME}.base.yml" \
-        "${ROLL_HOME_DIR}/environments/${ROLL_ENV_TYPE}/${PARTIAL_NAME}.${ROLL_ENV_SUBT}.yml"
-    do
-        if [[ -f "${PARTIAL_PATH}" ]]; then
-            DOCKER_COMPOSE_ARGS+=("-f" "${PARTIAL_PATH}")
-        fi
+    local PARTIAL_DIRS=(
+        "${ROLL_DIR}/environments/includes"
+        "${ROLL_DIR}/environments/${ROLL_ENV_TYPE}"
+        "${ROLL_HOME_DIR}/environments/includes"
+        "${ROLL_HOME_DIR}/environments/${ROLL_ENV_TYPE}"
+    )
+
+    ## WSL2 is Linux and needs the .linux.yml fragments too; .wsl.yml comes last so it can override them
+    local SUFFIXES=("base" "${ROLL_ENV_SUBT}")
+    if [[ "${ROLL_ENV_SUBT}" == "wsl" ]]; then
+        SUFFIXES=("base" "linux" "wsl")
+    fi
+
+    for PARTIAL_DIR in "${PARTIAL_DIRS[@]}"; do
+        for SUFFIX in "${SUFFIXES[@]}"; do
+            PARTIAL_PATH="${PARTIAL_DIR}/${PARTIAL_NAME}.${SUFFIX}.yml"
+            if [[ -f "${PARTIAL_PATH}" ]]; then
+                DOCKER_COMPOSE_ARGS+=("-f" "${PARTIAL_PATH}")
+            fi
+        done
     done
 }

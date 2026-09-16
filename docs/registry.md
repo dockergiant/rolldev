@@ -37,7 +37,13 @@ roll registry list config
 Filter commands by category:
 
 ```bash
-roll registry list "" environment
+roll registry list "" database
+```
+
+As JSON, with description, category, priority and source per command:
+
+```bash
+roll registry list --format json
 ```
 
 ### Browse by Category
@@ -51,7 +57,7 @@ roll registry categories
 Show commands in a specific category:
 
 ```bash
-roll registry categories environment
+roll registry categories database
 ```
 
 ### Command Information
@@ -154,21 +160,17 @@ The registry automatically includes environment-specific commands when an enviro
 
 ## Command Categories
 
-Commands are automatically categorized based on their help file metadata or directory structure:
+The built-in commands use these categories: `environment`, `services`, `database`, `backup`, `utility`, `magento2` and `wordpress`. A command without a category header is listed under `general`.
 
-* **Environment Setup**: Installation and initialization commands
-* **Environment Management**: Start, stop, configuration commands
-* **Development Tools**: Database, debugging, shell access
-* **Information**: Version, help, status commands
-* **General**: Uncategorized commands
+### Setting Description and Category
 
-### Setting Command Category
-
-Add a category comment to your command's help file:
+Put two header lines in the first five lines of the command's help file:
 
 ```bash
 #!/usr/bin/env bash
-# Category: Development Tools
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Pull the staging database into this project.
+## @category: database
 
 ROLL_USAGE=$(cat <<EOF
 # Your help content here
@@ -176,20 +178,9 @@ EOF
 )
 ```
 
-## Command Metadata
+`roll registry list`, `categories`, `search`, `info`, `stats` and `export` read these headers. The registry only reads them for those commands, so running any other command stays as fast as before.
 
-The registry extracts metadata from command help files:
-
-### Description Extraction
-
-The registry attempts to extract command descriptions from help files by looking for content after the "Usage:" section.
-
-### Category Detection
-
-Categories are detected from:
-1. `# Category: <name>` comments in help files
-2. `# TYPE: <name>` comments in help files
-3. Directory-based categorization
+The search path a command was found in (`environment` for project and env-type directories, `global` for the others) is no longer the category. It is available as `source` in `roll registry list --format json` and as the last column of `roll registry export csv`.
 
 ## Creating Custom Commands
 

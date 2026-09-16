@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: List running RollDev project environments and their services.
+## @category: environment
 
 ROLL_USAGE=$(cat <<'USAGE'
 \033[33mUsage:\033[0m
   status                Display list of all running RollDev project environments
+  status --format json  Same information, as machine-readable JSON on stdout
 
-The command shows each project's name, directory, primary URL and other
+For each project the command shows its name, directory, primary URL and other
 details such as the Docker network and the number of running containers.
 When RollDev core services are running, a summary table of enabled services
 is also displayed similar to the output of \`docker ps\`.
+
+With --format json, the same data is printed as a single JSON object with no
+ANSI escapes and no credentials: running (whether the core services are up),
+a projects array (name, type, dir, url, network, containers) and a services
+array (name, status).
 USAGE
 )
 

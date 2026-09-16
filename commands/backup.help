@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Back up project services (database, caches, search, config) to a local archive.
+## @category: backup
 
 ROLL_USAGE=$(cat <<EOF
 \033[33mUsage:\033[0m
@@ -38,6 +40,19 @@ ROLL_USAGE=$(cat <<EOF
   --name=NAME           Give backup a custom name
   --description=TEXT    Add description to backup metadata
 
+\033[33mOutput Options:\033[0m
+  --output-dir=PATH     Write the finished archive to PATH instead of .roll/backups/.
+                        Created if missing and checked for writability before the backup
+                        starts. Volumes are still staged in .roll/backups/ and retention
+                        cleanup never touches PATH, so a shared drop directory holding
+                        archives of other environments is safe.
+  --archive-name=NAME   Basename for the finished archive; the compression extension is
+                        appended (default: backup_<env-name>_<backup-id>). The "latest"
+                        symlink is only maintained when the archive stays in .roll/backups/.
+  --keep-dir            Keep the uncompressed backup directory in .roll/backups/ as well as
+                        the archive (removed by default). "roll restore" reads the directory
+                        form, so this is what leaves a restorable backup in the project.
+
 \033[33mDuplication Options:\033[0m
   --duplicate-name=NAME     Replace ROLL_ENV_NAME in backup for duplication
   --duplicate-domain=DOMAIN Replace TRAEFIK_DOMAIN in backup for duplication
@@ -54,12 +69,14 @@ ROLL_USAGE=$(cat <<EOF
   backup list                      # Show available backups
   backup info 1672531200           # Show backup details
   backup clean 7                   # Remove backups older than 7 days
+  backup all --output-dir=/srv/builds/latest --archive-name=shop-restore-only
+                                   # Drop shop-restore-only.tar.gz in a delivery directory
 
 \033[33mNotes:\033[0m
-  • Backups are stored in .roll/backups/ directory
+  • Backups are stored in .roll/backups/ directory unless --output-dir is given
   • Service detection is automatic based on environment configuration
   • All backups include metadata for restoration tracking
-  • Use 'roll restore' command to restore from backups
+  • Use "roll restore" command to restore from backups
   • Encrypted backups require GPG for decryption during restore
   • Use --encrypt without password to avoid storing passwords in command history
   • Source code backup excludes common cache/vendor directories

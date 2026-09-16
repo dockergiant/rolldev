@@ -59,6 +59,27 @@ Remove volumes completely:
 
     roll env down -v
 
+Start the environment and wait until every service reports healthy:
+
+    roll env up --wait
+
+Run a shell command in a container, with redirects and pipes applied inside the container:
+
+    roll env sh php-fpm 'bin/magento cache:flush > var/log/flush.log'
+
+Check whether the environment is fit to run (see [Diagnosing an Environment](configuration/doctor.md)):
+
+    roll env doctor
+
+## Copying Files
+
+Copy a file or folder from the `php-fpm` container to the host, or back:
+
+    roll copyfromcontainer app/etc/env.php
+    roll copytocontainer app/code/Vendor/Module
+
+See [Copying Files Between Host and Container](configuration/copy-container.md) for `--all`, `--cachegrind`, `--traces` and `--realpath`.
+
 ## Environment Duplication
 
 Duplicate the current environment to create a new environment with a different name:
@@ -105,6 +126,10 @@ Restore a specific backup:
 Preview what would be restored:
 
     roll restore --dry-run
+
+Restore a full backup, source code included, into a new directory:
+
+    roll restore --include-source backup_envname_1672531200.tar.gz ~/Sites/newenv
 
 For detailed backup and restore documentation, see the [Backup and Restore](backup-restore.md) page.
 

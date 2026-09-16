@@ -1,8 +1,39 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
 
+## registry takes any args so --format reaches it; positionals before the first flag are in
+## ROLL_PARAMS, the flags in "$@"
+REGISTRY_FORMAT="human"
+while (( "$#" )); do
+    case "$1" in
+        -h|--help)
+            source "${ROLL_DIR}/commands/usage.cmd"
+            ;;
+        --format=*)
+            REGISTRY_FORMAT="${1#*=}"
+            shift
+            ;;
+        --format)
+            REGISTRY_FORMAT="${2:-}"
+            shift
+            (( $# )) && shift
+            ;;
+        *)
+            fatal "Unsupported argument $1"
+            ;;
+    esac
+done
+
+if [[ "${REGISTRY_FORMAT}" != "human" && "${REGISTRY_FORMAT}" != "json" ]]; then
+    fatal "Unsupported --format value '${REGISTRY_FORMAT}' (expected: human, json)"
+fi
+
 if (( ${#ROLL_PARAMS[@]} == 0 )) || [[ "${ROLL_PARAMS[0]}" == "help" ]]; then
   source "${ROLL_DIR}/commands/usage.cmd"
+fi
+
+if [[ "${REGISTRY_FORMAT}" == "json" && "${ROLL_PARAMS[0]}" != "list" ]]; then
+    fatal "--format json is only supported for 'roll registry list'"
 fi
 
 ## Sub-command execution
@@ -11,10 +42,37 @@ case "${ROLL_PARAMS[0]}" in
         # List all available commands
         filter="${ROLL_PARAMS[1]:-}"
         category="${ROLL_PARAMS[2]:-}"
-        
+
         initializeRegistry
-        
-        if [[ -n "$category" ]]; then
+
+        if [[ "${REGISTRY_FORMAT}" == "json" ]]; then
+            loadRegistryMetadata
+
+            out="["
+            first=1
+            i=0
+            while [[ $i -lt ${#ROLL_REGISTRY_COMMANDS[@]} ]]; do
+                command="${ROLL_REGISTRY_COMMANDS[$i]}"
+                cmdCategory="${ROLL_REGISTRY_CATEGORIES[$i]}"
+                cmdDescription="${ROLL_REGISTRY_DESCRIPTIONS[$i]}"
+                cmdPriority="${ROLL_REGISTRY_PRIORITIES[$i]}"
+                cmdSource="${ROLL_REGISTRY_SOURCES[$i]}"
+                i=$((i + 1))
+
+                [[ -n "$filter" && ! "$command" =~ $filter ]] && continue
+                [[ -n "$category" && "$cmdCategory" != "$category" ]] && continue
+
+                (( first == 0 )) && out+=","
+                first=0
+                out+="{\"command\":\"$(jsonEscape "$command")\","
+                out+="\"category\":\"$(jsonEscape "$cmdCategory")\","
+                out+="\"description\":\"$(jsonEscape "$cmdDescription")\","
+                out+="\"priority\":${cmdPriority},"
+                out+="\"source\":\"$(jsonEscape "$cmdSource")\"}"
+            done
+            out+="]"
+            printf '%s\n' "${out}"
+        elif [[ -n "$category" ]]; then
             echo -e "\033[33mCommands in '${category}' category:\033[0m"
             listRegisteredCommands "$filter" "$category"
         elif [[ -n "$filter" ]]; then
@@ -29,11 +87,11 @@ case "${ROLL_PARAMS[0]}" in
     categories)
         # List commands organized by category
         category="${ROLL_PARAMS[1]:-}"
-        
+
         initializeRegistry
-        
+
         if [[ -n "$category" ]]; then
-            echo -e "\033[33m${category^} Commands:\033[0m"
+            echo -e "\033[33m$(capitalize "$category") Commands:\033[0m"
             listCommandsByCategory "$category"
         else
             listCommandsByCategory
@@ -72,9 +130,10 @@ case "${ROLL_PARAMS[0]}" in
         fi
         
         pattern="${ROLL_PARAMS[1]}"
-        
+
         initializeRegistry
-        
+        loadRegistryMetadata
+
         echo -e "\033[33mSearching for commands matching: '$pattern'\033[0m"
         echo ""
         

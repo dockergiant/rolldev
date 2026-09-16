@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Restore a full RollDev environment, including source code, from a backup archive.
+## @category: backup
 
 ROLL_USAGE=$(cat <<EOF
 \033[33mUsage:\033[0m
@@ -7,6 +9,7 @@ ROLL_USAGE=$(cat <<EOF
 
 \033[33mDescription:\033[0m
   Restore a complete RollDev environment from a backup archive that includes source code. The archive path and output location are required.
+  Same as: roll restore --include-source archive output-dir
 
 \033[33mOptions:\033[0m
   -h, --help              Display this help menu

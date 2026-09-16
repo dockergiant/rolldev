@@ -76,6 +76,20 @@ roll backup --quiet
 roll backup --retention=7         # Auto-cleanup after 7 days
 ```
 
+### Output Location
+
+By default the finished archive lands in `.roll/backups/`. Build servers and delivery scripts can write it somewhere else:
+
+```bash
+# Write the archive to a shared directory under a fixed name
+roll backup all --output-dir=/srv/builds/latest --archive-name=shop-restore-only
+
+# Keep the uncompressed backup directory next to the archive
+roll backup --keep-dir
+```
+
+`--output-dir` is created if it is missing and checked for write access before any volume is backed up. Volumes are still staged in `.roll/backups/`, and retention cleanup only runs there, so the output directory can hold archives of other environments. The `latest` symlink is only updated when the archive stays in `.roll/backups/`. `--archive-name` takes a file name without a path; the compression extension is added. `roll restore` reads the uncompressed directory form, which `--keep-dir` leaves in place.
+
 ### Management Commands
 
 ```bash
@@ -142,12 +156,15 @@ roll restore --no-legacy-migration
 ## Full Environment Restore
 
 A full backup created with `roll backup --include-source` can be restored
-directly using the `restore-full` command. The archive file and destination
-directory must both be provided.
+directly using `roll restore --include-source`, or its shorter name `roll restore-full`.
+The archive file and destination directory must both be provided.
 
 ```bash
 # Restore to a new environment path
 roll restore-full backup_envname_1672531200.tar.gz /path/to/newenv
+
+# The same restore through the restore command
+roll restore --include-source backup_envname_1672531200.tar.gz /path/to/newenv
 
 # Quiet forced restore of a specific archive
 roll restore-full --quiet --force backup_envname_1672531200.tar.gz /path/to/env
@@ -319,7 +336,7 @@ docker volume rm ${ROLL_ENV_NAME}_dbdata
 
 **Encrypted backup won't decrypt:**
 ```bash
-# Ensure GPG is installed
+# Ensure GPG is installed (macOS: brew install gnupg; Debian/Ubuntu: apt install gnupg)
 which gpg
 
 # Verify passphrase
@@ -403,7 +420,7 @@ If you encounter issues with encrypted backups:
 # Skip verification for problematic encrypted backups
 roll backup --encrypt --no-verify
 
-# Check GPG availability
+# Check GPG availability (macOS: brew install gnupg; Debian/Ubuntu: apt install gnupg)
 which gpg
 
 # Restore with explicit decryption

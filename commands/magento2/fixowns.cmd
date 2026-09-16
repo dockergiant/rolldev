@@ -14,10 +14,14 @@ trap '' ERR
 
 echo "Fixing filesystem ownerships..."
 
-if [ -z  "${ROLL_PARAMS[@]}" ]; then
+if (( ${#ROLL_PARAMS[@]} == 0 )); then
   "${ROLL_DIR}/bin/roll" rootnotty chown -R www-data:www-data /var/www
 else
-  "${ROLL_DIR}/bin/roll" rootnotty chown -R www-data:www-data /var/www/html/"${ROLL_PARAMS[@]}"
+  FIXOWNS_PATHS=()
+  for p in "${ROLL_PARAMS[@]}"; do
+    FIXOWNS_PATHS+=("/var/www/html/${p}")
+  done
+  "${ROLL_DIR}/bin/roll" rootnotty chown -R www-data:www-data "${FIXOWNS_PATHS[@]}"
 fi
 
 echo "Filesystem ownerships fixed."

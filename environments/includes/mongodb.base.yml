@@ -5,7 +5,7 @@ services:
 
   mongodb:
     hostname: "${ROLL_ENV_NAME}-mongodb"
-    image: ${ROLL_IMAGE_REPOSITORY}/mongo:${MONGODB_VERSION:-7}
+    image: ${ROLL_IMAGE_REPOSITORY}/mongo:${MONGO_VERSION:-7}
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ROOT_USER:-app}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD:-app}

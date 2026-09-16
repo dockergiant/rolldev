@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Copy a file, folder, or the entire project source from the host into the container.
+## @category: utility
+
+ROLL_USAGE=$(cat <<EOF
+\033[33mUsage:\033[0m
+  copytocontainer <file-or-folder>
+  copytocontainer --all
+
+\033[33mOptions:\033[0m
+  --all          Copy the entire project source from the host into the container
+  -h, --help     Display this help menu
+
+On Magento 2 projects, fixowns and fixperms run on the copied path afterwards.
+EOF
+)

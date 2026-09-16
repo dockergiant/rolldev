@@ -14,7 +14,7 @@ trap '' ERR
 
 echo "Fixing filesystem permissions..."
 
-if [ -z  "${ROLL_PARAMS[@]}" ]; then
+if (( ${#ROLL_PARAMS[@]} == 0 )); then
   "${ROLL_DIR}/bin/roll" clinotty find var vendor pub/static pub/media app/etc \( -type f -or -type d \) -exec chmod u+w {} +;
   "${ROLL_DIR}/bin/roll" clinotty chmod u+x bin/magento
 else

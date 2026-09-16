@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Restore project data and configuration from a previous backup.
+## @category: backup
 
 ROLL_USAGE=$(cat <<EOF
 \033[33mUsage:\033[0m
   restore [options] [backup-id]
+  restore --include-source [options] <archive> <output-dir>
 
 \033[33mDescription:\033[0m
   Restore data and configuration from a previous backup. If no backup ID is
   specified, the most recent backup will be used automatically.
+
+  With --include-source, restore a complete environment (source code, configuration
+  and volumes) from an archive into a new directory. restore-full is the same command.
 
 \033[33mOptions:\033[0m
   -h, --help              Display this help menu
@@ -16,6 +22,7 @@ ROLL_USAGE=$(cat <<EOF
   -f, --force             Force restore (overwrite existing volumes)
   --dry-run               Show what would be restored without doing it
   --no-progress           Disable progress indicators
+  --include-source        Restore an archive with source code into <output-dir>
 
 \033[33mBackup Selection:\033[0m
   --backup-id=ID          Specify backup ID/timestamp to restore from
@@ -46,6 +53,7 @@ ROLL_USAGE=$(cat <<EOF
   restore --decrypt                    # Restore encrypted backup with prompt
   restore --quiet --force              # Silent forced restore
   restore --verbose                    # Show detailed debug output
+  restore --include-source backup.tar.gz ~/Sites/newenv   # Full restore into a new directory
 
 \033[33mService Names:\033[0m
   db, database           Database volumes (MySQL/MariaDB/PostgreSQL)

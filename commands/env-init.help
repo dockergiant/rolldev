@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Initialize a new project environment configuration.
+## @category: environment
 
 ROLL_USAGE=$(cat <<EOF
 \033[33mUsage:\033[0m
@@ -7,6 +9,10 @@ ROLL_USAGE=$(cat <<EOF
 
 \033[33mOptions:\033[0m
   -h, --help        Display this help menu
+
+\033[33mEnvironment Variables:\033[0m
+  ROLL_ENV_INIT_FORCE=1   Overwrite an existing .env.roll without prompting, for scripts
+                          and other callers without a terminal.
 
 \033[33mEnvironment Types:\033[0m
   local               Declares the docker-compose version and labels the project

@@ -30,6 +30,10 @@ fi
 if [[ -f "${ROLL_CMD_HELP}" ]]; then
   # Load command-specific help file
   source "${ROLL_CMD_HELP}"
+  ## `roll usage` resolves to the default usage.help, which prints itself (see the else branch)
+  if [[ "${ROLL_CMD_HELP}" == "${ROLL_DIR}/commands/usage.help" ]]; then
+    exit 1
+  fi
 elif [[ -f "${ROLL_HOME_DIR:-$HOME/.roll}/commands/usage.help" ]]; then
   # Load global usage (variables are already set above)
   source "${ROLL_HOME_DIR:-$HOME/.roll}/commands/usage.help"
@@ -37,8 +41,10 @@ elif [[ -f "${ROLL_HOME_DIR:-$HOME/.roll}/reclu/usage.help" ]]; then
   # Load legacy global usage
   source "${ROLL_HOME_DIR:-$HOME/.roll}/reclu/usage.help"
 else
-  # Load system default usage (fragments already loaded above if needed)
+  # Load system default usage (fragments already loaded above if needed). usage.help prints itself,
+  # because ~/.roll/commands/usage.help overrides source it to show the default usage above their own
   source "${ROLL_DIR}/commands/usage.help"
+  exit 1
 fi
 
 echo -e "${ROLL_USAGE}"

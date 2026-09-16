@@ -350,11 +350,11 @@ roll cli bin/magento cache:flush
 # Connect to database
 roll db connect
 
-# Import database dump
+# Import database dump (pv shows progress; without it: gunzip -c dump.sql.gz | roll db import)
 pv dump.sql.gz | gunzip -c | roll db import
 
 # Export database
-roll db export > backup.sql
+roll db dump > backup.sql
 ```
 
 ## Performance Tips

@@ -19,7 +19,7 @@ NEWRELIC_LICENSE_KEY=your_license_key_here
 
 ### Project Configuration
 
-New Relic may be enabled by adding the following to the project's `.env` file:
+New Relic may be enabled by adding the following to the project's `.env.roll` file:
 
 ```
 ROLL_NEWRELIC=1
@@ -49,13 +49,13 @@ NEWRELIC_LICENSE_KEY=project_specific_key
 
 2. Enable for specific project:
    ```bash
-   echo "ROLL_NEWRELIC=1" >> .env
-   echo "NEWRELIC_APP_NAME=my-project" >> .env
+   echo "ROLL_NEWRELIC=1" >> .env.roll
+   echo "NEWRELIC_APP_NAME=my-project" >> .env.roll
    ```
 
 3. Start/restart containers:
    ```bash
-   roll up
+   roll env up
    # or
    roll restart
    ```
@@ -64,7 +64,7 @@ NEWRELIC_LICENSE_KEY=project_specific_key
 
 ```bash
 # Disable for current project  
-echo "ROLL_NEWRELIC=0" >> .env
+echo "ROLL_NEWRELIC=0" >> .env.roll
 roll restart
 ```
 
@@ -79,7 +79,7 @@ roll restart
 - **Local Development**: Optimized with raw SQL queries, 1ms threshold, and enhanced debugging
 
 ### Configuration Precedence
-1. **Project `.env`** (highest priority)
+1. **Project `.env.roll`** (highest priority)
 2. **Global `$HOME/.roll/.env`** (fallback) 
 3. **Default values** (disabled)
 
@@ -89,25 +89,25 @@ roll restart
 
 ```bash
 # Check PHP configuration
-roll exec php-fpm php -m | grep newrelic
+roll env exec php-fpm php -m | grep newrelic
 
 # Check environment variables  
-roll exec php-fpm env | grep NEWRELIC
+roll env exec php-fpm env | grep NEWRELIC
 
 # Check New Relic logs
-roll exec php-fpm tail -f /var/log/newrelic/php_agent.log
+roll env exec php-fpm tail -f /var/log/newrelic/php_agent.log
 
 # Check daemon logs
-roll exec php-fpm tail -f /var/log/newrelic/newrelic-daemon.log
+roll env exec php-fpm tail -f /var/log/newrelic/newrelic-daemon.log
 ```
 
 ### Common Issues
 
 **"New Relic enabled but no license key"**
-- Ensure `NEWRELIC_LICENSE_KEY` is set in project `.env` or global `~/.roll/.env`
+- Ensure `NEWRELIC_LICENSE_KEY` is set in project `.env.roll` or global `~/.roll/.env`
 
 **"PHP extension not loading"**  
-- Verify `ROLL_NEWRELIC=1` in project `.env`
+- Verify `ROLL_NEWRELIC=1` in project `.env.roll`
 - Restart containers: `roll restart`
 
 **"Transaction data too large"**
@@ -145,7 +145,7 @@ New Relic PHP agent is installed in RollDev containers:
 
 ```
 Project Level:
-├── .env (ROLL_NEWRELIC=1, NEWRELIC_APP_NAME=app)
+├── .env.roll (ROLL_NEWRELIC=1, NEWRELIC_APP_NAME=app)
 │
 Global Level:
 ├── ~/.roll/.env (NEWRELIC_LICENSE_KEY=xxx)

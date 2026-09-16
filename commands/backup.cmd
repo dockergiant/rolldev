@@ -6,6 +6,10 @@ ROLL_ENV_PATH="$(locateEnvPath)" || exit $?
 loadEnvConfig "${ROLL_ENV_PATH}" || exit $?
 assertDockerRunning
 
+## macOS tar otherwise stores extended attributes as ._name files, which a restore on Linux would
+## pick up as extra files and even as a service called ._db; GNU tar ignores the variable
+export COPYFILE_DISABLE=1
+
 # Default configuration values
 BACKUP_COMPRESSION="gzip"  # Options: gzip, xz, lz4, none
 BACKUP_ENCRYPT=""
@@ -20,7 +24,15 @@ BACKUP_NAME=""
 BACKUP_DESCRIPTION=""
 BACKUP_DUPLICATE_NAME=""  # New environment name for duplication
 BACKUP_DUPLICATE_DOMAIN=""  # New domain for duplication
+BACKUP_OUTPUT_DIR=""        # Where the final archive is written (default: BACKUP_BASE_DIR)
+BACKUP_ARCHIVE_NAME=""      # Final archive basename, extension appended (default: backup_<env>_<id>)
+BACKUP_KEEP_DIR=0           # Keep the uncompressed backup directory alongside the archive
+BACKUP_OUTPUT_REDIRECTED=0  # Set when --output-dir is given, whatever path it names
 PROGRESS=1
+
+## Volumes are always staged in the project and retention cleanup only runs here, so --output-dir
+## can point at a shared directory holding other projects' archives
+BACKUP_BASE_DIR="$(pwd)/.roll/backups"
 
 # Parse command line arguments
 POSITIONAL_ARGS=()
@@ -98,6 +110,19 @@ while [[ $# -gt 0 ]]; do
             BACKUP_DUPLICATE_DOMAIN="${1#*=}"
             shift
             ;;
+        --output-dir=*)
+            BACKUP_OUTPUT_DIR="${1#*=}"
+            BACKUP_OUTPUT_REDIRECTED=1
+            shift
+            ;;
+        --archive-name=*)
+            BACKUP_ARCHIVE_NAME="${1#*=}"
+            shift
+            ;;
+        --keep-dir)
+            BACKUP_KEEP_DIR=1
+            shift
+            ;;
         --no-progress)
             PROGRESS=0
             shift
@@ -128,69 +153,7 @@ if (( ${#BACKUP_COMMAND_PARAMS[@]} == 0 )); then
     BACKUP_COMMAND_PARAMS=("all")
 fi
 
-# Utility functions for backup operations
-function promptPassword() {
-    local prompt="$1"
-    local password=""
-    local confirm=""
-    
-    # Don't prompt in quiet mode or non-interactive shells
-    if [[ $BACKUP_QUIET -eq 1 ]] || [[ ! -t 0 ]]; then
-        error "Password required but running in non-interactive mode. Use --encrypt=password instead."
-        exit 1
-    fi
-    
-    echo -n "$prompt: " >&2
-    read -s password
-    echo >&2
-    
-    if [[ -z "$password" ]]; then
-        error "Password cannot be empty"
-        exit 1
-    fi
-    
-    # Confirm password for security
-    echo -n "Confirm password: " >&2
-    read -s confirm
-    echo >&2
-    
-    if [[ "$password" != "$confirm" ]]; then
-        error "Passwords do not match"
-        exit 1
-    fi
-    
-    echo "$password"
-}
 
-function showProgress() {
-    [[ $PROGRESS -eq 0 ]] && return
-    local current=$1
-    local total=$2
-    local description="$3"
-    local percent=$((current * 100 / total))
-    local bar_length=30
-    local filled_length=$((percent * bar_length / 100))
-    
-    printf "\r["
-    printf "%*s" $filled_length | tr ' ' '='
-    printf "%*s" $((bar_length - filled_length)) | tr ' ' '-'
-    printf "] %d%% %s" $percent "$description"
-    
-    # Always end with a newline for clean output
-    echo ""
-}
-
-function logMessage() {
-    [[ $BACKUP_QUIET -eq 1 ]] && return
-    local level="$1"
-    shift
-    case "$level" in
-        INFO) info "$@" ;;
-        SUCCESS) success "$@" ;;
-        WARNING) warning "$@" ;;
-        ERROR) error "$@" ;;
-    esac
-}
 
 function validateCompression() {
     case "$BACKUP_COMPRESSION" in
@@ -265,7 +228,7 @@ function detectEnabledServices() {
 
 function createBackupDirectory() {
     local timestamp=${1:-$(date +%s)}
-    local backup_dir="$(pwd)/.roll/backups/$timestamp"
+    local backup_dir="${BACKUP_BASE_DIR}/$timestamp"
     
     # Create backup directories
     mkdir -p "$backup_dir"/{volumes,config,metadata,logs}
@@ -331,7 +294,10 @@ function backupVolume() {
     
     # Create backup directory for volume if it doesn't exist
     mkdir -p "$backup_dir/volumes"
-    
+
+    ## a failing docker run would trip set -e before the failure branch below could report it
+    local volume_status=0
+
     # Execute backup with the original working approach - use ubuntu and direct tar compression
     if [[ "$BACKUP_COMPRESSION" == "lz4" ]]; then
         # Handle lz4 separately since tar doesn't support it directly
@@ -340,13 +306,13 @@ function backupVolume() {
                 --mount source="$full_volume_name",target=/data \
                 -v "$backup_dir/volumes":/backup \
                 ubuntu bash \
-                -c "tar -cf - /data | lz4 -9 > /backup/${service_name}.tar.lz4" >/dev/null 2>&1
+                -c "tar -cf - /data | lz4 -9 > /backup/${service_name}.tar.lz4" >/dev/null 2>&1 || volume_status=$?
         else
             docker run --rm --name "$temp_container" \
                 --mount source="$full_volume_name",target=/data \
                 -v "$backup_dir/volumes":/backup \
                 ubuntu bash \
-                -c "tar -cf - /data | lz4 -9 > /backup/${service_name}.tar.lz4"
+                -c "tar -cf - /data | lz4 -9 > /backup/${service_name}.tar.lz4" || volume_status=$?
         fi
     else
         # Use original working approach for gzip, xz, and none
@@ -361,18 +327,18 @@ function backupVolume() {
                 --mount source="$full_volume_name",target=/data \
                 -v "$backup_dir/volumes":/backup \
                 ubuntu bash \
-                -c "$tar_cmd" >/dev/null 2>&1
+                -c "$tar_cmd" >/dev/null 2>&1 || volume_status=$?
         else
             docker run --rm --name "$temp_container" \
                 --mount source="$full_volume_name",target=/data \
                 -v "$backup_dir/volumes":/backup \
                 ubuntu bash \
-                -c "$tar_cmd"
+                -c "$tar_cmd" || volume_status=$?
         fi
     fi
     
     # Check if backup was successful
-    if [[ $? -eq 0 && -f "$backup_dir/volumes/${service_name}$(getCompressionExtension)" ]]; then
+    if [[ $volume_status -eq 0 && -f "$backup_dir/volumes/${service_name}$(getCompressionExtension)" ]]; then
         # Generate checksum
         local checksum=$(sha256sum "$backup_dir/volumes/${service_name}$(getCompressionExtension)" | cut -d' ' -f1)
         echo "$checksum  volumes/${service_name}$(getCompressionExtension)" >> "$backup_dir/metadata/checksums.sha256"
@@ -610,7 +576,9 @@ function verifyBackup() {
             logMessage ERROR "Backup verification failed"
             
             # Show which files failed verification
-            local failed_files=$(echo "$verify_output" | grep -E "(No such file|FAILED)" | head -5)
+            ## grep exits 1 on no match, which set -e would turn into an abort here
+            local failed_files
+            failed_files=$(echo "$verify_output" | grep -E "(No such file|FAILED)" | head -5) || true
             if [[ -n "$failed_files" ]]; then
                 logMessage ERROR "Failed files:"
                 echo "$failed_files" | while read -r line; do
@@ -631,8 +599,35 @@ function verifyBackup() {
     fi
 }
 
+## Runs before any volume is tarred, so an unusable destination fails in seconds, not after hours
+function resolveBackupOutputDir() {
+    ## --archive-name=../x would write outside the checked directory
+    if [[ "$BACKUP_ARCHIVE_NAME" == */* ]]; then
+        error "--archive-name must be a filename, not a path: $BACKUP_ARCHIVE_NAME"
+        exit 1
+    fi
+
+    if [[ -z "$BACKUP_OUTPUT_DIR" ]]; then
+        BACKUP_OUTPUT_DIR="${BACKUP_BASE_DIR}"
+        return 0
+    fi
+
+    if ! mkdir -p "$BACKUP_OUTPUT_DIR" 2>/dev/null; then
+        error "Cannot create backup output directory: $BACKUP_OUTPUT_DIR"
+        exit 1
+    fi
+
+    if [[ ! -w "$BACKUP_OUTPUT_DIR" ]]; then
+        error "Backup output directory is not writable: $BACKUP_OUTPUT_DIR"
+        exit 1
+    fi
+
+    ## the archive is written from a subshell that cd's into the staging directory
+    BACKUP_OUTPUT_DIR="$(cd "$BACKUP_OUTPUT_DIR" && pwd)"
+}
+
 function cleanupOldBackups() {
-    local backup_base_dir="$(pwd)/.roll/backups"
+    local backup_base_dir="${BACKUP_BASE_DIR}"
     
     if [[ $BACKUP_RETENTION_DAYS -le 0 ]]; then
         return 0
@@ -656,10 +651,21 @@ function performBackup() {
     
     # Validate inputs
     validateCompression || exit 1
-    
-    # Handle interactive password prompt if needed
+    resolveBackupOutputDir
+
+    ## encryptBackup only runs after every volume is written, too late to find gpg missing
+    if [[ -n "$BACKUP_ENCRYPT" ]]; then
+        assertGpgInstalled
+    fi
+
+    # Handle interactive password prompt if needed. Quiet mode is an explicit request for no
+    # interaction, so it stays a hard error even when stdin happens to be a terminal.
     if [[ "$BACKUP_ENCRYPT" == "PROMPT" ]]; then
-        BACKUP_ENCRYPT=$(promptPassword "Enter encryption password")
+        if [[ $BACKUP_QUIET -eq 1 ]]; then
+            fatal "Password required but running in quiet mode. Use --encrypt=<password> instead."
+        fi
+        BACKUP_ENCRYPT=""
+        promptPassword BACKUP_ENCRYPT "--encrypt=<password>" "Enter encryption password" "Confirm encryption password"
     fi
     
     # Detect enabled services
@@ -689,7 +695,7 @@ function performBackup() {
         all)
             total_steps=$((${#enabled_services[@]} + 3))  # services + config + source + metadata
             if [[ $BACKUP_INCLUDE_SOURCE -eq 1 ]]; then
-                ((total_steps++))
+                total_steps=$((total_steps + 1))
             fi
             ;;
         db|database)
@@ -700,27 +706,28 @@ function performBackup() {
             ;;
     esac
     
+    ## never ((current_step++)): it evaluates to 0 on the first call and set -e exits on bash 5
     local current_step=0
-    
+
     # Backup based on type
     case "$backup_type" in
         all)
             # Backup all enabled services
             for service_info in "${enabled_services[@]}"; do
                 IFS=':' read -r service_name service_type volume_name <<< "$service_info"
-                ((current_step++))
+                current_step=$((current_step + 1))
                 if backupVolume "$service_name" "$volume_name" "$backup_dir" $current_step $total_steps; then
                     successful_services+=("$service_info")
                 fi
             done
             
             # Backup configurations
-            ((current_step++))
+            current_step=$((current_step + 1))
             backupConfigurations "$backup_dir" $current_step $total_steps
             
             # Backup source code if requested
             if [[ $BACKUP_INCLUDE_SOURCE -eq 1 ]]; then
-                ((current_step++))
+                current_step=$((current_step + 1))
                 backupSourceCode "$backup_dir" $current_step $total_steps
             fi
             ;;
@@ -729,7 +736,7 @@ function performBackup() {
             for service_info in "${enabled_services[@]}"; do
                 IFS=':' read -r service_name service_type volume_name <<< "$service_info"
                 if [[ "$service_type" =~ ^(mysql|mariadb|postgres)$ ]]; then
-                    ((current_step++))
+                    current_step=$((current_step + 1))
                     if backupVolume "$service_name" "$volume_name" "$backup_dir" $current_step $total_steps; then
                         successful_services+=("$service_info")
                     fi
@@ -742,7 +749,7 @@ function performBackup() {
             for service_info in "${enabled_services[@]}"; do
                 IFS=':' read -r service_name service_type volume_name <<< "$service_info"
                 if [[ "$service_type" =~ ^(redis|dragonfly)$ ]]; then
-                    ((current_step++))
+                    current_step=$((current_step + 1))
                     if backupVolume "$service_name" "$volume_name" "$backup_dir" $current_step $total_steps; then
                         successful_services+=("$service_info")
                     fi
@@ -755,7 +762,7 @@ function performBackup() {
             for service_info in "${enabled_services[@]}"; do
                 IFS=':' read -r service_name service_type volume_name <<< "$service_info"
                 if [[ "$service_type" =~ ^(elasticsearch|opensearch)$ ]]; then
-                    ((current_step++))
+                    current_step=$((current_step + 1))
                     if backupVolume "$service_name" "$volume_name" "$backup_dir" $current_step $total_steps; then
                         successful_services+=("$service_info")
                     fi
@@ -768,7 +775,7 @@ function performBackup() {
             for service_info in "${enabled_services[@]}"; do
                 IFS=':' read -r service_name service_type volume_name <<< "$service_info"
                 if [[ "$service_type" == "mongodb" ]]; then
-                    ((current_step++))
+                    current_step=$((current_step + 1))
                     if backupVolume "$service_name" "$volume_name" "$backup_dir" $current_step $total_steps; then
                         successful_services+=("$service_info")
                     fi
@@ -778,7 +785,7 @@ function performBackup() {
             ;;
         config|configuration)
             # Only backup configuration files
-            ((current_step++))
+            current_step=$((current_step + 1))
             backupConfigurations "$backup_dir" $current_step $total_steps
             ;;
         *)
@@ -788,7 +795,7 @@ function performBackup() {
     esac
     
     # Generate metadata with successfully backed up services
-    ((current_step++))
+    current_step=$((current_step + 1))
     generateBackupMetadata "$backup_dir" "${successful_services[@]}"
     showProgress $current_step $total_steps "Generating metadata"
     
@@ -801,32 +808,41 @@ function performBackup() {
     verifyBackup "$backup_dir"
     
     # Create compressed archive for the entire backup
-    local archive_name="backup_${ROLL_ENV_NAME}_${timestamp}$(getCompressionExtension)"
+    local archive_name="${BACKUP_ARCHIVE_NAME:-backup_${ROLL_ENV_NAME}_${timestamp}}$(getCompressionExtension)"
+    local archive_path="${BACKUP_OUTPUT_DIR}/${archive_name}"
     logMessage INFO "Creating final backup archive: $archive_name"
-    
-    # Suppress tar warnings when using --output-id
+
+    ## Without pipefail a tar that ran out of disk still reports gzip's 0, and the uncompressed
+    ## copy is deleted below
+    local archive_status=0
     if [[ $BACKUP_OUTPUT_ID -eq 1 ]]; then
-        (cd "$(pwd)/.roll/backups" && tar -cf - "$timestamp" 2>/dev/null | $(getCompressionCommand) > "$archive_name")
+        (set -o pipefail; cd "${BACKUP_BASE_DIR}" && tar -cf - "$timestamp" 2>/dev/null | $(getCompressionCommand) > "$archive_path") || archive_status=$?
     else
-        (cd "$(pwd)/.roll/backups" && tar -cf - "$timestamp" | $(getCompressionCommand) > "$archive_name")
+        (set -o pipefail; cd "${BACKUP_BASE_DIR}" && tar -cf - "$timestamp" | $(getCompressionCommand) > "$archive_path") || archive_status=$?
     fi
-    
-    if [[ $? -eq 0 ]]; then
-        # Update latest symlink
-        (cd "$(pwd)/.roll/backups" && ln -sf "$archive_name" "latest$(getCompressionExtension)")
-        
+
+    if [[ $archive_status -eq 0 ]]; then
+        ## In a shared output directory every project would overwrite the same "latest" symlink
+        if [[ $BACKUP_OUTPUT_REDIRECTED -eq 0 ]]; then
+            (cd "${BACKUP_BASE_DIR}" && ln -sf "$archive_name" "latest$(getCompressionExtension)")
+        fi
+
         if [[ $BACKUP_OUTPUT_ID -eq 1 ]]; then
             # Only output the backup ID for programmatic use
             echo "$timestamp"
         else
             logMessage SUCCESS "Backup completed successfully!"
             logMessage INFO "Backup ID: $timestamp"
-            logMessage INFO "Archive: $archive_name ($(du -h "$(pwd)/.roll/backups/$archive_name" | cut -f1))"
-            logMessage INFO "Location: $(pwd)/.roll/backups/"
+            logMessage INFO "Archive: $archive_name ($(du -h "$archive_path" | cut -f1))"
+            logMessage INFO "Location: ${BACKUP_OUTPUT_DIR}/"
         fi
-        
-        # Clean up directory version (keep archive)
-        rm -rf "$backup_dir"
+
+        # Clean up directory version (keep archive); --keep-dir leaves the form restore reads directly
+        if [[ $BACKUP_KEEP_DIR -eq 0 ]]; then
+            rm -rf "$backup_dir"
+        else
+            logMessage INFO "Keeping uncompressed backup directory: $backup_dir"
+        fi
     else
         logMessage ERROR "Failed to create final backup archive"
         exit 1
@@ -849,8 +865,8 @@ case "${BACKUP_COMMAND_PARAMS[0]}" in
         ;;
     list|ls)
         echo "Available backups:"
-        if [[ -d "$(pwd)/.roll/backups" ]]; then
-            ls -la "$(pwd)/.roll/backups/" | grep -E '^d.*[0-9]{10}$|^-.*backup_.*\.tar'
+        if [[ -d "${BACKUP_BASE_DIR}" ]]; then
+            ls -la "${BACKUP_BASE_DIR}/" | grep -E '^d.*[0-9]{10}$|^-.*backup_.*\.tar'
         else
             echo "No backups found."
         fi
@@ -860,14 +876,14 @@ case "${BACKUP_COMMAND_PARAMS[0]}" in
             backup_id="${BACKUP_COMMAND_PARAMS[1]}"
             
             # First check if directory exists (uncompressed backup)
-            metadata_file="$(pwd)/.roll/backups/$backup_id/metadata/backup.json"
+            metadata_file="${BACKUP_BASE_DIR}/$backup_id/metadata/backup.json"
             if [[ -f "$metadata_file" ]]; then
-                cat "$metadata_file" | jq '.' 2>/dev/null || cat "$metadata_file"
+                jq '.' "$metadata_file" 2>/dev/null || cat "$metadata_file"
             else
                 # Look for compressed archive
                 archive_file=""
                 for ext in ".tar.gz" ".tar.xz" ".tar.lz4" ".tar"; do
-                    potential_file="$(pwd)/.roll/backups/backup_${ROLL_ENV_NAME}_${backup_id}${ext}"
+                    potential_file="${BACKUP_BASE_DIR}/backup_${ROLL_ENV_NAME}_${backup_id}${ext}"
                     if [[ -f "$potential_file" ]]; then
                         archive_file="$potential_file"
                         break
@@ -876,7 +892,7 @@ case "${BACKUP_COMMAND_PARAMS[0]}" in
                 
                 if [[ -z "$archive_file" ]]; then
                     # Also check for generic archive names
-                    archive_file=$(ls "$(pwd)/.roll/backups"/*"$backup_id"*.tar* 2>/dev/null | head -1)
+                    archive_file=$(ls "${BACKUP_BASE_DIR}"/*"$backup_id"*.tar* 2>/dev/null | head -1)
                 fi
                 
                 if [[ -n "$archive_file" ]]; then

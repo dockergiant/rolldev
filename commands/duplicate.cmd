@@ -95,52 +95,6 @@ if [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]]; then
     DUPLICATE_NAME="${POSITIONAL_ARGS[0]}"
 fi
 
-# Utility functions for duplicate operations
-function promptPassword() {
-    local prompt="$1"
-    local password=""
-    local confirm=""
-    
-    # Don't prompt in quiet mode or non-interactive shells
-    if [[ $DUPLICATE_QUIET -eq 1 ]] || [[ ! -t 0 ]]; then
-        error "Password required but running in non-interactive mode. Use --encrypt=password instead."
-        exit 1
-    fi
-    
-    echo -n "$prompt: " >&2
-    read -s password
-    echo >&2
-    
-    if [[ -z "$password" ]]; then
-        error "Password cannot be empty"
-        exit 1
-    fi
-    
-    # Confirm password for security
-    echo -n "Confirm password: " >&2
-    read -s confirm
-    echo >&2
-    
-    if [[ "$password" != "$confirm" ]]; then
-        error "Passwords do not match"
-        exit 1
-    fi
-    
-    echo "$password"
-}
-
-function logMessage() {
-    [[ $DUPLICATE_QUIET -eq 1 ]] && return
-    local level="$1"
-    shift
-    case "$level" in
-        INFO) info "$@" ;;
-        SUCCESS) success "$@" ;;
-        WARNING) warning "$@" ;;
-        ERROR) error "$@" ;;
-    esac
-}
-
 function validateDuplicateName() {
     local name="$1"
     
@@ -149,9 +103,9 @@ function validateDuplicateName() {
         return 1
     fi
     
-    # Check if name is valid (alphanumeric, hyphens, underscores)
-    if [[ ! "$name" =~ ^[a-zA-Z0-9_-]+$ ]]; then
-        error "Environment name must contain only letters, numbers, hyphens, and underscores"
+    # Same rule as ROLL_ENV_NAME, checked here so a bad name fails before the backup instead of after it
+    if [[ ! "$name" =~ ^[a-z0-9][a-z0-9_-]*$ ]]; then
+        error "Environment name must contain only lowercase letters, numbers, hyphens, and underscores, starting with a letter or number"
         return 1
     fi
     
@@ -441,7 +395,7 @@ function updateMagento2Urls() {
             break
         fi
         sleep 2
-        ((retry_count++))
+        retry_count=$((retry_count + 1))
     done
     
     if [ $retry_count -eq $max_retries ]; then
@@ -704,20 +658,25 @@ function performDuplicate() {
     # Validate inputs
     validateDuplicateName "$new_name" || exit 1
     
-    # Handle interactive password prompt if needed
+    # Handle interactive password prompt if needed; quiet mode means no interaction even on a terminal
     if [[ "$DUPLICATE_ENCRYPT" == "PROMPT" ]]; then
-        DUPLICATE_ENCRYPT=$(promptPassword "Enter encryption password for backup")
+        if [[ $DUPLICATE_QUIET -eq 1 ]]; then
+            fatal "Password required but running in quiet mode. Use --encrypt=<password> instead."
+        fi
+        DUPLICATE_ENCRYPT=""
+        promptPassword DUPLICATE_ENCRYPT "--encrypt=<password>" "Enter encryption password for backup" "Confirm encryption password for backup"
     fi
-    
+
     local current_env_name="$ROLL_ENV_NAME"
     local current_dir="$(pwd)"
     local total_steps=7
+    ## never ((current_step++)): it evaluates to 0 on the first call and set -e exits on bash 5
     local current_step=0
     
     logMessage INFO "Duplicating environment '$current_env_name' to '$new_name'"
     
     # Step 1: Create backup
-    ((current_step++))
+    current_step=$((current_step + 1))
     local backup_id
     if ! backup_id=$(createBackup $current_step $total_steps); then
         logMessage ERROR "Failed to create backup"
@@ -725,7 +684,7 @@ function performDuplicate() {
     fi
     
     # Step 2: Setup new environment directory (rsync source code)
-    ((current_step++))
+    current_step=$((current_step + 1))
     local target_dir
     if ! target_dir=$(setupNewEnvironment "$new_name" $current_step $total_steps 2>/dev/null); then
         logMessage ERROR "Failed to setup new environment directory"
@@ -733,29 +692,29 @@ function performDuplicate() {
     fi
     
     # Step 3: Copy backup file to target location AFTER rsync
-    ((current_step++))
+    current_step=$((current_step + 1))
     if ! copyBackupToNewEnvironment "$backup_id" "$new_name" "$current_dir" $current_step $total_steps; then
         logMessage ERROR "Failed to copy backup file to new environment"
         exit 1
     fi
     
     # Step 4: Restore backup from already-copied file
-    ((current_step++))
+    current_step=$((current_step + 1))
     if ! restoreBackup "$backup_id" "$target_dir" "$current_dir" $current_step $total_steps; then
         logMessage ERROR "Backup restoration step failed - stopping duplication process"
         exit 1
     fi
     
     # Step 5: Generate new certificates
-    ((current_step++))
+    current_step=$((current_step + 1))
     generateCertificates "$new_name" "$target_dir" $current_step $total_steps
     
     # Step 6: Update database URLs
-    ((current_step++))
+    current_step=$((current_step + 1))
     updateDatabaseUrls "$new_name" "$target_dir" $current_step $total_steps
     
     # Step 7: Start new environment
-    ((current_step++))
+    current_step=$((current_step + 1))
     startNewEnvironment "$target_dir" $current_step $total_steps
     
     if [[ $DUPLICATE_DRY_RUN -eq 1 ]]; then

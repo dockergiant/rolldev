@@ -2,23 +2,67 @@ name: ShellCheck
 on:
   push:
     paths:
-      - 'commands/*.cmd'
+      - 'bin/roll'
+      - 'commands/**/*.cmd'
+      - 'commands/**/*.help'
       - 'utils/*.sh'
+      - 'environments/**'
+      - '.github/scripts/**'
+      - '.shellcheckrc'
       - '.github/workflows/shellcheck.yml'
   pull_request:
     paths:
-      - 'commands/*.cmd'
+      - 'bin/roll'
+      - 'commands/**/*.cmd'
+      - 'commands/**/*.help'
       - 'utils/*.sh'
+      - 'environments/**'
+      - '.github/scripts/**'
+      - '.shellcheckrc'
       - '.github/workflows/shellcheck.yml'
   workflow_dispatch:
 
 jobs:
   shellcheck:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install shellcheck
+        uses: actions/checkout@v4
+
+      - name: Install shellcheck (macOS)
+        if: runner.os == 'macOS'
+        run: brew install shellcheck
+
+      - name: Install shellcheck (Linux)
+        if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y shellcheck
+
       - name: Run shellcheck
-        run: shellcheck commands/*.cmd utils/*.sh
+        run: shellcheck commands/*.cmd commands/*/*.cmd commands/*.help commands/*/*.help utils/*.sh .github/scripts/*.sh
+
+      # bin/roll runs `docker compose version` before any command, and env-init needs envsubst;
+      # macOS runners ship neither, but no smoke command talks to a daemon
+      - name: Install Docker CLI, Compose plugin and gettext (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install docker docker-compose gettext
+          brew link --force gettext
+          mkdir -p "${HOME}/.docker"
+          cat > "${HOME}/.docker/config.json" <<EOF
+          {
+            "cliPluginsExtraDirs": ["$(brew --prefix)/lib/docker/cli-plugins"]
+          }
+          EOF
+          docker compose version
+
+      - name: Docker-free smoke test (native bash)
+        if: runner.os == 'Linux'
+        run: bash .github/scripts/smoke.sh native
+
+      - name: Docker-free smoke test (bash 3.2)
+        if: runner.os == 'macOS'
+        run: /bin/bash .github/scripts/smoke.sh bash32

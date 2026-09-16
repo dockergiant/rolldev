@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Duplicate the current environment into a new one with a different name.
+## @category: environment
 
 ROLL_USAGE=$(cat <<EOF
 \033[33mUsage:\033[0m
@@ -19,8 +21,8 @@ ROLL_USAGE=$(cat <<EOF
   --dry-run               Show what would be done without executing
   --encrypt               Encrypt backup with interactive password prompt
   --encrypt=%password%    Encrypt backup with the given password
-  --no-source             Don't include source code in duplication
-  --no-start              Don't start the new environment automatically
+  --no-source             Leave source code out of the duplication
+  --no-start              Leave the new environment stopped
   --no-urls               Skip updating base URLs in the database
   --no-magento-commands   Skip the post-duplication Magento commands
 

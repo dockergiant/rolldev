@@ -4,7 +4,9 @@
 ## Prerequisites
 
 * [Docker Desktop for Mac](https://hub.docker.com/editions/community/docker-ce-desktop-mac) 2.2.0.0 or later or [Docker for Linux](https://docs.docker.com/install/) or [Docker for Windows](https://docs.docker.com/desktop/windows/install/)
-* `docker-compose` version 2.0 or later is required (this can be installed via `brew`, `apt`, `dnf`, or `pip3` as needed)
+* Docker Compose 2.2.3 or later, as the `docker compose` plugin (this can be installed via `brew`, `apt`, `dnf`, or `pip3` as needed)
+* `envsubst` and `jq`. Homebrew installs both with RollDev. A manual install needs `brew install gettext jq` on macOS, or `apt install gettext-base jq` on Debian and Ubuntu.
+* GnuPG, only for encrypted backups (`roll backup --encrypt`): `brew install gnupg` or `apt install gnupg`
 * [Mutagen](https://mutagen.io/) 0.11.4 or later is required for environments leveraging sync sessions on Mac OS. RollDev will attempt to install this via `brew install mutagen-io/mutagen/mutagen` if not present. Recent Homebrew versions refuse formulae from untrusted third-party taps; if the install is blocked, run `brew trust mutagen-io/mutagen` first.
 
 :::{warning}
@@ -42,14 +44,12 @@ RollDev may be installed by cloning the repository to the directory of your choi
 
 ### Updating Alternative (Manual) Installations
 
-To update RollDev just pull the latest changes from git, or check out a specific release tag. You'll also want to rebuild your dashboard image to reflect the latest changes (if any).
+To update RollDev just pull the latest changes from git, or check out a specific release tag. `roll svc up` pulls the latest images for the global services when you are online.
 
     cd /opt/roll
     git fetch --tags
     git pull
     # git switch <tag>
-    roll svc build --no-cache --build-arg ROLL_VERSION=$(cat version | tr -d '\n' | sed -e 's/^[[:space:]]*//g; s/[[:space:]]*$//g') dashboard
-    roll svc ps --status=running -q dashboard >/dev/null 2>&1 && roll svc restart dashboard
     roll svc up
 
 ## Windows Installation (via WSL2)

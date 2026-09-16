@@ -1,0 +1,2 @@
+# Shell scripts break with CRLF (bash\r), e.g. when cloned on Windows with core.autocrlf and run from WSL
+* text=auto eol=lf

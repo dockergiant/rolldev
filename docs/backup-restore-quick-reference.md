@@ -17,6 +17,8 @@ roll backup --encrypt=password                # Encrypted backup
 roll backup --include-source                  # Include source code
 roll backup --name="pre-upgrade"              # Named backup
 roll backup --retention=7                     # Auto-cleanup after 7 days
+roll backup --output-dir=/srv/drop --archive-name=shop   # Archive to another directory
+roll backup --keep-dir                        # Keep the uncompressed backup directory
 
 # Management
 roll backup list               # List all backups
@@ -43,6 +45,7 @@ roll restore --quiet                          # Silent operation
 ```bash
 # Restore into a new directory
 roll restore-full backup.tar.gz /path/newenv
+roll restore --include-source backup.tar.gz /path/newenv   # Same restore
 
 # Restore encrypted backup with password
 roll restore-full --decrypt=password backup.tar.gz /path/newenv

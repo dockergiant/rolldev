@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 [[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Run docker compose subcommands scoped to the RollDev core services.
+## @category: services
 
 COMPOSE_USAGE=$(docker compose "${ROLL_PARAMS[@]}" "$@" \
   | grep -vE '(--file|--project-name|--project-directory|default: docker-compose.yml|default: directory name)' \

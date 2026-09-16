@@ -9,7 +9,7 @@ services:
       - ${ROLL_HOME_DIR}/etc/traefik/traefik.yml:/etc/traefik/traefik.yml
       - ${ROLL_HOME_DIR}/etc/traefik/dynamic.yml:/etc/traefik/dynamic.yml
       - ${ROLL_HOME_DIR}/ssl/certs:/etc/ssl/certs
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     labels:
       - traefik.enable=true
       - traefik.http.routers.traefik.tls=true

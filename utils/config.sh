@@ -85,6 +85,7 @@ function initConfigSchema() {
     ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_ALLURE); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:0")
     ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_MAGEPACK); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:0")
     ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_INCLUDE_GIT); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:0")
+    ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_PUBLISH_PORTS); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:1")
     
     # Traefik configuration
     ROLL_CONFIG_SCHEMA_KEYS+=(TRAEFIK_DOMAIN); ROLL_CONFIG_SCHEMA_VALUES+=("string:optional")
@@ -107,13 +108,15 @@ function initConfigSchema() {
     
     # Service version configurations
     ROLL_CONFIG_SCHEMA_KEYS+=(ELASTICSEARCH_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:7.17")
+    ROLL_CONFIG_SCHEMA_KEYS+=(ELASTICSEARCH_JAVA_OPTS); ROLL_CONFIG_SCHEMA_VALUES+=("string:optional")
     ROLL_CONFIG_SCHEMA_KEYS+=(RABBITMQ_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:3.11")
     ROLL_CONFIG_SCHEMA_KEYS+=(REDIS_DISTRIBUTION); ROLL_CONFIG_SCHEMA_VALUES+=("enum:redis|valkey:redis")
     ROLL_CONFIG_SCHEMA_KEYS+=(REDIS_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:7.0")
     ROLL_CONFIG_SCHEMA_KEYS+=(DRAGONFLY_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:latest")
     ROLL_CONFIG_SCHEMA_KEYS+=(VARNISH_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:7.0")
     ROLL_CONFIG_SCHEMA_KEYS+=(OPENSEARCH_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:2.5")
-    ROLL_CONFIG_SCHEMA_KEYS+=(MONGO_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:6.0")
+    ROLL_CONFIG_SCHEMA_KEYS+=(OPENSEARCH_JAVA_OPTS); ROLL_CONFIG_SCHEMA_VALUES+=("string:optional")
+    ROLL_CONFIG_SCHEMA_KEYS+=(MONGO_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:7")
     ROLL_CONFIG_SCHEMA_KEYS+=(NGINX_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:1.24")
     ROLL_CONFIG_SCHEMA_KEYS+=(MAGEPACK_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:2.3")
     ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_SELENIUM_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:3.141.59")
@@ -195,6 +198,10 @@ function validateConfigValue() {
         string)
             if [[ "$constraint" == "required" && -z "$value" ]]; then
                 error "Configuration $key is required but empty"
+                return 1
+            fi
+            if [[ "$key" == "ROLL_ENV_NAME" && -n "$value" && ! "$value" =~ ^[a-z0-9][a-z0-9_-]*$ ]]; then
+                error "ROLL_ENV_NAME=\"$value\" is invalid: it becomes the Docker Compose project name, which must match ^[a-z0-9][a-z0-9_-]*\$. The name also prefixes every volume, so renaming an existing environment leaves its data behind."
                 return 1
             fi
             ;;
@@ -368,7 +375,8 @@ function loadRollConfig() {
             setConfigValue "ROLL_ENV_SUBT" "linux"
             
             # Check for WSL
-            if grep -sqi microsoft /proc/sys/kernel/osrelease 2>/dev/null; then
+            ## WSL_DISTRO_NAME also covers custom WSL kernels without "microsoft" in their release string
+            if [[ -n "${WSL_DISTRO_NAME:-}" ]] || grep -sqi microsoft /proc/sys/kernel/osrelease 2>/dev/null; then
                 setConfigValue "ROLL_ENV_SUBT" "wsl"
             fi
             ;;
@@ -383,18 +391,22 @@ function loadRollConfig() {
     export GROUP_ID="$(id -g)"
     export OSTYPE="${OSTYPE}"
     
+    # Validate environment type
+    if ! assertValidEnvType; then
+        return 1
+    fi
+
+    # Env-type defaults must run before the schema literals, which would otherwise fill every
+    # toggle with 0 first and leave nothing unset for the env type to default
+    applyEnvTypeDefaults
+
     # Set defaults for unset values
     local i=0
     while [[ $i -lt ${#ROLL_CONFIG_SCHEMA_KEYS[@]} ]]; do
         setConfigDefault "${ROLL_CONFIG_SCHEMA_KEYS[$i]}"
         i=$((i + 1))
     done
-    
-    # Validate environment type
-    if ! assertValidEnvType; then
-        return 1
-    fi
-    
+
     # Post-processing for specific configurations
     postProcessConfig
     
@@ -418,6 +430,69 @@ function setConfigValue() {
     export "$key"="$value"
 }
 
+## Set a value unless a config file already did
+function setConfigDerived() {
+    local key="$1"
+    local value="$2"
+
+    if [[ $(findConfigIndex "$key") -ge 0 ]]; then
+        return 0
+    fi
+
+    setConfigValue "$key" "$value"
+}
+
+## Value a config file set for the key, or nothing; unlike getConfig it ignores exported variables,
+## so a shell or a parent roll process exporting the key cannot change a project's defaults
+function getLoadedConfig() {
+    local index
+    index=$(findConfigIndex "$1")
+    if [[ $index -ge 0 ]]; then
+        echo "${ROLL_CONFIG_CACHE_VALUES[$index]}"
+    fi
+    return 0
+}
+
+## Services an environment type needs unless .env.roll says otherwise
+function applyEnvTypeDefaults() {
+    local legacy_version=""
+
+    if [[ "${ROLL_ENV_TYPE}" != "local" ]]; then
+        setConfigDerived ROLL_NGINX 1
+        setConfigDerived ROLL_DB 1
+        setConfigDerived ROLL_REDIS 1
+    fi
+
+    if [[ "${ROLL_ENV_TYPE}" == "magento2" ]]; then
+        setConfigDerived ROLL_VARNISH 1
+        setConfigDerived ROLL_RABBITMQ 1
+        ## a project that only switched OpenSearch on must not get Elasticsearch next to it
+        if [[ "$(getLoadedConfig ROLL_OPENSEARCH)" != "1" ]]; then
+            setConfigDerived ROLL_ELASTICSEARCH 1
+        fi
+    fi
+
+    ## MYSQL_VERSION and MARIADB_VERSION are the older spellings of DB_DISTRIBUTION_VERSION
+    if [[ $(findConfigIndex DB_DISTRIBUTION_VERSION) -lt 0 ]]; then
+        if [[ "$(getLoadedConfig DB_DISTRIBUTION)" == "mysql" ]]; then
+            legacy_version="$(getLoadedConfig MYSQL_VERSION)"
+        else
+            legacy_version="$(getLoadedConfig MARIADB_VERSION)"
+        fi
+        if [[ -n "${legacy_version}" ]]; then
+            setConfigDerived DB_DISTRIBUTION_VERSION "${legacy_version}"
+        fi
+    fi
+
+    ## the mongodb fragment used to read MONGODB_VERSION, which laravel/init.env still wrote
+    legacy_version="$(getLoadedConfig MONGODB_VERSION)"
+    if [[ -n "${legacy_version}" ]]; then
+        setConfigDerived MONGO_VERSION "${legacy_version}"
+    fi
+
+    return 0
+}
+
 ## Post-process configuration after loading
 function postProcessConfig() {
     # Set PHP variant based on environment type
@@ -428,15 +503,6 @@ function postProcessConfig() {
     # Set Node.js variant
     if [[ "${NODE_VERSION}" != "0" ]]; then
         export ROLL_SVC_PHP_NODE="-node${NODE_VERSION}"
-    fi
-    
-    # Database distribution defaults
-    if [[ -z "${DB_DISTRIBUTION_VERSION}" ]]; then
-        if [[ "${DB_DISTRIBUTION}" == "mysql" ]]; then
-            export DB_DISTRIBUTION_VERSION="${MYSQL_VERSION:-8.0}"
-        else
-            export DB_DISTRIBUTION_VERSION="${MARIADB_VERSION:-10.4}"
-        fi
     fi
     
     # XDebug version configuration
@@ -456,14 +522,11 @@ function postProcessConfig() {
         export SSH_AUTH_SOCK_PATH_ENV="/run/host-services/ssh-auth.sock"
     fi
     
-    # Environment-specific defaults
+    # Bash history and SSH directories
     if [[ "${ROLL_ENV_TYPE}" != "local" ]]; then
-        export ROLL_NGINX="${ROLL_NGINX:-1}"
-        export ROLL_DB="${ROLL_DB:-1}"
-        export ROLL_REDIS="${ROLL_REDIS:-1}"
-        
-        # Bash history and SSH directories
         export CHOWN_DIR_LIST="/bash_history /home/www-data/.ssh ${ROLL_CHOWN_DIR_LIST:-}"
+    else
+        export CHOWN_DIR_LIST="${ROLL_CHOWN_DIR_LIST:-}"
     fi
     
     # Magento 1 specific configuration
@@ -481,10 +544,6 @@ function postProcessConfig() {
     
     # Magento 2 specific configuration
     if [[ "${ROLL_ENV_TYPE}" == "magento2" ]]; then
-        export ROLL_VARNISH="${ROLL_VARNISH:-1}"
-        export ROLL_ELASTICSEARCH="${ROLL_ELASTICSEARCH:-1}"
-        export ROLL_RABBITMQ="${ROLL_RABBITMQ:-1}"
-        
         if [[ "${ROLL_MAGENTO_STATIC_CACHING}" == "1" ]]; then
             if [[ "${ROLL_ADMIN_AUTOLOGIN}" == "1" ]]; then
                 export NGINX_TEMPLATE="${NGINX_TEMPLATE:-magento2-autologin.conf}"
@@ -499,6 +558,10 @@ function postProcessConfig() {
             fi
         fi
     fi
+
+    # The compose fragments interpolate these for every env type
+    export NGINX_TEMPLATE="${NGINX_TEMPLATE:-}"
+    export NGINX_PUBLIC="${NGINX_PUBLIC:-}"
 }
 
 ## Validate configuration file without loading
