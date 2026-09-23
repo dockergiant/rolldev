@@ -1,5 +1,7 @@
 # Setup Admin Auto Login in Magento 2
 
+Magento 1 projects use the same `roll setup-autologin` and `ROLL_ADMIN_AUTOLOGIN=1`, without the 2FA step; see [Magento 1 projects](../../magento1-init.md), section "Admin auto-login".
+
 
 
 Enabling admin auto-login in Magento 2 can be a great time-saver for developers. By setting a specific environment variable and using a command-line tool, you can bypass the manual login process. This guide will walk you through enabling this feature safely in a development environment.

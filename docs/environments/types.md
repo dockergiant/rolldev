@@ -33,11 +33,11 @@ The `magento-cloud` environment type uses `magento2` as a base and adds the vers
 The `magento1` environment type supports development of Magento 1 projects, launching containers including:
 
 * Nginx
-* PHP-FPM (5.5, 5.6 or 7.0+)
+* PHP-FPM (7.2 to 8.5, with n98-magerun)
 * MariaDB
 * Redis
 
-Files are currently mounted using a delegated mount on macOS and natively on Linux.
+On macOS, files in the webroot are synced into the container using a Mutagen sync session, except `media` and `var/log`, which are bind-mounted. On Linux they are mounted natively.
 
 To create a new Magento 1 project, see [Magento 1 projects](../magento1-init.md).
 

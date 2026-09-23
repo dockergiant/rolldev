@@ -130,7 +130,7 @@ The below example demonstrates the from-scratch setup of the Magento 2 applicati
         ROLL_MAGENTO_STATIC_CACHING=1
 
         # Auto login prefilling fields when accessing admin url on /shopmanager or /backend
-        # Only works when you did run the auto login setup script > roll setup-autologin (only available for Magento 2 projects)
+        # Only works when you did run the auto login setup script > roll setup-autologin (Magento 1 and Magento 2 projects)
         ROLL_ADMIN_AUTOLOGIN=0
 
         # New Relic license key (can be set globally in $HOME/.roll/.env)
