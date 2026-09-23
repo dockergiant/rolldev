@@ -122,7 +122,7 @@ Config is loaded from (later overrides earlier):
 | `ELASTICSEARCH_JAVA_OPTS` / `OPENSEARCH_JAVA_OPTS` | optional | search engine heap; unset gives Elasticsearch `-Xms64m -Xmx512m` and OpenSearch its image default (1g) |
 | `MONGO_VERSION` | `7` | `MONGODB_VERSION` is read as an alias |
 | `ROLL_MAGENTO_STATIC_CACHING` | `0` | picks prod vs `-dev` nginx template |
-| `ROLL_ADMIN_AUTOLOGIN` | `0` | magento2 auto-login nginx template |
+| `ROLL_ADMIN_AUTOLOGIN` | `0` | magento1/magento2 auto-login nginx template (`roll setup-autologin` creates localadmin/admin123) |
 | `ROLL_NEWRELIC` / `NEWRELIC_LICENSE_KEY` | `0` / optional | |
 | `ROLL_IMAGE_REPOSITORY` | `ghcr.io/dockergiant` | image registry base |
 | `ROLL_RESTART_POLICY` | `always` | |

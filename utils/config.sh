@@ -536,9 +536,17 @@ function postProcessConfig() {
         fi
         
         if [[ "${ROLL_MAGENTO_STATIC_CACHING}" == "1" ]]; then
-            export NGINX_TEMPLATE="${NGINX_TEMPLATE:-magento1.conf}"
+            if [[ "${ROLL_ADMIN_AUTOLOGIN}" == "1" ]]; then
+                export NGINX_TEMPLATE="${NGINX_TEMPLATE:-magento1-autologin.conf}"
+            else
+                export NGINX_TEMPLATE="${NGINX_TEMPLATE:-magento1.conf}"
+            fi
         else
-            export NGINX_TEMPLATE="${NGINX_TEMPLATE:-magento1-dev.conf}"
+            if [[ "${ROLL_ADMIN_AUTOLOGIN}" == "1" ]]; then
+                export NGINX_TEMPLATE="${NGINX_TEMPLATE:-magento1-dev-autologin.conf}"
+            else
+                export NGINX_TEMPLATE="${NGINX_TEMPLATE:-magento1-dev.conf}"
+            fi
         fi
     fi
     

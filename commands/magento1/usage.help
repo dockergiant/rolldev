@@ -3,7 +3,8 @@
 ENV_TYPE_USAGE=$(cat <<EOF
 
 \n\033[33mMagento 1 commands:\033[0m
-  magerun \033[32m%command%\033[0m     run magerun inside php-fpm container with params\n
+  magerun \033[32m%command%\033[0m     run magerun inside php-fpm container with params
+  setup-autologin       create localadmin/admin123 for ROLL_ADMIN_AUTOLOGIN=1\n
 
 EOF
 )
