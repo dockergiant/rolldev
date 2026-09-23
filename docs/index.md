@@ -30,6 +30,7 @@ installing
 services
 magento2-init
 magento2-init-quick-reference
+magento1-init
 usage
 duplicate
 backup-restore

@@ -162,6 +162,10 @@ roll mageos-init <name> [version]    # Mage-OS 1.1.0+, same flow as magento2-ini
 roll mageos-migrate [--dry-run]      # migrate a Magento 2.4.9 project to Mage-OS; backs up first,
                                      # then runs the upstream migrate-to-mage-os.sh in php-fpm
 
+# Magento 1 project creation
+roll magento1-init <name> [version]    # OpenMage LTS 20.x on PHP 8.4
+roll magento1ce-init <name> [version]  # original Magento CE 1.9.4.x on PHP 7.2
+
 # Database & backups
 roll db [connect|import|dump]      # picks mariadb/mariadb-dump or mysql/mysqldump in the container
 roll redis

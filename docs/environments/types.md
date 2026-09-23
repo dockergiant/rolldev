@@ -39,6 +39,8 @@ The `magento1` environment type supports development of Magento 1 projects, laun
 
 Files are currently mounted using a delegated mount on macOS and natively on Linux.
 
+To create a new Magento 1 project, see [Magento 1 projects](../magento1-init.md).
+
 ## Laravel
 
 The `laravel` environment type supports development of Laravel projects, launching containers including:

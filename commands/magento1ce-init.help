@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Scaffold a new original Magento CE 1.9.4.x project and its RollDev environment.
+## @category: magento1
+
+ROLL_USAGE=$(cat <<EOF
+\033[33mUsage:\033[0m
+  magento1ce-init <project_name> [ce_version] [target_directory]
+
+\033[33mArguments:\033[0m
+  project_name       Name of the project (required)
+                     Lowercase letters, numbers and hyphens
+                     Must start and end with a letter or number
+
+  ce_version         Magento CE version to install (optional, default: 1.9.4.5)
+                     Supported: 1.9.4.0 to 1.9.4.5
+
+  target_directory   Directory to create the project in (optional)
+                     Default: current directory
+                     The project lands in a subdirectory named after the project
+
+\033[33mDescription:\033[0m
+  Installs the original Magento CE 1.9.4.x from the OpenMage/magento-mirror
+  repository on GitHub as an empty store with one store view and an admin
+  account, and points the cache at Redis. Use this to reproduce an existing
+  Magento 1 shop. For new work, use magento1-init (OpenMage LTS).
+
+\033[33mSoftware versions:\033[0m
+  PHP 7.2, MariaDB 10.3, Redis 5.0, Composer 1, no Node.js
+  The PHP 7.2 images still work but no longer receive rebuilds.
+
+\033[33mMage One:\033[0m
+  Magento CE 1.9.4.x stops at PHP 7.2. With a Mage One subscription
+  (mage-one.com) you can apply their PHP 7.4 and PHP 8 patches after
+  installation, then raise PHP_VERSION in .env.roll and run roll env up.
+
+\033[33mExamples:\033[0m
+  roll magento1ce-init legacystore
+  roll magento1ce-init legacystore 1.9.4.3
+  roll magento1ce-init legacystore 1.9.4.5 ~/Sites/
+
+\033[33mPrerequisites:\033[0m
+  RollDev services must be running (roll svc up)
+
+\033[33mAfter installation:\033[0m
+  Frontend: https://app.<project_name>.test/
+  Admin:    https://app.<project_name>.test/shopmanager/
+  Admin credentials are in admin-credentials.txt in the project root
+
+EOF
+)

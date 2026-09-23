@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Scaffold a new OpenMage LTS (Magento 1) project and its RollDev environment.
+## @category: magento1
+
+ROLL_USAGE=$(cat <<EOF
+\033[33mUsage:\033[0m
+  magento1-init <project_name> [openmage_version] [target_directory]
+
+\033[33mArguments:\033[0m
+  project_name       Name of the project (required)
+                     Lowercase letters, numbers and hyphens
+                     Must start and end with a letter or number
+
+  openmage_version   OpenMage LTS version to install (optional, default: 20.x)
+                     Examples: 20.x, 20.18, 20.18.0
+
+  target_directory   Directory to create the project in (optional)
+                     Default: current directory
+                     The project lands in a subdirectory named after the project
+
+\033[33mDescription:\033[0m
+  Installs OpenMage LTS, the maintained continuation of Magento 1, as an empty
+  store with one store view and an admin account, and points the cache at Redis.
+  For the original Magento CE 1.9.4.x, use magento1ce-init.
+
+\033[33mSoftware versions:\033[0m
+  PHP 8.4, MariaDB 10.11, Redis 7.2, Composer 2, no Node.js
+
+\033[33mExamples:\033[0m
+  roll magento1-init mystore
+  roll magento1-init mystore 20.18.0
+  roll magento1-init mystore 20.x ~/Sites/
+
+\033[33mPrerequisites:\033[0m
+  RollDev services must be running (roll svc up)
+
+\033[33mAfter installation:\033[0m
+  Frontend: https://app.<project_name>.test/
+  Admin:    https://app.<project_name>.test/shopmanager/
+  Admin credentials are in admin-credentials.txt in the project root
+
+EOF
+)
