@@ -185,6 +185,37 @@ Each Mage-OS release is built on a Magento release, and `mageos-init` picks the 
 
 The only difference from `magento2-init`: packages come from `https://repo.mage-os.org/`, so no Magento Marketplace credentials are needed. Mage-OS includes the two-factor authentication module, so the admin user gets the same 2FA setup, with the QR code URL and backup codes in `admin-credentials.txt`.
 
+### Migrating an Existing Magento Project to Mage-OS
+
+`roll mageos-migrate` migrates a project you already run in RollDev, following the [Mage-OS migration guide](https://mage-os.org/get-started/migration-guide/). It takes a full backup first, so you can go back with one command.
+
+```bash
+# Check whether this project can migrate, change nothing
+roll mageos-migrate --dry-run
+
+# Back up, migrate, and finish the guide
+roll mageos-migrate
+```
+
+Only run this against a local or staging environment, never against production.
+
+**What it does:**
+
+1. Starts the environment when it is down, because the checks run inside the php-fpm container.
+2. Checks, before the backup, that `bin/magento --version` reports 2.4.9, that PHP is 8.3 or newer, that `app/etc/env.php` and `bin/magento` exist, and that the project runs in developer mode. It offers to switch the mode for you.
+3. Downloads the official migration script and reports its origin, line count and sha256. The file stays in `.roll/tmp/`, so you can read what ran.
+4. Runs `roll backup all`, which stops the environment, and reports the backup id.
+5. Starts the environment again and waits for the healthchecks.
+6. Runs the migration script as `www-data` in the php-fpm container. The script swaps every `magento/*` package for `mage-os/*`, reinstalls the base files, flushes Redis, clears `generated/` and the static files, and runs `setup:upgrade`.
+7. Finishes step 3 of the guide: `setup:di:compile`, `setup:static-content:deploy -f`, `indexer:reindex` and `cache:flush`.
+8. Reports the new version, which now says Mage-OS.
+
+**Requirements the script itself sets:** Magento 2.4.9 exactly, any patch release, and PHP 8.3 or newer. A 2.4.8 project has to go to 2.4.9 first. The current script migrates to Mage-OS 3.5.0.
+
+**If a step fails,** every message repeats the backup id, so you go back with `roll restore <backup-id>`. Once you have fixed the cause, `roll mageos-migrate --skip-backup` retries without making a second backup.
+
+**Options:** `--dry-run`, `-y`, `--skip-backup`, `--no-security-blocking` (passed to the script when a composer advisory blocks the update), `--script-ref=<branch|tag|commit>` to pin the script version, `--script=<path>` to run your own copy, and `--developer-mode` to switch the mode without being asked. Run `roll mageos-migrate --help` for the full list.
+
 ## Prerequisites
 
 ### Required Setup

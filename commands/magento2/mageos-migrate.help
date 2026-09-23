@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Migrate this Magento Open Source project to Mage-OS, backup first.
+## @category: magento2
+
+ROLL_USAGE=$(cat <<EOF
+\033[33mUsage:\033[0m
+  roll mageos-migrate [--dry-run] [--skip-backup] [--no-security-blocking] [-y]
+
+\033[33mDescription:\033[0m
+  Migrates this project from Magento Open Source to Mage-OS with the official Mage-OS migration
+  script, after taking a full backup. See https://mage-os.org/get-started/migration-guide/
+
+  Never run this against production. Point it at a local or staging environment only.
+
+\033[33mRequirements checked before the backup:\033[0m
+  magento-version    bin/magento --version reports 2.4.9 (any patch release)
+  php-version        the php-fpm container runs PHP 8.3 or newer
+  install            app/etc/env.php and bin/magento exist
+  developer-mode     deploy:mode:show reports developer; roll offers to switch
+
+\033[33mSteps:\033[0m
+  1. Start the environment when it is down, then run the checks above
+  2. Download the migration script and report its origin, line count and sha256
+  3. Take a full backup with roll backup all, which stops the environment
+  4. Start the environment again and wait for the healthchecks
+  5. Run the migration script as www-data inside the php-fpm container
+  6. Finish the guide: setup:di:compile, setup:static-content:deploy -f, indexer:reindex, cache:flush
+  7. Report the new version and the backup id
+
+\033[33mOptions:\033[0m
+  -h, --help                  Display this help menu
+  -y, --yes                   Do not ask for confirmation
+  --dry-run                   Run the checks and the download, change nothing
+  --skip-backup               Skip the backup, for a second attempt after a failed run
+  --no-security-blocking      Let composer advisories through, passed to the migration script
+  --script-ref=<ref>          Download this branch, tag or commit of the script (default: main)
+  --script=<path>             Run a local copy of the script instead of downloading it
+  --developer-mode            Switch to developer mode without asking
+
+\033[33mExamples:\033[0m
+  roll mageos-migrate --dry-run
+  roll mageos-migrate
+  roll mageos-migrate --skip-backup --no-security-blocking
+  roll mageos-migrate --script-ref=1a2b3c4 -y
+
+\033[33mIf something fails:\033[0m
+  Every failure reports the backup id, so the project goes back with:
+    roll restore <backup-id>
+  The downloaded script stays in .roll/tmp, so you can read what ran.
+EOF
+)

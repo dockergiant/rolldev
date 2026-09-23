@@ -159,6 +159,8 @@ roll add-php-ext <ext>             # install extra PHP extension at runtime
 # Magento 2 project creation
 roll magento2-init <name> [version]
 roll mageos-init <name> [version]    # Mage-OS 1.1.0+, same flow as magento2-init
+roll mageos-migrate [--dry-run]      # migrate a Magento 2.4.9 project to Mage-OS; backs up first,
+                                     # then runs the upstream migrate-to-mage-os.sh in php-fpm
 
 # Database & backups
 roll db [connect|import|dump]      # picks mariadb/mariadb-dump or mysql/mysqldump in the container
