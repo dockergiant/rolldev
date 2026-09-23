@@ -5,7 +5,7 @@ x-volumes: &volumes
   - .${ROLL_WEB_ROOT:-}/var/log:/var/www/html/var/log:delegated
 
 x-environment: &environment
-  - CHOWN_DIR_LIST=media ${CHOWN_DIR_LIST:-}
+  - CHOWN_DIR_LIST=media var/log ${CHOWN_DIR_LIST:-}
 
 services:
   nginx: { volumes: *volumes }
