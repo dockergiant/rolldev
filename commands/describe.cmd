@@ -124,7 +124,7 @@ if [[ "${ROLL_REDIS:-0}" == "1" ]]; then
 fi
 
 if [[ "${ROLL_REDISINSIGHT:-0}" == "1" ]]; then
-    service_row "redisinsight" "$(get_status_text redisinsight)" "https://insight.${TRAEFIK_DOMAIN}" ""
+    service_row "redisinsight" "$(get_status_text redisinsight)" "https://redisinsight.${TRAEFIK_DOMAIN}" ""
 fi
 
 if [[ "${ROLL_ELASTICSEARCH:-0}" == "1" ]]; then
