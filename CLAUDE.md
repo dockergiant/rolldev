@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **RollDev** (`roll-docker-stack`) is a Docker-based local development environment framework, written almost entirely in **Bash**. It provides a single `roll` CLI that orchestrates `docker compose` to spin up consistent, per-project containerized stacks for PHP frameworks and CMS platforms (Magento 1/2, Laravel, Symfony, TYPO3, Shopware, WordPress, Akeneo, generic PHP).
 
-- **Current version:** `0.7.0` (see `version` file)
+- **Current version:** `0.8.0` (see `version` file)
 - **Language:** Bash (must stay **Bash 3.2+ compatible** — macOS default shell)
 - **Distribution:** Homebrew tap `dockergiant/roll/roll`
 - **Container images:** pulled from `ghcr.io/dockergiant/*` (built by the sibling `images/` repo)
