@@ -494,11 +494,12 @@ else
     echo -e "\033[33mUsing Elasticsearch ${ELASTICSEARCH_VERSION}\033[0m"
 fi
 
-CACHE_PARAMS="--session-save=${MAGENTO_CACHE_ADAPTER} \\
-            --session-save-${MAGENTO_CACHE_ADAPTER}-host=redis \\
-            --session-save-${MAGENTO_CACHE_ADAPTER}-port=6379 \\
-            --session-save-${MAGENTO_CACHE_ADAPTER}-db=2 \\
-            --session-save-${MAGENTO_CACHE_ADAPTER}-max-concurrency=20 \\
+## Magento registers only the db and redis session handlers; valkey speaks the redis protocol
+CACHE_PARAMS="--session-save=redis \\
+            --session-save-redis-host=redis \\
+            --session-save-redis-port=6379 \\
+            --session-save-redis-db=2 \\
+            --session-save-redis-max-concurrency=20 \\
             --cache-backend=${MAGENTO_CACHE_ADAPTER} \\
             --cache-backend-${MAGENTO_CACHE_ADAPTER}-server=redis \\
             --cache-backend-${MAGENTO_CACHE_ADAPTER}-db=0 \\
