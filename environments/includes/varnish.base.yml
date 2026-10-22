@@ -8,6 +8,8 @@ services:
   varnish:
     hostname: "${ROLL_ENV_NAME}-varnish"
     image: ${ROLL_IMAGE_REPOSITORY}/varnish:${VARNISH_VERSION:-6.0}
+    ## exec'd tools (varnishlog, timeout) need a reaper; varnishd as PID 1 never reaps them
+    init: true
     depends_on:
       - nginx
     labels:
