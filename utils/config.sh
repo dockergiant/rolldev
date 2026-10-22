@@ -76,6 +76,13 @@ function initConfigSchema() {
     ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_OPENSEARCH); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:0")
     ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_ELASTICVUE); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:0")
     ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_REDISINSIGHT); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:0")
+    ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_INSPECTOR); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:0")
+    ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_INSPECTOR_TRACE); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:0")
+    ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_INSPECTOR_TRACE_DEBUG); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:0")
+    ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_INSPECTOR_PROFILE); ROLL_CONFIG_SCHEMA_VALUES+=("enum:off|excimer:off")
+    ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_INSPECTOR_TRACE_DETAIL); ROLL_CONFIG_SCHEMA_VALUES+=("enum:full|lean:full")
+    ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_INSPECTOR_SAMPLE); ROLL_CONFIG_SCHEMA_VALUES+=("enum:10|30|60|off:10")
+    ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_INSPECTOR_VERSION); ROLL_CONFIG_SCHEMA_VALUES+=("string:optional")
     ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_RABBITMQ); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:0")
     ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_MONGODB); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:0")
     ROLL_CONFIG_SCHEMA_KEYS+=(ROLL_BROWSERSYNC); ROLL_CONFIG_SCHEMA_VALUES+=("boolean:0")
@@ -653,6 +660,34 @@ function showConfig() {
     done
 }
 
+## Prints one line per Inspector toggle conflict (error: or warning: prefix); returns the number of errors
+function inspectorConflicts() {
+    local errors=0
+    local inspector trace trace_debug profile newrelic
+    inspector="$(getConfig ROLL_INSPECTOR 0)"
+    trace="$(getConfig ROLL_INSPECTOR_TRACE 0)"
+    trace_debug="$(getConfig ROLL_INSPECTOR_TRACE_DEBUG 0)"
+    profile="$(getConfig ROLL_INSPECTOR_PROFILE off)"
+    newrelic="$(getConfig ROLL_NEWRELIC 0)"
+
+    if [[ "$inspector" != "1" ]] && { [[ "$trace" == "1" ]] || [[ "$trace_debug" == "1" ]] || [[ "$profile" == "excimer" ]]; }; then
+        echo "error:ROLL_INSPECTOR_TRACE, ROLL_INSPECTOR_TRACE_DEBUG and ROLL_INSPECTOR_PROFILE need ROLL_INSPECTOR=1"
+        errors=$((errors + 1))
+    fi
+    if [[ "$newrelic" == "1" ]] && { [[ "$trace" == "1" ]] || [[ "$trace_debug" == "1" ]]; }; then
+        echo "error:ROLL_INSPECTOR_TRACE and ROLL_NEWRELIC cannot both be enabled"
+        errors=$((errors + 1))
+    fi
+    if [[ "$trace_debug" == "1" && "$trace" != "1" ]]; then
+        echo "error:ROLL_INSPECTOR_TRACE_DEBUG needs ROLL_INSPECTOR_TRACE=1"
+        errors=$((errors + 1))
+    fi
+    if [[ "$profile" == "excimer" && "$trace" != "1" ]]; then
+        echo "warning:ROLL_INSPECTOR_PROFILE=excimer needs ROLL_INSPECTOR_TRACE=1; profiling stays off"
+    fi
+    return $errors
+}
+
 ## Check for configuration conflicts
 function checkConfigConflicts() {
     local errors=0
@@ -684,6 +719,17 @@ function checkConfigConflicts() {
         error "REDIS_DISTRIBUTION=valkey needs REDIS_VERSION 8.0 or newer, got: $redis_version"
         errors=$((errors + 1))
     fi
+
+    local line
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        if [[ "$line" == error:* ]]; then
+            error "${line#error:}"
+            errors=$((errors + 1))
+        else
+            warning "${line#warning:}"
+        fi
+    done <<< "$(inspectorConflicts || true)"
 
     return $errors
 }

@@ -1,0 +1,33 @@
+services:
+  inspector:
+    image: ${ROLL_IMAGE_REPOSITORY:-ghcr.io/dockergiant}/inspector:${ROLL_INSPECTOR_VERSION:-latest}
+    hostname: "${ROLL_ENV_NAME}-inspector"
+    ## the Docker socket is root-owned on OrbStack, Docker Desktop and Linux
+    user: root
+    mem_limit: 768m
+    stop_grace_period: 20s
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - ROLL_ENV_NAME=${ROLL_ENV_NAME}
+      - TRAEFIK_DOMAIN=${TRAEFIK_DOMAIN}
+      - ROLL_INSPECTOR_SECRET=${ROLL_INSPECTOR_SECRET}
+      - TRAEFIK_SUBDOMAIN=${TRAEFIK_SUBDOMAIN:-}
+      - ROLL_INSPECTOR_SAMPLE=${ROLL_INSPECTOR_SAMPLE:-10}
+      - ROLL_INSPECTOR_TRACE_DETAIL=${ROLL_INSPECTOR_TRACE_DETAIL:-full}
+    healthcheck:
+      test: ["CMD", "/inspector", "--healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-inspector.tls=true
+      - traefik.http.routers.${ROLL_ENV_NAME}-inspector.priority=10
+      - traefik.http.routers.${ROLL_ENV_NAME}-inspector.rule=Host(`inspector.${TRAEFIK_DOMAIN}`)
+      - traefik.http.routers.${ROLL_ENV_NAME}-inspector.service=${ROLL_ENV_NAME}-inspector
+      - traefik.http.routers.${ROLL_ENV_NAME}-inspector.middlewares=${ROLL_ENV_NAME}-inspector-gate
+      - traefik.http.middlewares.${ROLL_ENV_NAME}-inspector-gate.headers.customrequestheaders.X-Inspector-Gate=${ROLL_INSPECTOR_SECRET}
+      - traefik.http.services.${ROLL_ENV_NAME}-inspector.loadbalancer.server.port=8080
+      - traefik.docker.network=${ROLL_ENV_NAME}_default

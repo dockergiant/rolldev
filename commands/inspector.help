@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+[[ ! ${ROLL_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
+## @description: Open Roll Inspector and switch PHP tracing.
+## @category: environment
+
+ROLL_USAGE=$(cat <<EOF
+\033[33mUsage:\033[0m
+  inspector [open]      Open Roll Inspector for this environment in the browser
+  inspector status      Show the Inspector toggles, container state and tracing support
+  inspector trace on    Turn PHP tracing on in the running php containers until the php containers restart
+  inspector trace off   Turn PHP tracing off in the running php containers until the php containers restart
+
+\033[33mOptions:\033[0m
+  -h, --help            Display this help menu
+
+Inspector needs ROLL_INSPECTOR=1 in .env.roll.
+EOF
+)

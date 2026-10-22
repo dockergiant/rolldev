@@ -116,6 +116,12 @@ Config is loaded from (later overrides earlier):
 | `ROLL_VARNISH` / `ROLL_ELASTICSEARCH` / `ROLL_RABBITMQ` | `0` | default on **only** for magento2 (via `applyEnvTypeDefaults`); Elasticsearch stays off when `ROLL_OPENSEARCH=1` |
 | `ROLL_OPENSEARCH` / `ROLL_DRAGONFLY` / `ROLL_MONGODB` | `0` | |
 | `ROLL_ELASTICVUE` / `ROLL_REDISINSIGHT` | `0` | GUI helper services |
+| `ROLL_INSPECTOR` | `0` | Roll Inspector at `https://inspector.<domain>` |
+| `ROLL_INSPECTOR_TRACE` / `ROLL_INSPECTOR_TRACE_DEBUG` | `0` | PHP tracing in `php-fpm` / also `php-debug`; need `ROLL_INSPECTOR=1` |
+| `ROLL_INSPECTOR_PROFILE` | `off` | `off` or `excimer`; needs `ROLL_INSPECTOR_TRACE=1` |
+| `ROLL_INSPECTOR_TRACE_DETAIL` | `full` | `full` or `lean` (no Magento block, event and plugin spans) |
+| `ROLL_INSPECTOR_SAMPLE` | `10` | metrics sample interval in Inspector: `10`, `30`, `60` or `off` |
+| `ROLL_INSPECTOR_VERSION` | optional | image tag of `inspector` |
 | `ROLL_SELENIUM` / `ROLL_ALLURE` / `ROLL_TEST_DB` | `0` | testing stack |
 | `ROLL_MAGEPACK` / `ROLL_BROWSERSYNC` | `0` | |
 | `ROLL_PUBLISH_PORTS` | `1` | `0` uses `browsersync.noports` so BrowserSync publishes no host ports |
@@ -128,7 +134,9 @@ Config is loaded from (later overrides earlier):
 | `ROLL_RESTART_POLICY` | `always` | |
 | `TRAEFIK_DOMAIN` / `TRAEFIK_SUBDOMAIN` / `TRAEFIK_LISTEN` | / / `127.0.0.1` | routing |
 
-**Conflict rules:** `ROLL_REDIS` and `ROLL_DRAGONFLY` cannot both be `1`, and `REDIS_DISTRIBUTION=valkey` needs `REDIS_VERSION` 8.0 or newer (both fatal in `env.cmd`, reported by `checkConfigConflicts`).
+**Conflict rules:** `ROLL_REDIS` and `ROLL_DRAGONFLY` cannot both be `1`, and `REDIS_DISTRIBUTION=valkey` needs `REDIS_VERSION` 8.0 or newer (both fatal in `env.cmd`, reported by `checkConfigConflicts`). The Inspector rules live once in `inspectorConflicts` (`utils/config.sh`), used by both: the tracing toggles need `ROLL_INSPECTOR=1`, tracing cannot be combined with `ROLL_NEWRELIC=1`, `ROLL_INSPECTOR_TRACE_DEBUG` needs `ROLL_INSPECTOR_TRACE`, and `ROLL_INSPECTOR_PROFILE=excimer` without tracing only warns.
+
+**Inspector lifecycle (`commands/env.cmd`):** with `ROLL_INSPECTOR=1`, `env` creates `${ROLL_HOME_DIR}/inspector/<env>.secret` and exports it as `ROLL_INSPECTOR_SECRET` (the Traefik gate header). `down`, a bare `stop`, and a `stop` that names `opensearch`, `elasticsearch` or `rabbitmq` stop the inspector service first so it restores its captures; the targeted stop starts it again afterwards. With `ROLL_INSPECTOR=0`, `up`, `down` and `stop` stop a leftover inspector container (`up` and `down` also remove it). `roll inspector trace on|off` changes the running php containers only; a container restart returns to the `.env.roll` values.
 
 ## Common Commands
 
@@ -169,6 +177,7 @@ roll magento1ce-init <name> [version]  # original Magento CE 1.9.4.x on PHP 7.2
 # Database & backups
 roll db [connect|import|dump]      # picks mariadb/mariadb-dump or mysql/mysqldump in the container
 roll redis
+roll inspector [open|status|trace on|off]   # Roll Inspector (needs ROLL_INSPECTOR=1)
 roll backup [all|db|redis|...] [--output-dir=PATH --archive-name=NAME --keep-dir]
 roll restore [backup-id] / roll restore --include-source <archive> <dir>   # restore-full is an alias
 roll tableplus                     # open DB GUI (macOS, password kept out of ps)
@@ -200,7 +209,7 @@ Valid env types are auto-discovered from any `environments/*/<type>.base.yml`:
 `akeneo`, `laravel`, `local`, `magento1`, `magento2`, `php`, `shopware`, `symfony`, `typo3`, `vuejs`, `wordpress`.
 
 Shared service fragments in `environments/includes/`:
-`php-fpm` (+ `.darwin`/`.linux`), `nginx` (+ `.darwin`), `db`, `redis`, `redisinsight`, `dragonfly`, `elasticsearch`, `elasticvue`, `opensearch`, `rabbitmq`, `mongodb`, `varnish`, `selenium`, `allure`, `browsersync` (+ `browsersync.noports`), `git`, `networks`.
+`php-fpm` (+ `.darwin`/`.linux`), `nginx` (+ `.darwin`), `db`, `redis`, `redisinsight`, `inspector`, `dragonfly`, `elasticsearch`, `elasticvue`, `opensearch`, `rabbitmq`, `mongodb`, `varnish`, `selenium`, `allure`, `browsersync` (+ `browsersync.noports`), `git`, `networks`.
 
 `db`, `redis`, `elasticsearch`, `opensearch` and `rabbitmq` define compose healthchecks, which `roll env up --wait` and `roll env doctor` rely on. Don't add one to `nginx` or `varnish`: Traefik skips containers whose health is starting or unhealthy, so the site would return a Traefik 404. Look containers up by the `com.docker.compose.service` label, not by building `<env>-<service>-1`: the redis container is named after `REDIS_DISTRIBUTION`.
 

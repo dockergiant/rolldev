@@ -36,6 +36,9 @@ services:
       - ROLL_NEWRELIC=${ROLL_NEWRELIC:-0}
       - NEWRELIC_LICENSE_KEY=${NEWRELIC_LICENSE_KEY:-}
       - NEWRELIC_APP_NAME=${NEWRELIC_APP_NAME:-}
+      - ROLL_INSPECTOR_TRACE=${ROLL_INSPECTOR_TRACE:-0}
+      - ROLL_INSPECTOR_PROFILE=${ROLL_INSPECTOR_PROFILE:-off}
+      - ROLL_INSPECTOR_TRACE_DETAIL=${ROLL_INSPECTOR_TRACE_DETAIL:-full}
     volumes: *volumes
     extra_hosts: *extra_hosts
 
@@ -60,6 +63,10 @@ services:
       - ROLL_NEWRELIC=${ROLL_NEWRELIC:-0}
       - NEWRELIC_LICENSE_KEY=${NEWRELIC_LICENSE_KEY:-}
       - NEWRELIC_APP_NAME=${NEWRELIC_APP_NAME:-}
+      ## php-debug runs Xdebug; it traces only when asked for separately
+      - ROLL_INSPECTOR_TRACE=${ROLL_INSPECTOR_TRACE_DEBUG:-0}
+      - ROLL_INSPECTOR_PROFILE=${ROLL_INSPECTOR_PROFILE:-off}
+      - ROLL_INSPECTOR_TRACE_DETAIL=${ROLL_INSPECTOR_TRACE_DETAIL:-full}
     volumes: *volumes
     extra_hosts: *extra_hosts
     depends_on:

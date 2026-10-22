@@ -26,3 +26,15 @@ Setting ``TRAEFIK_LISTEN=0.0.0.0`` can be quite useful in some cases, but be awa
 :::
 
 After changing settings in `~/.roll/.env.roll`, please run `roll svc up` to apply.
+
+## Roll Inspector
+
+Roll Inspector runs per environment when `ROLL_INSPECTOR=1` is set in `.env.roll`. It shows what a request did across Varnish, nginx, PHP, Valkey or Redis, RabbitMQ, the database and the search engine, and offers a few write actions such as cache purges.
+
+* URL: `https://inspector.<TRAEFIK_DOMAIN>`. `roll inspector` opens it and `roll inspector status` shows the toggles.
+* Tracing needs `ROLL_INSPECTOR_TRACE=1`, which cannot run next to `ROLL_NEWRELIC=1`.
+* Keys, dashboards, the API and troubleshooting: see [Roll Inspector](inspector.md).
+
+:::{warning}
+Inspector has no login and holds the Docker socket. That risk is accepted because it runs on a local development machine. A hop gate rejects connections that bypass Traefik, but processes on your host and code in any container can still reach it through Traefik. When Traefik listens beyond loopback (`TRAEFIK_LISTEN=0.0.0.0`), Inspector refuses every write action and only serves reads.
+:::

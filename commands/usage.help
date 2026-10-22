@@ -63,6 +63,7 @@ RollDev version $(cat ${ROLL_DIR}/version)
   restore               Restore data and configuration from a backup (see \033[31m'roll restore -h'\033[0m for details)
   restore-full          Restore an entire environment including source code (see \033[31m'roll restore-full -h'\033[0m for details)
   duplicate             Duplicate the current environment under a new name (see \033[31m'roll duplicate -h'\033[0m for details)
+  inspector             Open Roll Inspector and switch PHP tracing (see \033[31m'roll inspector -h'\033[0m for details)
   describe              Describe the assembled docker-compose stack of the current environment
   doctor                Check whether the current environment is fit to run (see \033[31m'roll doctor -h'\033[0m for details)
   has-command           Exit 0 when a roll command is available, 1 when it is not

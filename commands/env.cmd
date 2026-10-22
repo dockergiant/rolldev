@@ -16,11 +16,30 @@ fi
 if [[ ${ROLL_REDIS} -eq 1 && "${REDIS_DISTRIBUTION:-redis}" == "valkey" ]] && [[ $(version "${REDIS_VERSION}") -lt $(version "8.0") ]]; then
   fatal "Valkey images are published from version 8.0, but REDIS_VERSION=${REDIS_VERSION}. Set REDIS_VERSION to 8.1 or 9.0 in .env.roll."
 fi
+INSPECTOR_CONFLICTS="$(inspectorConflicts || true)"
+while IFS= read -r INSPECTOR_CONFLICT; do
+  [[ -z "${INSPECTOR_CONFLICT}" ]] && continue
+  if [[ "${INSPECTOR_CONFLICT}" == error:* ]]; then
+    fatal "${INSPECTOR_CONFLICT#error:}"
+  fi
+  warning "${INSPECTOR_CONFLICT#warning:}"
+done <<< "${INSPECTOR_CONFLICTS}"
+
 ## allow return codes from sub-process to bubble up normally
 trap '' ERR
 
 ## loadEnvConfig already read ~/.roll/.env and derived the env-type defaults (utils/config.sh)
 export ROLL_IMAGE_REPOSITORY="${ROLL_IMAGE_REPOSITORY:-"ghcr.io/dockergiant"}"
+
+if [[ ${ROLL_INSPECTOR} -eq 1 ]]; then
+  ROLL_INSPECTOR_SECRET_FILE="${ROLL_HOME_DIR}/inspector/${ROLL_ENV_NAME}.secret"
+  if [[ ! -s "${ROLL_INSPECTOR_SECRET_FILE}" ]]; then
+    mkdir -p "${ROLL_HOME_DIR}/inspector"
+    ( umask 077; LC_ALL=C tr -dc 'a-f0-9' < /dev/urandom | head -c 48 > "${ROLL_INSPECTOR_SECRET_FILE}" )
+  fi
+  ROLL_INSPECTOR_SECRET="$(cat "${ROLL_INSPECTOR_SECRET_FILE}")"
+  export ROLL_INSPECTOR_SECRET
+fi
 
 ## configure docker-compose files
 DOCKER_COMPOSE_ARGS=()
@@ -78,6 +97,9 @@ fi
 
 [[ ${ROLL_DRAGONFLY} -eq 1 ]] \
     && appendEnvPartialIfExists "dragonfly"
+
+[[ ${ROLL_INSPECTOR} -eq 1 ]] \
+    && appendEnvPartialIfExists "inspector"
 
 appendEnvPartialIfExists "${ROLL_ENV_TYPE}"
 
@@ -144,6 +166,38 @@ if [[ "${ROLL_PARAMS[0]}" == "sh" ]]; then
     ROLL_PARAMS=("exec" "-T" "${ROLL_PARAMS[1]}" "sh" "-c" "${ROLL_PARAMS[2]}")
 fi
 
+## Inspector restores capture settings on stop, so it goes before the services it changed
+INSPECTOR_RESTART=0
+if [[ ${ROLL_INSPECTOR} -eq 1 ]]; then
+  INSPECTOR_PRESTOP=0
+  if [[ "${ROLL_PARAMS[0]}" == "down" ]] || { [[ "${ROLL_PARAMS[0]}" == "stop" ]] && (( ${#ROLL_PARAMS[@]} == 1 )); }; then
+    INSPECTOR_PRESTOP=1
+  elif [[ "${ROLL_PARAMS[0]}" == "stop" ]] && ! containsElement "inspector" "${ROLL_PARAMS[@]:1}"; then
+    for INSPECTOR_STOPPED in opensearch elasticsearch rabbitmq; do
+      if containsElement "${INSPECTOR_STOPPED}" "${ROLL_PARAMS[@]:1}"; then
+        INSPECTOR_PRESTOP=1
+        INSPECTOR_RESTART=1
+      fi
+    done
+  fi
+  if (( INSPECTOR_PRESTOP )); then
+    docker compose \
+        --env-file "${ROLL_ENV_PATH}/.env.roll" --project-directory "${ROLL_ENV_PATH}" -p "${ROLL_ENV_NAME}" \
+        "${DOCKER_COMPOSE_ARGS[@]}" stop inspector || true
+  fi
+elif [[ "${ROLL_PARAMS[0]}" == "up" || "${ROLL_PARAMS[0]}" == "down" || "${ROLL_PARAMS[0]}" == "stop" ]]; then
+  ## a container left over from ROLL_INSPECTOR=1 keeps the Docker socket and its router, and blocks network removal
+  INSPECTOR_ORPHAN="$(docker ps -aq \
+      --filter "label=com.docker.compose.project=${ROLL_ENV_NAME}" \
+      --filter "label=com.docker.compose.service=inspector" 2>/dev/null || true)"
+  if [[ -n "${INSPECTOR_ORPHAN}" ]]; then
+    docker stop -t 20 ${INSPECTOR_ORPHAN} >/dev/null 2>&1 || true
+    if [[ "${ROLL_PARAMS[0]}" != "stop" ]]; then
+      docker rm ${INSPECTOR_ORPHAN} >/dev/null 2>&1 || true
+    fi
+  fi
+fi
+
 ## disconnect peered service containers from environment network
 if [[ "${ROLL_PARAMS[0]}" == "down" ]]; then
     disconnectPeeredServices "$(renderEnvNetworkName)"
@@ -199,6 +253,12 @@ fi
 docker compose \
     --env-file "${ROLL_ENV_PATH}/.env.roll" --project-directory "${ROLL_ENV_PATH}" -p "${ROLL_ENV_NAME}" \
     "${DOCKER_COMPOSE_ARGS[@]}" "${ROLL_PARAMS[@]}" "$@"
+
+if (( INSPECTOR_RESTART )); then
+    docker compose \
+        --env-file "${ROLL_ENV_PATH}/.env.roll" --project-directory "${ROLL_ENV_PATH}" -p "${ROLL_ENV_NAME}" \
+        "${DOCKER_COMPOSE_ARGS[@]}" start inspector || true
+fi
 
 if [[ ("${ROLL_PARAMS[0]}" == "up" || "${ROLL_PARAMS[0]}" == "start") && -n "${ROLL_EXTRA_PHP_EXT}" ]]; then
   info "Adding additional PHP extension, This may take a while... (output hidden)"

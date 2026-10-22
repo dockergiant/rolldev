@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 510" width="1200" height="510" role="img" aria-labelledby="flow-title flow-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" fill="#0f172a">
+  <title id="flow-title">One traced request</title>
+  <desc id="flow-desc">A request that misses Varnish runs in one FPM worker. dd-trace hooks in Magento, PDO, phpredis and curl emit spans that form one trace. After the request the trace goes as msgpack v0.4 to inspector:8126, where Inspector computes self time, hot spans and N+1 for the UI and API. In parallel the Excimer profiler, started by the prepend file on traced requests, takes 5 ms samples, posts a speedscope profile to /profiles/ with the trace id, and the UI draws it as a flame graph.</desc>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="arr-push" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#be185d"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="510" fill="#ffffff"/>
+  <text x="30" y="32" font-size="16" font-weight="600">One traced request, from hook to flame graph</text>
+
+  <!-- Lane labels -->
+  <text x="205" y="68" fill="#475569"><tspan font-weight="600" fill="#0f172a">Spans</tspan> · dd-trace, when ROLL_INSPECTOR_TRACE=1 or roll inspector trace on</text>
+  <text x="205" y="354" fill="#475569"><tspan font-weight="600" fill="#0f172a">Profile</tspan> · Excimer, when ROLL_INSPECTOR_PROFILE=excimer as well</text>
+
+  <!-- Request -->
+  <rect x="30" y="140" width="120" height="122" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+  <text x="42" y="164" font-size="13" font-weight="600">Request</text>
+  <text x="42" y="184">GET /shoes.html</text>
+  <text x="42" y="200" fill="#475569">Varnish miss</text>
+  <text x="42" y="216" fill="#475569">one FPM worker</text>
+  <rect x="42" y="228" width="96" height="18" rx="9" fill="#F5B544"/>
+  <text x="90" y="241" text-anchor="middle" font-size="10.5" font-weight="600">X-Varnish: xid</text>
+
+  <!-- dd-trace hooks -->
+  <rect x="205" y="80" width="185" height="230" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+  <text x="219" y="104" font-size="13" font-weight="600">dd-trace hooks</text>
+  <rect x="219" y="124" width="10" height="10" rx="2" fill="#FF9BC1"/>
+  <text x="235" y="133" font-weight="600">Magento</text>
+  <text x="219" y="149" font-size="10.5" fill="#475569">controller, blocks, templates,</text>
+  <text x="219" y="163" font-size="10.5" fill="#475569">events, plugins, observers</text>
+  <text x="219" y="189" font-weight="600">PDO</text>
+  <text x="219" y="205" font-size="10.5" fill="#475569">every SQL query</text>
+  <rect x="219" y="222" width="10" height="10" rx="2" fill="#6CB6FF"/>
+  <text x="235" y="231" font-weight="600">phpredis</text>
+  <text x="219" y="247" font-size="10.5" fill="#475569">cache and session calls</text>
+  <rect x="219" y="264" width="10" height="10" rx="2" fill="#C79BFF"/>
+  <text x="235" y="273" font-weight="600">curl</text>
+  <text x="219" y="289" font-size="10.5" fill="#475569">OpenSearch, outbound HTTP</text>
+
+  <!-- Spans -->
+  <rect x="440" y="80" width="210" height="230" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+  <text x="454" y="104" font-size="13" font-weight="600">Spans (one trace)</text>
+  <g font-size="10.5">
+    <text x="454" y="128">magento.request</text>
+    <text x="464" y="148">controller</text>
+    <text x="474" y="168">block · template</text>
+    <text x="484" y="188">PDO.query ×4</text>
+    <text x="474" y="208">redis GET</text>
+    <text x="474" y="228">curl search</text>
+  </g>
+  <g fill="#94a3b8">
+    <rect x="580" y="119" width="56" height="11" rx="2"/>
+    <rect x="583" y="139" width="51" height="11" rx="2"/>
+    <rect x="586" y="159" width="25" height="11" rx="2"/>
+    <rect x="588" y="179" width="4" height="11" rx="1"/>
+    <rect x="594" y="179" width="4" height="11" rx="1"/>
+    <rect x="600" y="179" width="4" height="11" rx="1"/>
+    <rect x="606" y="179" width="4" height="11" rx="1"/>
+    <rect x="613" y="199" width="4" height="11" rx="1"/>
+    <rect x="619" y="219" width="14" height="11" rx="2"/>
+  </g>
+  <line x1="454" y1="244" x2="636" y2="244" stroke="#cbd5e1"/>
+  <text x="454" y="264" fill="#475569">root span tags:</text>
+  <text x="454" y="280">varnish.xid, http.url</text>
+  <text x="454" y="296" fill="#475569">bars: start and duration</text>
+
+  <!-- Inspector analysis -->
+  <rect x="775" y="80" width="185" height="230" rx="8" fill="#eef2f7" stroke="#334155" stroke-width="1.5"/>
+  <text x="789" y="104" font-size="13" font-weight="600">Inspector analysis</text>
+  <text x="789" y="126" fill="#475569">trace store, key = trace id</text>
+  <text x="789" y="150">self time per span</text>
+  <text x="789" y="168">hot spans with ancestry</text>
+  <text x="789" y="186">N+1: repeated identical</text>
+  <text x="789" y="200">SQL and cache calls</text>
+  <text x="789" y="218">time by type: SQL, cache,</text>
+  <text x="789" y="232">search, HTTP, PHP</text>
+  <text x="789" y="256" fill="#475569">timeline: Varnish log row</text>
+  <text x="789" y="270" fill="#475569">joined through the xid</text>
+
+  <!-- UI and API -->
+  <rect x="1005" y="80" width="165" height="230" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+  <text x="1019" y="104" font-size="13" font-weight="600">UI and API</text>
+  <text x="1019" y="126">Bottlenecks</text>
+  <text x="1019" y="144">Waterfall · By type</text>
+  <text x="1019" y="162">Hotspots: p95 by route</text>
+  <text x="1019" y="186" fill="#475569">/api/v1/traces/{id}</text>
+  <text x="1019" y="200" fill="#475569">and …/{id}/analysis</text>
+  <text x="1019" y="224" fill="#475569">userscript badge,</text>
+  <text x="1019" y="238" fill="#475569">DevTools tab, MCP tools</text>
+
+  <!-- Lane 1 arrows -->
+  <g stroke="#334155" stroke-width="1.5" fill="none" marker-end="url(#arr)">
+    <line x1="150" y1="180" x2="204" y2="180"/>
+    <line x1="390" y1="195" x2="439" y2="195"/>
+    <line x1="960" y1="195" x2="1004" y2="195"/>
+  </g>
+  <line x1="650" y1="195" x2="774" y2="195" stroke="#be185d" stroke-width="2.2" marker-end="url(#arr-push)"/>
+  <g text-anchor="middle" fill="#334155">
+    <text x="177" y="173">runs</text>
+    <text x="415" y="188">emit</text>
+    <text x="982" y="188">JSON</text>
+  </g>
+  <g text-anchor="middle">
+    <text x="712" y="172" font-weight="600" fill="#be185d">msgpack v0.4</text>
+    <text x="712" y="186">PUT /v0.4/traces</text>
+    <text x="712" y="213">→ inspector:8126</text>
+    <text x="712" y="227" fill="#475569">after the request</text>
+  </g>
+
+  <!-- Lane 2 boxes -->
+  <rect x="205" y="366" width="185" height="90" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+  <rect x="219" y="380" width="10" height="10" rx="2" fill="#FF9BC1"/>
+  <text x="235" y="389" font-size="13" font-weight="600">Excimer</text>
+  <text x="219" y="408">sampling profiler, 5 ms</text>
+  <text x="219" y="424" fill="#475569">started by the prepend file</text>
+  <text x="219" y="440" fill="#475569">on traced requests only</text>
+
+  <rect x="440" y="366" width="210" height="90" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+  <text x="454" y="389" font-size="13" font-weight="600">Profile</text>
+  <text x="454" y="408">speedscope JSON</text>
+  <text x="454" y="424" fill="#475569">call stack per sample</text>
+  <text x="454" y="440" fill="#475569">sent at shutdown, up to 5 MB</text>
+
+  <rect x="775" y="366" width="185" height="90" rx="8" fill="#eef2f7" stroke="#334155" stroke-width="1.5"/>
+  <text x="789" y="389" font-size="13" font-weight="600">Profile store</text>
+  <text x="789" y="408">same key as the trace</text>
+  <text x="789" y="424" fill="#475569">GET …/traces/{id}/profile</text>
+
+  <rect x="1005" y="366" width="165" height="90" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+  <text x="1019" y="389" font-size="13" font-weight="600">Flame graph</text>
+  <text x="1019" y="408">icicle, merged by call path</text>
+  <text x="1019" y="424" fill="#475569">no profile: draws the</text>
+  <text x="1019" y="440" fill="#475569">span tree instead</text>
+
+  <!-- Lane 2 arrows -->
+  <path d="M90,262 V411 H204" fill="none" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+  <g text-anchor="middle" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" paint-order="stroke" fill="#0f172a">
+    <text x="90" y="318" font-weight="600">auto_prepend_file</text>
+    <text x="90" y="332">inspector-prepend.php</text>
+  </g>
+  <g stroke="#334155" stroke-width="1.5" fill="none" marker-end="url(#arr)">
+    <line x1="390" y1="411" x2="439" y2="411"/>
+    <line x1="960" y1="411" x2="1004" y2="411"/>
+  </g>
+  <line x1="650" y1="411" x2="774" y2="411" stroke="#be185d" stroke-width="2.2" marker-end="url(#arr-push)"/>
+  <g text-anchor="middle" fill="#334155">
+    <text x="415" y="404">samples</text>
+    <text x="982" y="404">JSON</text>
+  </g>
+  <g text-anchor="middle">
+    <text x="712" y="390" font-weight="600" fill="#be185d">POST :8126</text>
+    <text x="712" y="404">/profiles/&lt;trace id&gt;</text>
+    <text x="712" y="429" fill="#475569">curl, 500 ms cap</text>
+  </g>
+
+  <!-- trace id join -->
+  <line x1="867" y1="311" x2="867" y2="365" stroke="#334155" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="875" y="342" fill="#334155">joined by trace id</text>
+
+  <text x="30" y="492" fill="#475569">Tracing off removes the ini, so ddtrace is not loaded; Excimer stays loaded but idle. Nothing leaves the machine: Inspector plays the Datadog agent, no account needed.</text>
+</svg>

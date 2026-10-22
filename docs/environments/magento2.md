@@ -105,6 +105,7 @@ The below example demonstrates the from-scratch setup of the Magento 2 applicati
         ROLL_RABBITMQ=1
         ROLL_REDIS=1
         ROLL_REDISINSIGHT=1
+        ROLL_INSPECTOR=0
         ROLL_DRAGONFLY=0
 
         DB_DISTRIBUTION=mariadb

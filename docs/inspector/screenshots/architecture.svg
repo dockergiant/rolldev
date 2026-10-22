@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 890" width="1200" height="890" role="img" aria-labelledby="arch-title arch-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" fill="#0f172a">
+  <title id="arch-title">Roll Inspector architecture</title>
+  <desc id="arch-desc">A shop request runs browser, Traefik, Varnish, nginx, php-fpm. The X-Varnish xid travels with the backend request. php-fpm pushes spans and profiles to Inspector on port 8126 while tracing is on. Inspector reads Varnish through docker exec, Valkey over TCP, OpenSearch and RabbitMQ over HTTP, nginx through docker logs and php-fpm through a privileged /proc walk and env.php. Inside, a metrics sampler, live sources, a per-request timeline join and the trace store feed port 8080, which serves the web UI, /api/v1, the userscript, the DevTools extension and the rolldev MCP tools.</desc>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="arr-push" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#be185d"/>
+    </marker>
+    <marker id="arr-xid" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b45309"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="890" fill="#ffffff"/>
+
+  <text x="30" y="32" font-size="16" font-weight="600">Roll Inspector: how the parts connect</text>
+
+  <!-- xid bracket: Varnish to php-fpm -->
+  <path d="M495,70 V56 H1010 V68" fill="none" stroke="#b45309" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr-xid)"/>
+  <text x="752" y="49" text-anchor="middle" fill="#92400e">X-Varnish: &lt;xid&gt; travels with the backend request; dd-trace stores it as span tag varnish.xid</text>
+
+  <!-- Row A: request path -->
+  <g>
+    <rect x="30" y="70" width="110" height="72" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+    <text x="42" y="96" font-size="13" font-weight="600">Browser</text>
+    <text x="42" y="114" fill="#475569">storefront</text>
+
+    <rect x="230" y="70" width="110" height="72" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+    <text x="242" y="96" font-size="13" font-weight="600">Traefik</text>
+    <text x="242" y="114" fill="#475569">TLS, routing</text>
+    <text x="242" y="130" fill="#475569">also inspector.*</text>
+
+    <rect x="430" y="70" width="130" height="72" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+    <rect x="442" y="86" width="10" height="10" rx="2" fill="#F5B544"/>
+    <text x="458" y="96" font-size="13" font-weight="600">Varnish</text>
+    <text x="442" y="114" fill="#475569">full-page cache</text>
+    <text x="442" y="130" fill="#475569">logs every xid</text>
+
+    <rect x="650" y="70" width="110" height="72" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+    <text x="662" y="96" font-size="13" font-weight="600">nginx</text>
+    <text x="662" y="114" fill="#475569">web server</text>
+    <text x="662" y="130" fill="#475569">access log</text>
+
+    <rect x="850" y="70" width="320" height="72" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+    <rect x="862" y="86" width="10" height="10" rx="2" fill="#FF9BC1"/>
+    <text x="878" y="96" font-size="13" font-weight="600">php-fpm · Magento 2</text>
+    <text x="862" y="114" fill="#475569">dd-trace 1.26 (spans) · Excimer (5 ms samples)</text>
+    <text x="862" y="130" fill="#475569">talks to Valkey, OpenSearch, RabbitMQ, MySQL</text>
+  </g>
+
+  <!-- Row A arrows -->
+  <g stroke="#334155" stroke-width="1.5" fill="none" marker-end="url(#arr)">
+    <line x1="140" y1="106" x2="229" y2="106"/>
+    <line x1="340" y1="106" x2="429" y2="106"/>
+    <line x1="560" y1="106" x2="649" y2="106"/>
+    <line x1="760" y1="106" x2="849" y2="106"/>
+  </g>
+  <g text-anchor="middle" fill="#334155">
+    <text x="185" y="99">HTTPS</text>
+    <text x="385" y="99">HTTP</text>
+    <text x="605" y="99">miss / pass</text>
+    <text x="805" y="99">FastCGI</text>
+  </g>
+  <g>
+    <rect x="588" y="113" width="34" height="16" rx="8" fill="#F5B544"/>
+    <text x="605" y="125" text-anchor="middle" font-size="10.5" font-weight="600">xid</text>
+    <rect x="788" y="113" width="34" height="16" rx="8" fill="#F5B544"/>
+    <text x="805" y="125" text-anchor="middle" font-size="10.5" font-weight="600">xid</text>
+  </g>
+
+  <!-- Row B: backing services -->
+  <text x="30" y="240" fill="#475569">Backing services: Inspector installs nothing in them</text>
+  <g>
+    <rect x="30" y="250" width="130" height="72" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+    <rect x="42" y="266" width="10" height="10" rx="2" fill="#6CB6FF"/>
+    <text x="58" y="276" font-size="13" font-weight="600">Valkey</text>
+    <text x="42" y="294" fill="#475569">cache and sessions</text>
+
+    <rect x="180" y="250" width="130" height="72" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+    <rect x="192" y="266" width="10" height="10" rx="2" fill="#C79BFF"/>
+    <text x="208" y="276" font-size="13" font-weight="600">OpenSearch</text>
+    <text x="192" y="294" fill="#475569">catalog search</text>
+
+    <rect x="330" y="250" width="130" height="72" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+    <rect x="342" y="266" width="10" height="10" rx="2" fill="#7EE2A8"/>
+    <text x="358" y="276" font-size="13" font-weight="600">RabbitMQ</text>
+    <text x="342" y="294" fill="#475569">message queue</text>
+  </g>
+
+  <!-- Inspector reads (dashed) -->
+  <g stroke="#334155" stroke-width="1.5" fill="none" stroke-dasharray="5 4" marker-end="url(#arr)">
+    <line x1="95" y1="420" x2="95" y2="323"/>
+    <line x1="245" y1="420" x2="245" y2="323"/>
+    <line x1="395" y1="420" x2="395" y2="323"/>
+    <line x1="495" y1="420" x2="495" y2="143"/>
+    <line x1="705" y1="420" x2="705" y2="143"/>
+    <line x1="900" y1="420" x2="900" y2="143"/>
+  </g>
+
+  <!-- read labels, haloed over their lines -->
+  <g text-anchor="middle" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" paint-order="stroke" fill="#0f172a">
+    <text x="95" y="351" font-weight="600">own TCP client</text>
+    <text x="95" y="365">INFO · SCAN/GET</text>
+    <text x="95" y="379">MONITOR</text>
+
+    <text x="245" y="344" font-weight="600">HTTP API</text>
+    <text x="245" y="358">_cat · _nodes/stats</text>
+    <text x="245" y="372">Query Insights</text>
+    <text x="245" y="386">slowlog capture</text>
+
+    <text x="395" y="351" font-weight="600">management API</text>
+    <text x="395" y="365">queues · rates</text>
+    <text x="395" y="379">peek · firehose</text>
+  </g>
+  <g fill="#0f172a">
+    <text x="503" y="196" font-weight="600">docker exec</text>
+    <text x="503" y="210">varnishlog -g request</text>
+    <text x="503" y="224">varnishstat -j</text>
+    <text x="503" y="238">varnishadm</text>
+    <text x="503" y="252">+ HTTP PURGE</text>
+
+    <text x="713" y="196" font-weight="600">docker logs</text>
+    <text x="713" y="210">access log lines</text>
+
+    <text x="908" y="182" font-weight="600">docker exec (privileged)</text>
+    <text x="908" y="196">/proc walk: socket → PID</text>
+    <text x="908" y="210">env.php as www-data</text>
+    <text x="908" y="224" fill="#475569">cache prefixes, db numbers</text>
+  </g>
+
+  <!-- php-fpm push to :8126 -->
+  <line x1="1110" y1="143" x2="1110" y2="465" stroke="#be185d" stroke-width="2.2" marker-end="url(#arr-push)"/>
+  <g text-anchor="end">
+    <text x="1100" y="286" font-weight="600" fill="#be185d">only while tracing is on</text>
+    <text x="1100" y="300">spans: msgpack v0.4</text>
+    <text x="1100" y="314">profiles: speedscope JSON</text>
+    <text x="1100" y="328">→ inspector:8126</text>
+    <text x="1100" y="342" fill="#475569">OTLP/HTTP on :4318 too</text>
+  </g>
+
+  <!-- Inspector -->
+  <rect x="30" y="420" width="1140" height="260" rx="10" fill="#eef2f7" stroke="#334155" stroke-width="1.5"/>
+  <text x="48" y="448" font-size="14" font-weight="600">Roll Inspector</text>
+  <text x="160" y="448" fill="#475569">one container per env (ROLL_INSPECTOR=1) · reaches services through the Docker socket and their own protocols</text>
+  <rect x="1084" y="411" width="52" height="18" rx="9" fill="#ffffff" stroke="#be185d" stroke-width="1.5"/>
+  <text x="1110" y="424" text-anchor="middle" font-weight="600" fill="#be185d">:8126</text>
+
+  <g>
+    <rect x="50" y="466" width="240" height="144" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="64" y="490" font-size="12.5" font-weight="600">Metrics sampler</text>
+    <text x="64" y="510">every 10 s (30, 60 or paused)</text>
+    <text x="64" y="526">varnishstat -j · INFO</text>
+    <text x="64" y="542">_nodes/stats · /api/overview</text>
+    <text x="64" y="558">→ 60-minute ring per service</text>
+    <text x="64" y="574" fill="#475569">feeds the Health dashboards</text>
+
+    <rect x="330" y="466" width="240" height="144" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="344" y="490" font-size="12.5" font-weight="600">Live sources</text>
+    <text x="344" y="510">varnishlog · MONITOR</text>
+    <text x="344" y="526">nginx log · Query Insights</text>
+    <text x="344" y="542">run only while someone watches:</text>
+    <text x="344" y="558">Overview, live drawer,</text>
+    <text x="344" y="574">an /api/v1 lease</text>
+
+    <rect x="610" y="466" width="250" height="144" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="624" y="490" font-size="12.5" font-weight="600">Timeline: one row per request</text>
+    <text x="624" y="510">Varnish log ⇄ trace via xid</text>
+    <text x="624" y="526">/proc map: socket ⇄ FPM PID,</text>
+    <text x="624" y="542">so Redis calls join their request</text>
+    <text x="624" y="558">tracing on: the Valkey lane comes</text>
+    <text x="624" y="574">from the trace's own Redis spans</text>
+
+    <rect x="900" y="466" width="250" height="144" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+    <rect x="914" y="480" width="10" height="10" rx="2" fill="#FF9BC1"/>
+    <text x="930" y="490" font-size="12.5" font-weight="600">Trace store + analysis</text>
+    <text x="914" y="510">bounded, in memory (256 MB)</text>
+    <text x="914" y="526">self time per span</text>
+    <text x="914" y="542">hot spans with ancestry</text>
+    <text x="914" y="558">N+1: repeated identical calls</text>
+    <text x="914" y="574">profile → flame graph</text>
+  </g>
+  <g stroke="#334155" stroke-width="1.5" fill="none" marker-end="url(#arr)">
+    <line x1="570" y1="540" x2="609" y2="540"/>
+    <line x1="900" y1="540" x2="861" y2="540"/>
+  </g>
+  <g text-anchor="middle" font-size="10" fill="#334155">
+    <text x="590" y="533">events</text>
+    <text x="880" y="533">spans</text>
+  </g>
+
+  <rect x="50" y="626" width="1100" height="36" rx="6" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="600" y="648" text-anchor="middle"><tspan font-weight="600">:8080</tspan>   UI · /api (writes: same origin + confirm) · /api/v1 (read-only, every origin, OpenAPI at /api/v1/openapi.json) · SSE stream</text>
+
+  <!-- Clients -->
+  <g stroke="#334155" stroke-width="1.5" fill="none" marker-end="url(#arr)">
+    <line x1="130" y1="750" x2="130" y2="681"/>
+    <line x1="365" y1="750" x2="365" y2="681"/>
+    <line x1="600" y1="750" x2="600" y2="681"/>
+    <line x1="835" y1="750" x2="835" y2="681"/>
+    <line x1="1070" y1="750" x2="1070" y2="681"/>
+  </g>
+  <g fill="#334155">
+    <text x="138" y="720">HTTPS · SSE</text>
+    <text x="373" y="720">GET, any origin</text>
+    <text x="608" y="720">GET /api/v1</text>
+    <text x="843" y="720">GET /api/v1</text>
+    <text x="1078" y="720">GET /api/v1</text>
+  </g>
+  <g>
+    <rect x="30" y="750" width="200" height="60" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+    <text x="42" y="774" font-size="13" font-weight="600">Web UI</text>
+    <text x="42" y="794" fill="#475569">Overview, traces, dashboards</text>
+
+    <rect x="265" y="750" width="200" height="60" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+    <text x="277" y="774" font-size="13" font-weight="600">/api/v1</text>
+    <text x="277" y="794" fill="#475569">read-only JSON for your own tools</text>
+
+    <rect x="500" y="750" width="200" height="60" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+    <text x="512" y="774" font-size="13" font-weight="600">Userscript</text>
+    <text x="512" y="794" fill="#475569">badge on every shop page</text>
+
+    <rect x="735" y="750" width="200" height="60" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+    <text x="747" y="774" font-size="13" font-weight="600">DevTools extension</text>
+    <text x="747" y="794" fill="#475569">Roll Inspector tab</text>
+
+    <rect x="970" y="750" width="200" height="60" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+    <text x="982" y="774" font-size="13" font-weight="600">rolldev MCP tools</text>
+    <text x="982" y="794" fill="#475569">six read-only tools for Claude</text>
+  </g>
+  <text x="30" y="832" fill="#475569">Clients: all reach Inspector through Traefik at https://inspector.&lt;domain&gt;, which has no login</text>
+
+  <!-- Legend -->
+  <g>
+    <line x1="30" y1="862" x2="60" y2="862" stroke="#334155" stroke-width="1.5"/>
+    <text x="68" y="866">request path, client calls</text>
+    <line x1="230" y1="862" x2="260" y2="862" stroke="#334155" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <text x="268" y="866">Inspector reads, through the Docker socket or the service's own protocol</text>
+    <line x1="680" y1="862" x2="710" y2="862" stroke="#be185d" stroke-width="2.2"/>
+    <text x="718" y="866">pushed by php-fpm</text>
+    <rect x="840" y="854" width="34" height="16" rx="8" fill="#F5B544"/>
+    <text x="857" y="866" text-anchor="middle" font-size="10.5" font-weight="600">xid</text>
+    <text x="882" y="866">Varnish transaction id</text>
+  </g>
+</svg>

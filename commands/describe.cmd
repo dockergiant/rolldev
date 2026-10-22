@@ -127,6 +127,10 @@ if [[ "${ROLL_REDISINSIGHT:-0}" == "1" ]]; then
     service_row "redisinsight" "$(get_status_text redisinsight)" "https://redisinsight.${TRAEFIK_DOMAIN}" ""
 fi
 
+if [[ "${ROLL_INSPECTOR:-0}" == "1" ]]; then
+    service_row "inspector" "$(get_status_text inspector)" "https://inspector.${TRAEFIK_DOMAIN}" ""
+fi
+
 if [[ "${ROLL_ELASTICSEARCH:-0}" == "1" ]]; then
     service_row "elasticsearch" "$(get_status_text elasticsearch)" "InDocker: elasticsearch:9200" "ES ${ELASTICSEARCH_VERSION:-7.17}"
 fi

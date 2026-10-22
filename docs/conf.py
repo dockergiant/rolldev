@@ -34,7 +34,7 @@ author = ''
 version = ''
 release = ''
 
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', 'superpowers']
 
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]

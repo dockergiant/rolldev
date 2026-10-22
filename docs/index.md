@@ -43,6 +43,15 @@ machine-interface
 
 ```{toctree}
 ---
+maxdepth: 2
+caption: Roll Inspector
+---
+
+inspector
+```
+
+```{toctree}
+---
 maxdepth: 1
 caption: About RollDev
 ---

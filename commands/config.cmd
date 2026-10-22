@@ -110,7 +110,7 @@ case "${ROLL_PARAMS[0]}" in
         while [[ $i -lt ${#ROLL_CONFIG_SCHEMA_KEYS[@]} ]]; do
             key="${ROLL_CONFIG_SCHEMA_KEYS[$i]}"
             value="${ROLL_CONFIG_SCHEMA_VALUES[$i]}"
-            if [[ "$key" =~ ^ROLL_(NGINX|DB|REDIS|DRAGONFLY|VARNISH|ELASTICSEARCH|OPENSEARCH|ELASTICVUE|RABBITMQ|MONGODB|BROWSERSYNC|PUBLISH_PORTS|SELENIUM|TEST_DB|ALLURE|MAGEPACK|INCLUDE_GIT) ]] && [[ ! "$key" =~ _VERSION$ ]]; then
+            if [[ "$key" =~ ^ROLL_(NGINX|DB|REDIS|DRAGONFLY|VARNISH|ELASTICSEARCH|OPENSEARCH|ELASTICVUE|INSPECTOR|RABBITMQ|MONGODB|BROWSERSYNC|PUBLISH_PORTS|SELENIUM|TEST_DB|ALLURE|MAGEPACK|INCLUDE_GIT) ]] && [[ ! "$key" =~ _VERSION$ ]]; then
                 printf "  %-30s %s\n" "$key" "$value"
             fi
             i=$((i + 1))
